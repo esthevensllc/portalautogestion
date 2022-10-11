@@ -14,6 +14,10 @@ class AppServiceProvider extends ServiceProvider
     public function register()
     {
         //
+        $service = $this->app->make(\AMovil\Shared\Infrastructure\LaravelSharedServiceProvider::class, ['app' => $this->app]);
+        $service->register();
+        $service = $this->app->make(\AMovil\Reports\Shared\Infrastructure\Services\LaravelReportsServiceProvider::class, ['app' => $this->app]);
+        $service->register();
     }
 
     /**

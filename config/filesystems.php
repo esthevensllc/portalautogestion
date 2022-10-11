@@ -53,6 +53,24 @@ return [
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
         ],
 
+        'sftp_local' => [
+            'driver' => 'local',
+            'root' => '/',
+        ],
+
+        'sftp_reports_log' => [
+            'driver' => 'sftp',
+            'host' => env('SFTP2_HOST'),
+         
+            // Settings for basic authentication...
+            'username' => env('SFTP2_USERNAME'),
+            'password' => env('SFTP2_PASSWORD'),
+         
+            // Settings for SSH key based authentication with encryption password...
+            'privateKey' => env('SFTP2_PRIVATE_KEY'),
+            'password' => env('SFTP2_PASSWORD'),
+        ],
+
     ],
 
     /*

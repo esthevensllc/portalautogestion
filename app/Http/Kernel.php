@@ -63,5 +63,7 @@ class Kernel extends HttpKernel
         'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+        'auth.cas' => \AMovil\Auth\AccessControl\Services\AuthCentralMiddleware::class,
+        'check.permission' => \AMovil\Auth\User\Services\CheckPermissionMiddleware::class,
     ];
 }
