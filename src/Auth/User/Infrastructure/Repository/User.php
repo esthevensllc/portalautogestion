@@ -7,8 +7,8 @@ use DB;
 
 class User extends Model
 {
-    protected $table = 'padm_user';
-    private $roles_table = 'padm_user_rol';
+    protected $table = 'usraes.padm_user';
+    private $roles_table = 'usraes.padm_user_rol';
 
     public function getRoles()
     {

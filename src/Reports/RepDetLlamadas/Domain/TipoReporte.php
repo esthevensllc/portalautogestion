@@ -28,4 +28,18 @@ class TipoReporte
                 return null;
         }
     }
+
+    public static function getName($tipo)
+    {
+        switch ($tipo) {
+            case '01':
+                return 'detalle_llamadas.entrantes';
+            case '02':
+                return 'detalle_llamadas.salientes';
+            case '03':
+                return 'detalle_llamadas.entrantes_salientes';
+            default:
+                return null;
+        }
+    }
 }

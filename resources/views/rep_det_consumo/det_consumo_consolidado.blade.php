@@ -18,11 +18,32 @@
                 </div>
                 <div class="col-lg-2">
                     <div class="form-group">
-                        <label for="" data-toggle="tooltip" data-placement="top" title="Tooltip on top">Periodo</label>
-                        <input type="text" class="form-control form-control-sm" name="periodo" placeholder="YYYYMM" required>
-                        <div class="invalid-feedback d-block text-dark">
-                            Para Ingresar mas de un periodo separar por comas<br>
-                            Ej. 202208,202209
+                        <label for="">Tipo input</label>
+                        <select class="form-control form-control-sm" name="tipo_input" id="tabs_select">
+                            {{-- <option value="1">Periodos</option> --}}
+                            <option value="2">Rango de fechas</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-4 tabs">
+                    <div class="row">
+                        <div class="col-lg-12 tab-item 1">
+                            <div class="form-group">
+                                <label for="" data-toggle="tooltip" data-placement="top" title="Tooltip on top">Periodo</label>
+                                <input type="text" class="form-control form-control-sm" name="periodo" placeholder="YYYYMM" required>
+                                <div class="invalid-feedback d-block text-dark">
+                                    Para Ingresar mas de un periodo separar por comas<br>
+                                    Ej. 202208,202209
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-12 form-group tab-item 2">
+                            <label for="">Fecha1</label>
+                            <input type="date" class="form-control form-control-sm" name="fecha1" required>
+                        </div>
+                        <div class="col-lg-12 form-group tab-item 2">
+                            <label for="">Fecha2</label>
+                            <input type="date" class="form-control form-control-sm" name="fecha2" required>
                         </div>
                     </div>
                 </div>
@@ -40,9 +61,28 @@
                     <div class="form-group">
                         <label for="" data-toggle="tooltip" data-placement="top" title="Tooltip on top">Unidad consumo</label>
                         <select class="form-control form-control-sm" name="unidad_consumo_id" required>
-                            <option value="1">SEGUNDOS</option>
-                            <option value="2">MINUTOS</option>
+                            <option value="1">SEGUNDOS (SS)</option>
+                            <option value="2">MINUTOS (MM:SS)</option>
+                            <option value="3">HORAS (HH:MM:SS)</option>
                         </select>
+                    </div>
+                </div>
+                <div class="col-lg-2">
+                    <div class="form-group">
+                        <label for="">Consumo sin cargo</label>
+                        <select class="form-control form-control-sm" name="consumo_sin_cargo" required>
+                            <option value="0">NO</option>
+                            <option value="1">SI</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-lg-3">
+                    <div class="form-group">
+                        <p class="min_periodo">
+                            Periodo mínimo: yyyymm
+                            <br>
+                            Periodo máximo: yyyymm 
+                        </p>
                     </div>
                 </div>
                 <div class="col-12" style="display: flex; align-items: end;">
@@ -53,6 +93,7 @@
             </div>
             <div class="text-danger">
                 *Toda consulta que se realice se registrara en un log
+                <br>*Si el periodo a consultar no se entra en el rango mostrado comunicarse con el área de Facturación a Clientes
             </div>
         </form>
     </div>
@@ -61,6 +102,7 @@
 @endsection
 
 @section('after_scripts')
+@include('includes.utils_js')
 <script>
 $(function() {
     const config = @json($data);
@@ -83,10 +125,16 @@ $(function() {
         const periodo = $("#form_export input[name=periodo]").val();
         const unidad_trafico_id = $("#form_export select[name=unidad_trafico_id]").val();
         const unidad_consumo_id = $("#form_export select[name=unidad_consumo_id]").val();
-        fetch("{{asset($data['url_validator'])}}"+`?cod_cliente=${cod_cliente}&periodo=${periodo}`, {
-            method: 'GET'
+        const consumo_sin_cargo = $("#form_export select[name=consumo_sin_cargo]").val();
+        const tipo_input = $("#form_export select[name=tipo_input]").val();
+        const fecha1 = $("#form_export input[name=fecha1]").val();
+        const fecha2 = $("#form_export input[name=fecha2]").val();
+        fetch("{{asset($data['url_validator'])}}"+`?cod_cliente=${cod_cliente}&periodo=${periodo}&tipo_input=${tipo_input}&fecha1=${fecha1}&fecha2=${fecha2}`, {
+            method: 'GET',
+            redirect: 'manual'
         })
-        .then(response => {
+        .then(utils.fetchAuthMiddleware)
+        .then(async response => {
             if(!response.ok){
                 throw new Error(response.statusText);
             }
@@ -95,7 +143,7 @@ $(function() {
         .then(response => response.json())
         .then(response => {
             if(response.passes === true){
-                fetch("{{asset(isset($data['url_export']) ? $data['url_export'] : '')}}"+`?cod_cliente=${cod_cliente}&periodo=${periodo}&unidad_trafico_id=${unidad_trafico_id}&unidad_consumo_id=${unidad_consumo_id}`, {
+                utils.fetch("{{asset(isset($data['url_export']) ? $data['url_export'] : '')}}"+`?cod_cliente=${cod_cliente}&periodo=${periodo}&unidad_trafico_id=${unidad_trafico_id}&unidad_consumo_id=${unidad_consumo_id}&consumo_sin_cargo=${consumo_sin_cargo}&tipo_input=${tipo_input}&fecha1=${fecha1}&fecha2=${fecha2}`, {
                     method: 'GET'
                 })
                 .then(response => {
@@ -128,6 +176,7 @@ $(function() {
             }
         })
         .catch(error => {
+            console.log(error);
             $(".loader_component").hide();
             $(".btn_export").prop('disabled', false);
             alert(error);
@@ -136,6 +185,44 @@ $(function() {
     if("{{ isset($data['url_export']) ? $data['url_export'] : '' }}" === ''){
         $(".btn_export").prop('disabled', true);
     }
+
+    $("input[name=cod_cliente]").on('change', function(){
+        const cod_cliente = $("#form_export input[name=cod_cliente]").val();
+        fetch("{{ $data['url_cliente_validator'] }}"+`?cliente=${cod_cliente}`, {
+            method: 'GET'
+        })
+        .then(response => {
+            if(!response.ok){
+                throw new Error(response.statusText);
+            }
+            return response;
+        })
+        .then(response => response.json())
+        .then(resp => {
+            if(resp.min_periodo === undefined){
+                $(".min_periodo").html("Periodo mínimo: yyyymm<br>Periodo máximo: yyyymm <br>*Verificar que el numero de cuenta sea correcto");
+            }else{
+                $(".min_periodo").html(`Periodo mínimo: ${resp.min_periodo}<br>Periodo máximo: ${resp.max_periodo}`);
+            }
+        })
+        .catch(error => {
+            $(".min_periodo").html("Periodo mínimo: yyyymm<br>Periodo máximo: yyyymm");
+        });
+    });
+
+
+    // select
+    $("#tabs_select").on('change', function(){
+        $(".tabs .tab-item").hide();
+        $(".tabs .tab-item."+$("#tabs_select").val()).show();
+    });
+    $("#tabs_select").on('change', function(){
+        $(".tabs .tab-item input").prop('disabled', true);
+        $(".tabs .tab-item textarea").prop('disabled', true);
+        $(".tabs .tab-item."+$("#tabs_select").val()+" input").prop('disabled', false);
+        $(".tabs .tab-item."+$("#tabs_select").val()+" textarea").prop('disabled', false);
+    });
+    $("#tabs_select").trigger('change');
 });
 </script>
 @endsection

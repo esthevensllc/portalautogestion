@@ -19,23 +19,25 @@ class CheckPermissionMiddleware
 
     public function handle(Request $request, Closure $next, ...$guards)
     {
-        $path_url = $request->path();
-        if(!$this->hasAccessTo($path_url)){
+        $trac_name = $request->route()->getAction()['trac_name'] ?? null;
+        // $path_url = $request->path();
+        if(!$this->hasAccessTo($trac_name)){
             return abort(403, 'No tiene permisos suficientes para acceder al modulo');
         }
 
         return $next($request);
     }
 
-    private function hasAccessTo($path_url)
+    private function hasAccessTo($trac_name)
     {
         $identifier = $this->service->getUserIdentifier();
         $response = $this->getUserModules->__invoke($identifier);
-        $modules = $this->getUserModules->groupBy('url', $response['array']);
-        
+        $modules = $this->getUserModules->groupBy('name', $response['array']);
+        // dd($modules);
         foreach($modules as $row){
             // if(preg_match("/^".$row->url."\//i", $path_url."/")){
-            if(str_starts_with("$path_url/", "{$row->url}/")){
+            // if(str_starts_with("$path_url/", "{$row->url}/")){
+            if($row->name === $trac_name){
                 return true;
             }
         }

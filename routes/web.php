@@ -18,7 +18,116 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/auth-user', function () {
+    $date = new DateTime();
+    $date->modify("+1 day");
+    session([
+        "cas__username" => "C19884",
+        "cas__expireDate" => $date->getTimestamp()
+    ]);
+});
+
+Route::get('/test', function () {
+    $response = \Illuminate\Support\Facades\Http::withHeaders([
+        "x-user-identifier" => "C19884",
+    ])
+    ->timeout(-1)
+    ->get("http://172.19.10.171/recursos/cobertura_fija_20230505.zip");
+    //dd([]);
+    if($response->ok()){
+	dd($response->header("Content-Type"));
+        return response($response->body(), 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment;filename="TEST.xlsx"'
+        ]);
+    }else{
+        throw new Exception($response->body());
+    }
+});
+
+Route::get('/export-test', function () {
+    ini_set('max_execution_time', '7200');
+    set_time_limit(7200);
+    
+$exportService = app(\AMovil\Shared\Exports\Domain\ExportService::class);
+
+$headers = [
+    "numero_origen" => ['label' => 'NUMERO_ORIGEN'],
+    "fecha" => ['label' => 'FECHA'],
+    "hora_inicio" => ['label' => 'HORA_INICIO'],
+    "hora_fin" => ['label' => 'HORA_FIN'],
+    "numero_destino" => ['label' => 'NUMBERO_DESTINO'],
+    "consumo" => ['label' => 'CONSUMO'],
+    "tipo" => ['label' => 'TIPO'],
+];
+
+$data = DB::connection("oracle_reptdm")
+->select(DB::raw("SELECT NUMERO_ORIGEN,FECHA,HORA_INICIO,HORA_FIN,NUMERO_DESTINO,CONSUMO,TIPO FROM USRAES.T_REP_LLA2_C26282"));
+
+$exportService->loadData($headers, $data, [
+    'sheetIndex' => 0,
+    'title' => "2023-03-06 - 2023-04-05",
+    'styles' => [
+        'header' => [
+            'font' => ['bold' => true, 'size' => 9],
+            'borders'=> [
+                'allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN, 'color' => array('rgb'=>'000000')]
+            ]
+        ],
+        'body' => [
+            'font' => ['size' => 9],
+        ]
+    ]
+]);
+
+$columns_to_autosize = ['A','B','C','D', 'E', 'F', 'G'];
+$sheet = $exportService->getExportReference()->getActiveSheet();
+foreach($columns_to_autosize as $col){
+    $sheet->getColumnDimension($col)->setAutoSize(true);
+}
+
+$export = [];
+$export["content"] = $exportService->getWriter(\AMovil\Shared\Exports\Domain\WriterType::XLSX)->getOutput();
+
+    //return $export;
+    $headers_by_type = [
+        'xlsx' => [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment;filename="REPORTE.xlsx"'
+        ],
+        'zip' => [
+            'Content-Type' => 'application/zip',
+            'Content-Transfer-Encoding' => 'Binary',
+            'Content-Disposition' => 'attachment;filename="REPORTE_CONSUMO_DETALLADO.zip"'
+        ]
+    ];
+    return response($export['content'], 200, $headers_by_type["xlsx"]);
+});
+
 Route::get('api/user', function (Request $request) {
+$expireTimestamp = session('cas__expireDate');
+    $now = new DateTime();
+    $expireDate = new DateTime();
+    $expireDate->setTimestamp($expireTimestamp);
+return [$expireDate];
+//$service = app(\AMovil\Auth\AccessControl\Domain\AuthService::class);
+    //return [$service->getUserIdentifier()];
+//return file_get_contents(storage_path('app/public')."/c40692df-110d-48f7-8990-9f0d0c738969_temp.csv");
+$data = \DB::select(DB::raw("SELECT A.* FROM (
+  SELECT A.*,B.ASNC_TIPO_TITULAR ASNC_TIPO_TITULAR,B.ASNC_TIPO_CONTRATO ASNC_TIPO_CONTRATO,B.ASNC_TIPO_DOCTITULAR ASNC_TIPO_DOCTITULAR,
+  B.ASNV_NUM_DOCTITULAR ASNV_NUM_DOCTITULAR,B.ASNV_NOMBRETITULAR  ASNV_NOMBRETITULAR,B.ASND_FEC_INICONTRATO ASND_FEC_INICONTRATO,
+  B.ASND_FEC_FINCONTRATO  ASND_FEC_FINCONTRATO,B.ASNV_DIRECCION ASNV_DIRECCION,B.ASNV_UBIGEO  ASNV_UBIGEO,NULL  ASND_FECHAHORA_LLAMADA
+  FROM USRAES.TMP_PLANTILLA_REPOMENSUAL A
+  JOIN (SELECT * FROM USRAES.TMP_REPOMENSUAL_1 WHERE ESTADO_SUBS NOT LIKE 'D')  B
+  ON (B.MSISDN=A.ASNV_NUMERO_LINEA)
+) A
+FULL JOIN DUAL B ON 1=1"));
+dd($data);
+
+$service = app(\AMovil\Shared\Exports\Domain\ExportService::class);
+$service->loadData(['asnv_direccion' => ['label' => 'A']], $data);
+    return $service->download("export.xlsx");
+
     $auth_service = app(\AMovil\Auth\AccessControl\Domain\AuthService::class);
     $service = app(\AMovil\Auth\User\Services\GetUserModules::class);
 
@@ -37,6 +146,16 @@ Route::group([
     });
     Route::get('admin/logout', [\AMovil\Auth\AccessControl\Controllers\AccessControlController::class, 'logout']);
     Route::get('dashboard', [App\Http\Controllers\AdminController::class, 'dashboard']);
+    Route::get('general-import', [App\Http\Controllers\GeneralImportController::class, 'import_view']);
+    Route::post('general-import/import', [App\Http\Controllers\GeneralImportController::class, 'import']);
+});
+
+Route::group([
+    'middleware' => ['web','auth.cas'],
+    'namespace'  => 'App\Http\Controllers',
+], function () {
+    Route::get('lineas-mtc-osiptel/logs/tickets/{tipo_plan}/{tipo_solicitud}', [\AMovil\Reports\General\LineasMTCOsiptel\Controllers\LineasMTCOsiptelController::class, 'getTickets']);
+    Route::get('lineas-mtc-osiptel/logsMsisdn/tickets/{tipo_plan}', [\AMovil\Reports\General\LineasMTCOsiptel\Controllers\LineasMTCOsiptelController::class, 'getTicketsMsisdn']);
 });
 
 Route::group([
@@ -45,43 +164,278 @@ Route::group([
         (array) config('backpack.base.web_middleware', 'web'),
         (array) config('backpack.base.middleware_key', 'admin')
     ),*/
-    'middleware' => ['auth.cas', 'check.permission'],
+    'middleware' => ['web', 'auth.cas', 'check.permission'],
     'namespace'  => 'App\Http\Controllers',
 ], function () {
     // SIGREI
-    Route::get('reporte_sigrei', 'ReporteSigrei\ReporteSigreiController@index')->name('sigrei.reporte.index');
-    Route::post('reporte_sigrei/import', 'ReporteSigrei\ReporteSigreiController@import');
-    Route::get('reporte_sigrei/export', 'ReporteSigrei\ReporteSigreiController@export');
-    Route::get('reporte_sigrei/test', 'ReporteSigrei\ReporteSigreiController@test');
+    Route::group(['prefix' => 'reporte_sigrei', 'trac_name' => 'sigrei'], function(){
+        Route::get('/', 'ReporteSigrei\ReporteSigreiController@index')->name('sigrei.reporte.index');
+        Route::post('import', 'ReporteSigrei\ReporteSigreiController@import');
+        Route::get('export', 'ReporteSigrei\ReporteSigreiController@export');
+        Route::get('test', 'ReporteSigrei\ReporteSigreiController@test');
+    });
 
     // detalle llamadas
-    Route::get('rep-det-consumo/detalle-llamadas/entrantes', [\AMovil\Reports\RepDetLlamadas\Controllers\DetalleLLamadasController::class, 'entrantes']);
-    Route::post('rep-det-consumo/detalle-llamadas/entrantes/export', [\AMovil\Reports\RepDetLlamadas\Controllers\DetalleLLamadasController::class, 'exportEntrantes']);
-    Route::get('rep-det-consumo/detalle-llamadas/salientes', [\AMovil\Reports\RepDetLlamadas\Controllers\DetalleLLamadasController::class, 'salientes']);
-    Route::post('rep-det-consumo/detalle-llamadas/salientes/export', [\AMovil\Reports\RepDetLlamadas\Controllers\DetalleLLamadasController::class, 'exportSalientes']);
-    Route::get('rep-det-consumo/detalle-llamadas/entrantes-salientes', [\AMovil\Reports\RepDetLlamadas\Controllers\DetalleLLamadasController::class, 'entrantes_salientes']);
-    Route::post('rep-det-consumo/detalle-llamadas/entrantes-salientes/export', [\AMovil\Reports\RepDetLlamadas\Controllers\DetalleLLamadasController::class, 'exportEntrantesSalientes']);
-
-    Route::get('rep-det-consumo/detalle-llamadas/entrantes/test', function(){
-        return ['access' => true];
+    Route::group(['prefix' => 'rep-det-consumo/detalle-llamadas/entrantes', 'trac_name' => 'detalle_llamadas.entrantes'], function(){
+        Route::get('/', [\AMovil\Reports\RepDetLlamadas\Controllers\DetalleLLamadasController::class, 'entrantes']);
+        Route::post('export', [\AMovil\Reports\RepDetLlamadas\Controllers\DetalleLLamadasController::class, 'exportEntrantes']);
+    });
+    Route::group(['prefix' => 'rep-det-consumo/detalle-llamadas/salientes', 'trac_name' => 'detalle_llamadas.salientes'], function(){
+        Route::get('/', [\AMovil\Reports\RepDetLlamadas\Controllers\DetalleLLamadasController::class, 'salientes']);
+        Route::post('export', [\AMovil\Reports\RepDetLlamadas\Controllers\DetalleLLamadasController::class, 'exportSalientes']);
+    });
+    Route::group(['prefix' => 'rep-det-consumo/detalle-llamadas/entrantes-salientes', 'trac_name' => 'detalle_llamadas.entrantes_salientes'], function(){
+        Route::get('/', [\AMovil\Reports\RepDetLlamadas\Controllers\DetalleLLamadasController::class, 'entrantes_salientes']);
+        Route::post('export', [\AMovil\Reports\RepDetLlamadas\Controllers\DetalleLLamadasController::class, 'exportEntrantesSalientes']);
     });
 
     //Reporte Facturacion fija
-    Route::get('facturacion-fija', 'FacturacionFija\FacturacionFijaController@index')->name('facturacion.fija.index');
-    Route::get('facturacion-fija/salientes/export', 'FacturacionFija\FacturacionFijaController@generar_reporte');
-    Route::get('facturacion-fija/salientes/validReport', 'FacturacionFija\FacturacionFijaController@validReport');
+    Route::group(['prefix' => 'facturacion-fija', 'trac_name' => 'facturacion_fija.entrantes'], function(){
+        Route::get('/', 'FacturacionFija\FacturacionFijaController@index')->name('facturacion.fija.index');
+        Route::get('salientes/export', 'FacturacionFija\FacturacionFijaController@generar_reporte');
+        Route::get('salientes/validReport', 'FacturacionFija\FacturacionFijaController@validReport');
+    });
 
     // reporte fiscalia
-    Route::get('rep-fiscalia/rep-fiscal', [\AMovil\Reports\RepFiscalia\Controllers\ReporteFiscalController::class, 'repFiscal']);
-    Route::get('rep-fiscalia/rep-fiscal/export', [\AMovil\Reports\RepFiscalia\Controllers\ReporteFiscalController::class, 'exportRepFiscal']);
-    Route::get('rep-fiscalia/rep-fiscal/validator', [\AMovil\Reports\RepFiscalia\Controllers\ReporteFiscalController::class, 'validator']);
+    Route::group(['prefix' => 'rep-fiscalia/rep-fiscal', 'trac_name' => 'repote_fiscal.reporte_fiscal'], function(){
+        Route::get('/', [\AMovil\Reports\RepFiscalia\Controllers\ReporteFiscalController::class, 'repFiscal']);
+        Route::get('export', [\AMovil\Reports\RepFiscalia\Controllers\ReporteFiscalController::class, 'exportRepFiscal']);
+        Route::get('validator', [\AMovil\Reports\RepFiscalia\Controllers\ReporteFiscalController::class, 'validator']);
+    });
 
-    Route::group(['prefix' => 'rep-det-consumo/detalle-consumo'], function(){
+    Route::group(['prefix' => 'rep-det-consumo/detalle-consumo', 'trac_name' => 'detallle_consumo.detallado'], function(){
         Route::get('detallado', [AMovil\Reports\RepDetConsumo\Controllers\DetalleConsumoController::class, 'detallado']);
         Route::get('detallado/export', [AMovil\Reports\RepDetConsumo\Controllers\DetalleConsumoController::class, 'exportDetallado']);
         Route::get('detallado/validator', [AMovil\Reports\RepDetConsumo\Controllers\DetalleConsumoController::class, 'validation']);
+        Route::get('detallado/clientes', [AMovil\Reports\RepDetConsumo\Controllers\DetalleConsumoController::class, 'clienteValidator']);
+    });
+    Route::group(['prefix' => 'rep-det-consumo/detalle-consumo', 'trac_name' => 'detallado_consumo.consolidado'], function(){
         Route::get('consolidado', [AMovil\Reports\RepDetConsumo\Controllers\DetalleConsumoController::class, 'consolidado']);
         Route::get('consolidado/export', [AMovil\Reports\RepDetConsumo\Controllers\DetalleConsumoController::class, 'exportConsolidado']);
         Route::get('consolidado/validator', [AMovil\Reports\RepDetConsumo\Controllers\DetalleConsumoController::class, 'validation']);
+        Route::get('consolidado/clientes', [AMovil\Reports\RepDetConsumo\Controllers\DetalleConsumoController::class, 'clienteValidator']);
+    });
+    Route::group(['prefix' => 'rep-det-consumo/detalle-consumo', 'trac_name' => 'detalle_consumo.facturacion'], function(){
+        Route::get('facturacion', [\AMovil\Reports\General\FacturacionAdelantada\Controllers\FacturacionAdelantadaController::class, 'view']);
+        Route::post('facturacion/export', [\AMovil\Reports\General\FacturacionAdelantada\Controllers\FacturacionAdelantadaController::class, 'export']);
+    });
+    Route::group(['prefix' => 'rep-det-consumo/facturacion-consolidado', 'trac_name' => 'detalle_consumo.fa_consolidado'], function(){
+        Route::get('/', [\AMovil\Reports\General\FacturacionAdelantada\Controllers\FacturacionAdelantadaController::class, 'consolidadoView']);
+        Route::post('export', [\AMovil\Reports\General\FacturacionAdelantada\Controllers\FacturacionAdelantadaController::class, 'exportConsolidado']);
+    });
+    Route::group(['prefix' => 'rep-det-consumo/detalle-tasado', 'trac_name' => 'rep-det-consumo.detalle-tasado'], function(){
+        Route::get('/', [\AMovil\Reports\DetalleTasado\Controllers\DetalleTasadoController::class, 'view']);
+        Route::post('/export', [\AMovil\Reports\DetalleTasado\Controllers\DetalleTasadoController::class, 'export']);
+    });
+
+    // admin
+    Route::group(['prefix' => 'admin', 'trac_name' => 'admin.usuarios'], function(){
+        // Route::get('usuarios', [\AMovil\Auth\User\Controllers\BackpackListUserController::class, 'index']);
+        // Route::post('usuarios/search', [\AMovil\Auth\User\Controllers\BackpackListUserController::class, 'search']);
+        Route::get('usuarios', [\AMovil\Auth\User\Controllers\ListUsersController::class, 'view']);
+        Route::post('usuarios/search', [\AMovil\Auth\User\Controllers\ListUsersController::class, 'get']);
+        Route::get('usuarios/edit/{id}', [\AMovil\Auth\User\Controllers\EditUserController::class, 'view']);
+        Route::post('usuarios/edit/{id}', [\AMovil\Auth\User\Controllers\EditUserController::class, 'udpate']);
+        Route::get('usuarios/create', [\AMovil\Auth\User\Controllers\CreateUserController::class, 'view']);
+        Route::post('usuarios/create', [\AMovil\Auth\User\Controllers\CreateUserController::class, 'create']);
+        Route::post('usuarios/{id}/status/{status}', [\AMovil\Auth\User\Controllers\ChangeUserStatusController::class, '__invoke']);
+        Route::get('usuarios/{id}', [\AMovil\Auth\User\Controllers\FindUserController::class, 'view']);
+    });
+    Route::group(['prefix' => 'admin/roles', 'trac_name' => 'admin.roles'], function(){
+        Route::get('/', [\AMovil\Auth\Roles\Controllers\GetRolesController::class, 'view']);
+        Route::post('search', [\AMovil\Auth\Roles\Controllers\GetRolesController::class, 'get']);
+        Route::get('edit/{id}', [\AMovil\Auth\Roles\Controllers\UpdateRolController::class, 'view']);
+        Route::post('edit/{id}', [\AMovil\Auth\Roles\Controllers\UpdateRolController::class, 'update']);
+        Route::post('{id}/status/{status}', [\AMovil\Auth\Roles\Controllers\ChangeRolStatusController::class, '__invoke']);
+        Route::get('create', [\AMovil\Auth\Roles\Controllers\CreateRolController::class, 'view']);
+        Route::post('/', [\AMovil\Auth\Roles\Controllers\CreateRolController::class, 'create']);
+    });
+    
+    Route::group(['prefix' => 'mtc/suspensiones', 'trac_name' => 'mtc.suspensiones'], function(){
+        Route::get('/', [\AMovil\Reports\Mtc\Suspensiones\Controllers\MtcSuspensionesController::class, 'view']);
+        Route::post('/export', [\AMovil\Reports\Mtc\Suspensiones\Controllers\MtcSuspensionesController::class, 'export']);
+        Route::get('/export-test', [\AMovil\Reports\Mtc\Suspensiones\Controllers\MtcSuspensionesController::class, 'exportTest']);
+    });
+
+    Route::group(['prefix' => 'reporte-cursados', 'trac_name' => 'reporte-cursados'], function(){
+        Route::get('/', [\AMovil\Reports\RepCursado\Controllers\ReporteCursadoController::class, 'view']);
+        Route::post('/export', [\AMovil\Reports\RepCursado\Controllers\ReporteCursadoController::class, 'export']);
+    });
+
+    // DAPU
+    Route::group(['prefix' => 'dapu/tramites-consulta', 'trac_name' => 'dapu.tramites-consulta'], function(){
+        Route::get('/', [\AMovil\Reports\DAPU\TramiteConsulta\Controllers\TramiteConsultaController::class, 'view']);
+        Route::post('export', [\AMovil\Reports\DAPU\TramiteConsulta\Controllers\TramiteConsultaController::class, 'export']);
+    });
+    Route::group(['prefix' => 'dapu/suspension-servicio', 'trac_name' => 'dapu.suspension-servicio'], function(){
+        Route::get('/', [\AMovil\Reports\DAPU\SuspensionServicio\Controllers\SuspensionServicioController::class, 'view']);
+        Route::get('/json', [\AMovil\Reports\DAPU\SuspensionServicio\Controllers\SuspensionServicioController::class, 'getData']);
+        Route::get('/export', [\AMovil\Reports\DAPU\SuspensionServicio\Controllers\SuspensionServicioController::class, 'export']);
+    });
+    Route::group(['prefix' => 'dapu/adquisicion', 'trac_name' => 'dapu.adquisicion'], function(){
+        Route::get('/', [\AMovil\Reports\DAPU\Adquisiciones\Controllers\AdquisicionEquipoController::class, 'view']);
+        Route::get('json', [\AMovil\Reports\DAPU\Adquisiciones\Controllers\AdquisicionEquipoController::class, 'getData']);
+        Route::get('export', [\AMovil\Reports\DAPU\Adquisiciones\Controllers\AdquisicionEquipoController::class, 'export']);
+    });
+    Route::group(['prefix' => 'dapu/consulta-linea', 'trac_name' => 'dapu.consulta-linea'], function(){
+        Route::get('/', [\AMovil\Reports\DAPU\Lineas\Controllers\LineaController::class, 'view']);
+        Route::get('/json', [\AMovil\Reports\DAPU\Lineas\Controllers\LineaController::class, 'getData']);
+        Route::post('/export', [\AMovil\Reports\DAPU\Lineas\Controllers\LineaController::class, 'export']);
+    });
+    Route::group(['prefix' => 'dapu/consulta-fono', 'trac_name' => 'dapu.consulta-fono'], function(){
+        Route::get('/', [\AMovil\Reports\DAPU\FONO\Controllers\FonoController::class, 'view']);
+        Route::get('/json', [\AMovil\Reports\DAPU\FONO\Controllers\FonoController::class, 'getData']);
+        Route::post('/export', [\AMovil\Reports\DAPU\FONO\Controllers\FonoController::class, 'export']);
+    });
+    Route::group(['prefix' => 'dapu/ventas-linea', 'trac_name' => 'dapu.ventas-linea'], function(){
+        Route::get('/', [\AMovil\Reports\DAPU\VentasLinea\Controllers\VentasLineaController::class, 'view']);
+        Route::get('/json', [\AMovil\Reports\DAPU\VentasLinea\Controllers\VentasLineaController::class, 'getData']);
+        Route::post('/export', [\AMovil\Reports\DAPU\VentasLinea\Controllers\VentasLineaController::class, 'export']);
+    });
+    Route::group(['prefix' => 'dapu/log-biometria', 'trac_name' => 'dapu.log-biometria'], function(){
+        Route::get('/', [\AMovil\Reports\DAPU\LogBiometria\Controllers\LogBiometriaController::class, 'view']);
+        Route::get('/json', [\AMovil\Reports\DAPU\LogBiometria\Controllers\LogBiometriaController::class, 'getData']);
+        Route::post('/export', [\AMovil\Reports\DAPU\LogBiometria\Controllers\LogBiometriaController::class, 'export']);
+    });
+    Route::group(['prefix' => 'dapu/equipo-biometria', 'trac_name' => 'dapu.equipo-biometria'], function(){
+        Route::get('/', [\AMovil\Reports\DAPU\EquipoBiometria\Controllers\EquipoBiometriaController::class, 'view']);
+        Route::get('/json', [\AMovil\Reports\DAPU\EquipoBiometria\Controllers\EquipoBiometriaController::class, 'getData']);
+        Route::post('/export', [\AMovil\Reports\DAPU\EquipoBiometria\Controllers\EquipoBiometriaController::class, 'export']);
+    });
+    Route::group(['prefix' => 'dapu/historico-bloqueos', 'trac_name' => 'dapu.historico-bloqueos'], function(){
+        Route::get('/', [\AMovil\Reports\DAPU\HistoricoBloqueos\Controllers\HistoricoBloqueoController::class, 'view']);
+        Route::get('/json', [\AMovil\Reports\DAPU\HistoricoBloqueos\Controllers\HistoricoBloqueoController::class, 'getData']);
+        Route::post('/export', [\AMovil\Reports\DAPU\HistoricoBloqueos\Controllers\HistoricoBloqueoController::class, 'export']);
+    });
+
+    Route::group(['prefix' => 'rep-recargas/detalle', 'trac_name' => 'rep-recargas.detalle'], function(){
+        Route::get('/', [\AMovil\Reports\RepRecargas\Controllers\ReporteRecargasController::class, 'detalle']);
+        Route::post('/export', [\AMovil\Reports\RepRecargas\Controllers\ReporteRecargasController::class, 'exportDetalle']);
+    });
+    Route::group(['prefix' => 'rep-recargas/extras', 'trac_name' => 'rep-recargas.extras'], function(){
+        Route::get('/', [\AMovil\Reports\RepRecargas\Controllers\ReporteRecargasController::class, 'extras']);
+        Route::post('/export', [\AMovil\Reports\RepRecargas\Controllers\ReporteRecargasController::class, 'exportExtras']);
+    });
+    Route::group(['prefix' => 'logs/reporte_log', 'trac_name' => 'logs.reporte_log'], function(){
+        Route::get('/', [\AMovil\Reports\ReportLog\Controllers\GetReportLogController::class, 'view']);
+        Route::post('/search', [\AMovil\Reports\ReportLog\Controllers\GetReportLogController::class, 'search']);
+    });
+    Route::group(['prefix' => 'minedu/consumo-activacion', 'trac_name' => 'minedu.consumo-activacion'], function(){
+        Route::get('/', [\AMovil\Reports\MINEDU\RepConsumo\Controllers\ReporteConsumoController::class, 'view']);
+        Route::post('/export', [\AMovil\Reports\MINEDU\RepConsumo\Controllers\ReporteConsumoController::class, 'export']);
+    });
+    Route::group(['prefix' => 'visanet/visanet', 'trac_name' => 'visanet.visanet'], function(){
+        Route::get('/', [\AMovil\Reports\Visanet\Controllers\VisanetController::class, 'view']);
+        Route::post('/export', [\AMovil\Reports\Visanet\Controllers\VisanetController::class, 'export']);
+    });
+    Route::group(['prefix' => 'caja-arequipa/gb-otorgados', 'trac_name' => 'caja-arequipa.gb-otorgados'], function(){
+        Route::get('/', [\AMovil\Reports\CajaArequipa\GBOtorgados\Controllers\GBOtorgadosController::class, 'view']);
+        Route::post('/export', [\AMovil\Reports\CajaArequipa\GBOtorgados\Controllers\GBOtorgadosController::class, 'export']);
+    });
+    Route::group(['prefix' => 'caja-arequipa/factura-detallada', 'trac_name' => 'caja-arequipa.factura-detallada'], function(){
+        Route::get('/', [\AMovil\Reports\CajaArequipa\FacturaDetallada\Controllers\FacturaDetalladaController::class, 'view']);
+        Route::post('/export', [\AMovil\Reports\CajaArequipa\FacturaDetallada\Controllers\FacturaDetalladaController::class, 'export']);
+    });
+
+    Route::group(['prefix' => 'extraccion-devolucion', 'trac_name' => 'extraccion-devolucion'], function(){
+        Route::get('/', [\AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Controllers\ExtraccionDevolucionController::class, 'view']);
+        Route::post('/process', [\AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Controllers\ExtraccionDevolucionController::class, 'process']);
+    });
+    Route::group(['prefix' => 'extraccion-devolucion/tabla-interes', 'trac_name' => 'extraccion-devolucion.tabla-interes'], function(){
+        Route::post('api', [\AMovil\Reports\ExtraccionDevolucion\TablaInteres\Controllers\TablaInteresController::class, 'create']);
+        Route::get('api', [\AMovil\Reports\ExtraccionDevolucion\TablaInteres\Controllers\TablaInteresController::class, 'api']);
+        Route::get('/', [\AMovil\Reports\ExtraccionDevolucion\TablaInteres\Controllers\TablaInteresController::class, 'view']);
+    });
+    Route::group(['prefix' => 'extraccion-devolucion/reportes', 'trac_name' => 'extraccion-devolucion.reportes'], function(){
+        Route::get('/', [\AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Controllers\ExtraccionDevolucionController::class, 'reportView']);
+        Route::post('export', [\AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Controllers\ExtraccionDevolucionController::class, 'export']);
+        Route::post('/confirm', [\AMovil\Reports\ExtraccionDevolucion\TicketReports\Controllers\TicketReportsController::class, 'confirm']);
+        Route::post('/find-input', [\AMovil\Reports\ExtraccionDevolucion\TicketReports\Controllers\TicketReportsController::class, 'findInput']);
+    });
+    Route::group(['prefix' => 'extraccion-devolucion/tickets', 'trac_name' => 'extraccion-devolucion.tickets'], function(){
+        Route::get('/', [\AMovil\Reports\ExtraccionDevolucion\TicketReports\Controllers\TicketReportsController::class, 'view']);
+        Route::post('search', [\AMovil\Reports\ExtraccionDevolucion\TicketReports\Controllers\TicketReportsController::class, 'search']);
+    });
+    Route::group(['prefix' => 'extraccion-devolucion/eliminar-ticket', 'trac_name' => 'extraccion-devolucion.eliminar-ticket'], function(){
+        Route::get('/', [\AMovil\Reports\ExtraccionDevolucion\TicketReports\Controllers\TicketReportsController::class, 'deleteView']);
+        Route::post('/', [\AMovil\Reports\ExtraccionDevolucion\TicketReports\Controllers\TicketReportsController::class, 'delete']);
+    });
+    Route::group(['prefix' => 'extraccion-devolucion/carga-reportes', 'trac_name' => 'extraccion-devolucion.carga-reportes'], function(){
+        Route::get('/', [\AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Controllers\ExtraccionDevolucionController::class, 'updateView']);
+        Route::post('/import', [\AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Controllers\ExtraccionDevolucionController::class, 'import']);
+    });
+    Route::group(['prefix' => 'extraccion-devolucion/cartera-gobierno', 'trac_name' => 'extraccion-devolucion.cartera-gobierno'], function(){
+        Route::get('/', [\AMovil\Reports\ExtraccionDevolucion\CarteraGobierno\Controllers\CarteraGobiernoController::class, 'view']);
+        Route::post('/import', [\AMovil\Reports\ExtraccionDevolucion\CarteraGobierno\Controllers\CarteraGobiernoController::class, 'import']);
+    });
+    Route::group(['prefix' => 'extraccion-devolucion/modev', 'trac_name' => 'extraccion-devolucion.modev'], function(){
+        Route::get('/', [\AMovil\Reports\ExtraccionDevolucion\MODEV\Controllers\MODEVController::class, 'view']);
+        Route::post('/export', [\AMovil\Reports\ExtraccionDevolucion\MODEV\Controllers\MODEVController::class, 'export']);
+    });
+    Route::group(['prefix' => 'extraccion-devolucion/carga-informe-fallas', 'trac_name' => 'extraccion-devolucion.carga-info-fallas'], function(){
+        Route::get('/', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'view']);
+        Route::post('/import', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'import']);
+        Route::get('/search', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'get']);
+        Route::get('/search/{id}', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'findInput']);
+        Route::get('/{id}', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'reportView']);
+        Route::post('/delete/{id}', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'delete']);
+        Route::post('/aprobar', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'aprobar']);
+        Route::post('/desaprobar', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'desaprobar']);
+        Route::post('/en-espera', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'enEspera']);
+        Route::post('/revisado', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'revisado']);
+    });
+
+    Route::group(['prefix' => 'michaell-cia-nn', 'trac_name' => 'michaell-cia-nn'], function(){
+        Route::get('/', [\AMovil\Reports\General\RepMichaellCIANN\Controllers\RepMichaellCIANNController::class, 'view']);
+        Route::get('/num-cuenta-info/{numCuenta}', [\AMovil\Reports\General\RepMichaellCIANN\Controllers\RepMichaellCIANNController::class, 'getInfoForNumCuenta']);
+        Route::post('/export', [\AMovil\Reports\General\RepMichaellCIANN\Controllers\RepMichaellCIANNController::class, 'export']);
+    });
+
+    Route::group(['prefix' => 'extraccion-dev-fija', 'trac_name' => 'extraccion-dev-fija'], function(){
+        Route::get('/', [\AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Controllers\ExtraccionDevFijaController::class, 'view']);
+        Route::post('/process', [\AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Controllers\ExtraccionDevFijaController::class, 'process']);
+    });
+    Route::group(['prefix' => 'lineas-mtc-osiptel', 'trac_name' => 'lineas-mtc-osiptel'], function(){
+        Route::get('/', [\AMovil\Reports\General\LineasMTCOsiptel\Controllers\LineasMTCOsiptelController::class, 'view']);
+        Route::post('/export', [\AMovil\Reports\General\LineasMTCOsiptel\Controllers\LineasMTCOsiptelController::class, 'export']);
+    });
+    Route::group(['prefix' => 'lineas-mtc-osiptel/logs', 'trac_name' => 'lineas-mtc-osiptel.logs'], function(){
+        Route::get('/', [\AMovil\Reports\General\LineasMTCOsiptel\Controllers\LineasMTCOsiptelController::class, 'logView']);
+        Route::post('/save', [\AMovil\Reports\General\LineasMTCOsiptel\Controllers\LineasMTCOsiptelController::class, 'saveLog']);
+        //Route::get('tickets/{tipo_plan}/{tipo_solicitud}', [\AMovil\Reports\General\LineasMTCOsiptel\Controllers\LineasMTCOsiptelController::class, 'getTickets']);
+    });
+    Route::group(['prefix' => 'lineas-mtc-osiptel/registros-sms', 'trac_name' => 'lineas-mtc-osiptel.registros-sms'], function(){
+        Route::get('/', [\AMovil\Reports\General\LineasMTCOsiptel\Controllers\LineasMTCOsiptelController::class, 'registrosView']);
+        Route::post('/search', [\AMovil\Reports\General\LineasMTCOsiptel\Controllers\LineasMTCOsiptelController::class, 'search']);
+    });
+    Route::group(['prefix' => 'lineas-mtc-osiptel/registros-sms/eliminar', 'trac_name' => 'lineas-mtc-osiptel.registros-sms.delete'], function(){
+        Route::get('/', [\AMovil\Reports\General\LineasMTCOsiptel\Controllers\LineasMTCOsiptelController::class, 'deleteView']);
+        Route::post('/', [\AMovil\Reports\General\LineasMTCOsiptel\Controllers\LineasMTCOsiptelController::class, 'delete']);
+    });
+    Route::group(['prefix' => 'lineas-mtc-osiptel/osiptel-msisdn-dni', 'trac_name' => 'lineas-mtc-osiptel.osiptel-msisdn-dni'], function(){
+        Route::get('/', [\AMovil\Reports\General\LineasMTCOsiptel\Controllers\LineasMTCOsiptelController::class, 'cartaView']);
+        Route::post('/export', [\AMovil\Reports\General\LineasMTCOsiptel\Controllers\LineasMTCOsiptelController::class, 'procesarCarta']);
+    });
+    Route::group(['prefix' => 'lineas-mtc-osiptel/osiptel-registros-msisdn', 'trac_name' => 'lineas-mtc-osiptel.registros-msisdn'], function(){
+        Route::get('/', [\AMovil\Reports\General\LineasMTCOsiptel\Controllers\LineasMTCOsiptelController::class, 'registrosMsisdnView']);
+        Route::post('/searchMsisdn', [\AMovil\Reports\General\LineasMTCOsiptel\Controllers\LineasMTCOsiptelController::class, 'searchMsisdn']);
+    });
+    Route::group(['prefix' => 'lineas-mtc-osiptel/osiptel-registros-msisdn/eliminar', 'trac_name' => 'lineas-mtc-osiptel.registros-msisdn.delete'], function(){
+        Route::get('/', [\AMovil\Reports\General\LineasMTCOsiptel\Controllers\LineasMTCOsiptelController::class, 'deleteMsisdnView']);
+        Route::post('/', [\AMovil\Reports\General\LineasMTCOsiptel\Controllers\LineasMTCOsiptelController::class, 'deleteMsisdn']);
+    });
+
+    // BASES CLIENTES PREPAGO
+    Route::group(['prefix' => 'bases-clientes-prepago', 'trac_name' => 'bases-clientes-prepago'], function(){
+        Route::get('/', [\AMovil\Reports\BasesClientesPrepago\Controllers\BasesClientesPrepagoController::class, 'view']);
+        Route::get('/getUbigeo', [\AMovil\Reports\BasesClientesPrepago\Controllers\BasesClientesPrepagoController::class, 'getUbigeo']);
+        Route::post('/export', [\AMovil\Reports\BasesClientesPrepago\Controllers\BasesClientesPrepagoController::class, 'export']);
+    });
+
+    // SOLICITUD DE DATOS/CONFIRMACIÓN
+    Route::group(['prefix' => 'solicitud-datos-confirmacion', 'trac_name' => 'solicitud-datos-confirmacion'], function(){
+        Route::get('/', [\AMovil\Reports\SolicitudDatosConfirmacion\Controllers\SolicitudDatosConfirmacionController::class, 'view']);
+        Route::get('/getTable', [\AMovil\Reports\SolicitudDatosConfirmacion\Controllers\SolicitudDatosConfirmacionController::class, 'getTable'])->name('solicitud-datos-confirmacion.getTable');
+        Route::post('/export', [\AMovil\Reports\SolicitudDatosConfirmacion\Controllers\SolicitudDatosConfirmacionController::class, 'export']);
     });
 });

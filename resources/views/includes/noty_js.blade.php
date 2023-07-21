@@ -1,0 +1,1 @@
+<script src="{{asset('packages/noty/noty.min.js')}}"></script>

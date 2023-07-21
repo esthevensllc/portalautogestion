@@ -23,12 +23,23 @@ class ExportDetalleConsumoConsolidado
         $this->saveReportLog = $saveReportLog;
     }
 
-    public function __invoke(string $cliente, string $periodo, string $unidad_trafico_id, string $unidad_consumo_id)
+    public function __invoke(string $cliente, ?string $periodo, string $unidad_trafico_id, string $unidad_consumo_id, string $consumo_sin_cargo,$tipo_input, $fecha1, $fecha2)
     {
         $dt_start = new DateTime();
         try {
             $dt_periodos = [];
-            $periodos = explode(",", trim($periodo));
+            $periodos = [];
+            if($tipo_input === '1'){
+                $periodos = explode(",", trim($periodo));
+            }else{
+                $periodos = $this->repo->getPeriodosByFechas(
+                    $cliente,
+                    DateTime::createFromFormat("Y-m-d", $fecha1),
+                    DateTime::createFromFormat("Y-m-d", $fecha2)
+                );
+            }
+            // dd($periodos);
+
             $str_periodo = [];
             $last_period = $periodos[0];
             foreach($periodos as $p){
@@ -38,6 +49,9 @@ class ExportDetalleConsumoConsolidado
                 $last_period = $p;
             }
             $str_periodo = implode(",", $str_periodo);
+            if($tipo_input === "2"){
+                $str_periodo = DateTime::createFromFormat("Y-m-d", $fecha1)->format("d/m/Y")." al ".DateTime::createFromFormat("Y-m-d", $fecha2)->format("d/m/Y");
+            }
 
             $title = $periodos[0];
             if($periodos[0] !== $last_period){
@@ -91,7 +105,9 @@ class ExportDetalleConsumoConsolidado
                 "nro_telefono" => ['label' => 'Nro Telefono'],
                 "factura" => ['label' => 'Nro Factura'],
                 "ciclo" => ['label' => 'Ciclo'],
-                "cantidad_gprs" => ['label' => "Cantidad Gprs ({$unidad_trafico_label})", 'bodyStyles' => $numberFormat],
+                "cantidad_gprs" => ['label' => "Cantidad Gprs (KB)", 'bodyStyles' => $numberFormat],
+                "cantidad_gprs_mb" => ['label' => "Cantidad Gprs (MB)", 'bodyStyles' => $numberFormat],
+                "cantidad_gprs_gb" => ['label' => "Cantidad Gprs (GB)", 'bodyStyles' => $numberFormat],
                 "duracion_roaming_datos" => ['label' => 'Duracion Roaming Datos', 'bodyStyles' => $numberFormat],
                 "total_cantidad" => ['label' => "Total Cantidad({$unidad_trafico_label})", 'bodyStyles' => $numberFormat],
                 "cantidad_sms" => ['label' => 'Cantidad Sms', 'bodyStyles' => $numberFormat],
@@ -104,7 +120,12 @@ class ExportDetalleConsumoConsolidado
                 "duracion_roaming_voz" => ['label' => 'Duracion Roaming Voz', 'bodyStyles' => $numberFormat],
                 "duracion_ldn" => ['label' => 'Duracion Ldn', 'bodyStyles' => $numberFormat],
                 "duracion_ldi" => ['label' => 'Duracion Ldi', 'bodyStyles' => $numberFormat],
+                // "duracion_sin_cargo" => ['label' => 'Duracion Sin Cargo', 'bodyStyles' => $numberFormat],
             ];
+
+            if($consumo_sin_cargo === "1"){
+                $headers["duracion_sin_cargo"] = ['label' => 'Duracion Sin Cargo', 'bodyStyles' => $numberFormat];
+            }
 
             $options = [
                 // 'rowType' => 'array',
@@ -133,15 +154,26 @@ class ExportDetalleConsumoConsolidado
                 }
             }
 
-            $this->repo->generateReporteConsolidado($cliente, $periodos_ok, $unidad_trafico_id, $unidad_consumo_id);
-            $data = $this->repo->getReporteConsolidado();
+            
+            
+            if($tipo_input === '1'){
+                $this->repo->generateReporteConsolidado($cliente, $periodos_ok, $unidad_trafico_id, $unidad_consumo_id, null, null);
+            }else{
+                $this->repo->generateReporteConsolidado($cliente, $periodos_ok, $unidad_trafico_id, $unidad_consumo_id, DateTime::createFromFormat("Y-m-d", $fecha1), DateTime::createFromFormat("Y-m-d", $fecha2));
+            }
 
+            $data = $this->repo->getReporteConsolidado();
+            
             $this->exportService->loadData($headers, $data, $options);
 
             $sheet = $this->exportService->getExportReference()->getActiveSheet();
             //$sheet = new Spreadsheet();
             //$sheet = $sheet->getActiveSheet();
-            $sheet->getStyle('B8:Q8')->applyFromArray([
+            $finalColumn = "S";
+            if($consumo_sin_cargo === "1"){
+                $finalColumn = "T";
+            }
+            $sheet->getStyle("B8:{$finalColumn}8")->applyFromArray([
                 'font' => ['bold' => true, 'size' => 9],
                 'borders'=> [
                     'allBorders' => [
@@ -155,12 +187,12 @@ class ExportDetalleConsumoConsolidado
                     // 'wrapText' => true
                 ]
             ]);
-            $sheet->mergeCells('E8:F8')->setCellValue('E8', 'DATOS');
-            $sheet->mergeCells('G8:G9')->setCellValue('G8', "Total Cantidad({$unidad_trafico_label})");
-            $sheet->mergeCells('H8:I8')->setCellValue('H8', 'MENSAJES');
-            $sheet->mergeCells('J8:Q8')->setCellValue('J8', 'VOZ');
+            $sheet->mergeCells('E8:H8')->setCellValue('E8', 'DATOS');
+            $sheet->mergeCells('I8:I9')->setCellValue('I8', "Total Cantidad({$unidad_trafico_label})");
+            $sheet->mergeCells('J8:K8')->setCellValue('J8', 'MENSAJES');
+            $sheet->mergeCells("L8:{$finalColumn}8")->setCellValue('L8', 'VOZ');
 
-            $columns_to_autosize = ['C','D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q'];
+            $columns_to_autosize = ['C','D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T'];
 
             foreach($columns_to_autosize as $col){
                 $sheet->getColumnDimension($col)->setAutoSize(true);
@@ -195,6 +227,7 @@ class ExportDetalleConsumoConsolidado
             'name' => 'DETALLE_CONSUMO',
             'ini' => $ini->format('Y-m-d H:i:s'),
             'fin' => $fin->format('Y-m-d H:i:s'),
+            'trac_name' => 'detallado_consumo.consolidado',
         ], $extra_data);
         $this->saveReportLog->fromExport($exportService, $data, $filename, 'DETALLE_CONSUMO');
     }

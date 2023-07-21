@@ -25,7 +25,7 @@ class ExportReporteLlamadas
         $this->saveReportLog = $saveReportLog;
     }
 
-    public function __invoke($tipo_reporte, $periodo1, $periodo2, $tipo_input, $lineas, $excel, $num_doc, $num_cuenta, $cod_cliente)
+    public function __invoke($tipo_reporte, $periodo1, $periodo2, $tipo_input, $lineas, $excel, $num_doc, $num_cuenta, $cod_cliente, $numeros_primarios)
     {
         $dt_start = new DateTime();
         try {
@@ -58,6 +58,9 @@ class ExportReporteLlamadas
                     break;
                 case 'tab_cod_cliente':
                     $data = $this->repo->getReporteByPeriodo_CodCliente_tipo($dt_periodo1, $dt_periodo2, [$cod_cliente], $tipo_reporte);
+                    break;
+                case 'tab_numeros_primarios':
+                    $data = $this->repo->getReporteByPeriodo_Lineas_tipo($dt_periodo1, $dt_periodo2, explode(",", trim($numeros_primarios)), $tipo_reporte, true);
                     break;
                 default:
                     throw new Exception("Input no valido");
@@ -134,6 +137,7 @@ class ExportReporteLlamadas
             'name' => 'DETALLE_LLAMADAS',
             'ini' => $ini->format('Y-m-d H:i:s'),
             'fin' => $fin->format('Y-m-d H:i:s'),
+            'trac_name' => TipoReporte::getName($tipo_reporte),
         ], $extra_data);
         $this->saveReportLog->fromExport($exportService, $data, $filename, 'DETALLE_LLAMADAS');
     }

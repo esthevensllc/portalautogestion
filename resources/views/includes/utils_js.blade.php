@@ -1,1 +1,1 @@
-<script src="{{asset('js/utils.js')}}"></script>
+<script src="{{asset('js/utils.js')}}?v={{ date("YmdHis") }}"></script>

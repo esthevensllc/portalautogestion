@@ -7,22 +7,34 @@ use DB;
 
 class EloquentModuleRepository implements ModuleRepository
 {
-    private $table = 'prg_seguimiento';
-
-    public function __construct()
-    {
-        if(env('APP_ENV') !== 'local'){
-            $this->table = "usraes.".$this->table;
-        }
-    }
+    private $table = 'usraes.prg_seguimiento';
+    private $fields = [
+        'id_tracing',
+        'trac_name as label',
+        'trac_description as type',
+        'trac_status as status',
+        'trac_order as order',
+        'trac_father as father_id',
+        'url',
+        'icon',
+        'name'
+    ];
 
     private function builder(){
        return DB::table($this->table);
     }
 
+    public function get()
+    {
+        return $this->builder()
+        ->select($this->fields)
+        ->get();
+    }
+
     public function getByIds(array $ids)
     {
         return $this->builder()
+        ->select($this->fields)
         ->where('trac_status', 1)
         ->whereIn('id_tracing', $ids)
         ->get();
@@ -31,17 +43,23 @@ class EloquentModuleRepository implements ModuleRepository
     public function getAsTreeByIds(array $ids)
     {
         $modulos = $this->builder()
+        ->select($this->fields)
         ->where('trac_status', 1)
         ->where(function($query) use ($ids) {
-            $query->whereNull('url')->OrWhereIn('id_tracing', $ids);
+            $query->whereNull('name')->OrWhereIn('id_tracing', $ids);
         })
         ->orderBy('trac_father', 'asc')
         ->orderBy('trac_order', 'asc')
         ->get()
-        ->groupBy('trac_father')
+        ->groupBy('father_id')
         ->toArray();
 
-        $kpis = $this->builder()->where('trac_description', 'kpi')->orderBy('trac_order', 'asc')->get();
+        $kpis = $this->builder()
+        ->select($this->fields)
+        ->where('trac_status', 1)
+        ->where('trac_description', 'kpi')
+        ->orderBy('trac_order', 'asc')
+        ->get();
 
         $response = $this->getModulosTo($kpis, $modulos);
 
@@ -70,7 +88,7 @@ class EloquentModuleRepository implements ModuleRepository
     private function getArrayIdTracings($modulos){
         $filtered = [];
         foreach($modulos as $row){
-            if($row->trac_description === 'menu' && $row->url !== null){
+            if($row->type === 'menu' && $row->name !== null){
                 $filtered[] = $row->id_tracing;
             }
         }
@@ -80,7 +98,7 @@ class EloquentModuleRepository implements ModuleRepository
     private function filterTracings($modulos){
         $filtered = [];
         foreach($modulos as $row){
-            if(count($row->tracings) !== 0 || ($row->url !== null && count($row->tracings) === 0)){
+            if(count($row->tracings) !== 0 || ($row->name !== null && count($row->tracings) === 0)){
                 if(isset($row->modulos)){
                     $row->modulos = $this->filterTracings($row->modulos);
                 }

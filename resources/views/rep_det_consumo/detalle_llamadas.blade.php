@@ -17,6 +17,7 @@
                             <option value="tab_numero_documento">NUMERO DE DOCUMENTO</option>
                             <option value="tab_numero_cuenta">NUMERO DE CUENTA</option>
                             <option value="tab_cod_cliente">CODIGO CLIENTE</option>
+                            <option value="tab_numeros_primarios">NUMEROS PRIMARIOS</option>
                         </select>
                     </div>
                 </div>
@@ -59,6 +60,14 @@
                             Ej. 3848,1333261
                         </div>
                     </div>
+                    <div class="form-group tab-item tab_numeros_primarios">
+                        <label for="">Números primarios</label>
+                        <textarea class="form-control form-control-sm" name="numeros_primarios" required></textarea>
+                        <div class="invalid-feedback d-block text-dark">
+                            Ingrese valores separados por comas y anteponer el codigo 51<br>
+                            Ej. 5116199470
+                        </div>
+                    </div>
                 </div>
                 <div class="col-lg-3 col-md-4">
                     <div class="form-group">
@@ -90,6 +99,7 @@
 @endsection
 
 @section('after_scripts')
+@include('includes.utils_js')
 <script>
 $(function() {
     const config = @json($data);
@@ -112,7 +122,7 @@ $(function() {
 
         let data = new FormData(document.getElementById("form_export"));
 
-        fetch(`{{asset(isset($data['url_export']) ? $data['url_export'] : '')}}`, {
+        utils.fetch(`{{asset(isset($data['url_export']) ? $data['url_export'] : '')}}`, {
             method: 'POST',
             body: data
         })
@@ -136,7 +146,7 @@ $(function() {
         .catch(error => {
             $(".loader_component").hide();
             $(".btn_export").prop('disabled', false).text('Descargar');
-            Promise.reject();
+            //Promise.reject();
             alert(error);
             //throw(error);
         });
@@ -159,6 +169,31 @@ $(function() {
         $(".tabs .tab-item."+$("#tabs_select").val()+" textarea").prop('disabled', false);
     });
     $("#tabs_select").trigger('change');
+
+
+    let fecha1 = document.querySelector("input[name=periodo1]");
+    let fecha2 = document.querySelector("input[name=periodo2]");
+    fecha1.addEventListener("change", function(e){
+        fecha2.min = e.target.value;
+        if(e.target.value !== ''){
+            let _date = new Date(e.target.value+"T00:00:00");
+            _date.setMonth(_date.getMonth()+12);
+            fecha2.max = _date.toISOString().substring(0, 10);
+        }else{
+            fecha2.max = '';
+        }
+    });
+    fecha2.addEventListener("change", function(e){
+        fecha1.max = e.target.value;
+
+        if(e.target.value !== ''){
+            let _date = new Date(e.target.value+"T00:00:00");
+            _date.setMonth(_date.getMonth()-12);
+            fecha1.min = _date.toISOString().substring(0, 10);
+        }else{
+            fecha1.min = '';
+        }
+    });
 
 });
 </script>

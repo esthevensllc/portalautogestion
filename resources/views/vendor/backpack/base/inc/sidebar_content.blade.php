@@ -11,13 +11,21 @@
     $response = $service->__invoke($username);
     $modules = $response['tree'];
     $modules_by_id = $response['by_id'];
-    $modules_by_url = $service->groupBy('url', $response['array']);
+    $modules_by_name = $service->groupBy('name', $response['array']);
 
-    $currentURL = Request::path();
+    // $currentURL = Request::route()->uri();
+    $trac_name = Request::route()->getAction()['trac_name'] ?? null;
+
+    if($trac_name === null){
+        throw new Exception('La ruta no tiene un modulo asignado');
+    }
 
     $main_module = [];
     foreach($modules as $row){
-        $tracing = $modules_by_url[$currentURL];
+        if(!array_key_exists($trac_name, $modules_by_name)){
+            throw new Exception('El nombre del modulo asignado no existe');
+        }
+        $tracing = $modules_by_name[$trac_name];
         if(in_array($tracing->id_tracing, $row->tracings)){
             $main_module = $row->modulos;
         }
@@ -26,20 +34,20 @@
     foreach($main_module as $row){
         if(isset($row->modulos)){
             echo "<li class='nav-item nav-dropdown' style='font-size: 12px;'>
-                <a class='nav-link nav-dropdown-toggle' href='#'><i class='nav-icon {$row->icon}'></i>{$row->trac_name}</a>
+                <a class='nav-link nav-dropdown-toggle' href='#'><i class='nav-icon {$row->icon}'></i>{$row->label}</a>
                 <ul class='nav-dropdown-items' style='padding-left: .5rem;'>
                 <li class='nav-item'>";
             foreach($row->modulos as $sub_menu){
                 echo "<a class='nav-link' href='".asset($sub_menu->url)."'>
                     <i class='nav-icon {$sub_menu->icon}'></i>
-                    <span>".$sub_menu->trac_name."</span>
+                    <span>".$sub_menu->label."</span>
                 </a>";
             }
             echo "</li>
                 </ul>
             </li>";
         }else{
-            echo "<li class='nav-item'><a class='nav-link' style='font-size: 12px;' href='".asset($row->url)."'><i class='".$row->icon."'></i>".$row->trac_name."</a></li>";
+            echo "<li class='nav-item'><a class='nav-link' style='font-size: 12px;' href='".asset($row->url)."'><i class='".$row->icon."'></i>".$row->label."</a></li>";
         }
     }
 

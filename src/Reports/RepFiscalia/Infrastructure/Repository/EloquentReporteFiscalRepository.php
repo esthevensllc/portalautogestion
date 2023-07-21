@@ -2,6 +2,7 @@
 
 namespace AMovil\Reports\RepFiscalia\Infrastructure\Repository;
 
+use AMovil\Auth\AccessControl\Domain\AuthService;
 use AMovil\Reports\RepFiscalia\Domain\ReporteFiscalRepository;
 use DateTime;
 use DB;
@@ -12,6 +13,14 @@ class EloquentReporteFiscalRepository implements ReporteFiscalRepository
     private $cdr_dwh_table = '';
     private $cdr_tfi_table = '';
     private $tablespace = '';
+
+    private $userIdentifier;
+    private $authService;
+
+    public function __construct(AuthService $authService)
+    {
+        $this->authService = $authService;
+    }
 
     public function getReporteByMsisdn_Periodos(string $msisdn, DateTime $periodo1, DateTime $periodo2)
     {
@@ -37,6 +46,8 @@ class EloquentReporteFiscalRepository implements ReporteFiscalRepository
 
     private function generateReporteByMsisdn_Periodos(string $msisdn, DateTime $periodo1, DateTime $periodo2)
     {
+        $this->userIdentifier = $this->authService->getUserIdentifier();
+
         $int_msisdn = (int) $msisdn;
         $periodo1_f1 = $periodo1->format('Ymd');
         $periodo2_f1 = $periodo2->format('Ymd');
@@ -45,7 +56,7 @@ class EloquentReporteFiscalRepository implements ReporteFiscalRepository
 
         $sql = "BEGIN
             BEGIN
-                EXECUTE IMMEDIATE 'DROP TABLE USRAES.TEMP_FISCAL';
+                EXECUTE IMMEDIATE 'DROP TABLE USRAES.TEMP_FISCAL_{$this->userIdentifier}';
             EXCEPTION
                 WHEN OTHERS THEN
                     IF SQLCODE != -942 THEN
@@ -55,7 +66,7 @@ class EloquentReporteFiscalRepository implements ReporteFiscalRepository
         END;";
         DB::connection($this->connnection)->statement(DB::Raw($sql));
 
-        $sql = "create table USRAES.TEMP_FISCAL 
+        $sql = "create table USRAES.TEMP_FISCAL_{$this->userIdentifier} 
             {$this->tablespace} AS
             SELECT  CDR.RECORD_TYPE MODALIDAD,
             decode(cdr.record_type,'12','Llamada Saliente',
@@ -154,12 +165,12 @@ class EloquentReporteFiscalRepository implements ReporteFiscalRepository
         DB::connection($this->connnection)->statement(DB::Raw($sql));
 
         if($this->connnection !== 'oracle_reptdm'){
-            $data = DB::connection($this->connnection)->table('USRAES.TEMP_FISCAL')->get()->toJson();
+            $data = DB::connection($this->connnection)->table("USRAES.TEMP_FISCAL_{$this->userIdentifier}")->get()->toJson();
             $data = json_decode($data, true);
 
             $sql = "BEGIN
                 BEGIN
-                    EXECUTE IMMEDIATE 'DROP TABLE USRAES.TEMP_FISCAL';
+                    EXECUTE IMMEDIATE 'DROP TABLE USRAES.TEMP_FISCAL_{$this->userIdentifier}';
                 EXCEPTION
                     WHEN OTHERS THEN
                         IF SQLCODE != -942 THEN
@@ -169,7 +180,7 @@ class EloquentReporteFiscalRepository implements ReporteFiscalRepository
             END;";
             DB::connection('oracle_reptdm')->statement(DB::Raw($sql));
 
-            $sql = "CREATE TABLE USRAES.TEMP_FISCAL (
+            $sql = "CREATE TABLE USRAES.TEMP_FISCAL_{$this->userIdentifier} (
                 modalidad varchar2(250),
                 tipo_llamada varchar2(250),
                 numero_origen varchar2(250),
@@ -183,7 +194,7 @@ class EloquentReporteFiscalRepository implements ReporteFiscalRepository
                 imei_b varchar2(250)
             ) tablespace WORKAREA";
             DB::connection('oracle_reptdm')->statement(DB::Raw($sql));
-            DB::connection('oracle_reptdm')->table('USRAES.TEMP_FISCAL')->insert($data);
+            DB::connection('oracle_reptdm')->table("USRAES.TEMP_FISCAL_{$this->userIdentifier}")->insert($data);
             DB::connection('oracle_reptdm')->commit();
         }
     }
@@ -196,7 +207,7 @@ class EloquentReporteFiscalRepository implements ReporteFiscalRepository
             (select   MODALIDAD, 
             A.tipo_llamada,a.numero_origen,a.numero_destino,a.fecha_hora,a.minutos, a.segundos,a.lac, a.celda,b.direccion ubicacion_A,b.provincia,b.distrito,b.departamento,
             a.imei_a,a.imei_b --,' ' observaciones
-            from USRAES.TEMP_FISCAL a 
+            from USRAES.TEMP_FISCAL_{$this->userIdentifier} a 
             left join  dm.cdr_celdas_red b
             ON (a.celda=b.cell_id and a.LAC=b.lac))T
             ) r where rank=1

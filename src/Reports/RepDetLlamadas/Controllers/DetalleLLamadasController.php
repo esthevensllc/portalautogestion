@@ -43,8 +43,8 @@ class DetalleLLamadasController
     }
 
     public function exportEntrantes(Request $request){
-        ini_set('max_execution_time', '300');
-        set_time_limit(300);
+        ini_set('max_execution_time', 4*60*60);
+        set_time_limit(4*60*60);
 
         $export = $this->service->__invoke(
             TipoReporte::ENTRANTES,
@@ -55,7 +55,8 @@ class DetalleLLamadasController
             $request->hasFile('excel') ? $request->file('excel') : null,
             $request->input('numero_documento'),
             $request->input('numero_cuenta'),
-            $request->input('cod_cliente')
+            $request->input('cod_cliente'),
+            $request->input('numeros_primarios')
         );
         return response($export, 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -64,8 +65,8 @@ class DetalleLLamadasController
     }
 
     public function exportSalientes(Request $request){
-        ini_set('max_execution_time', '300');
-        set_time_limit(300);
+        ini_set('max_execution_time', 4*60*60);
+        set_time_limit(4*60*60);
 
         $export = $this->service->__invoke(
             TipoReporte::SALIENTES,
@@ -76,7 +77,8 @@ class DetalleLLamadasController
             $request->hasFile('excel') ? $request->file('excel') : null,
             $request->input('numero_documento'),
             $request->input('numero_cuenta'),
-            $request->input('cod_cliente')
+            $request->input('cod_cliente'),
+            $request->input('numeros_primarios')
         );
         return response($export, 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -85,8 +87,8 @@ class DetalleLLamadasController
     }
 
     public function exportEntrantesSalientes(Request $request){
-        ini_set('max_execution_time', '300');
-        set_time_limit(300);
+        ini_set('max_execution_time', 4*60*60);
+        set_time_limit(4*60*60);
 
         $export = $this->service->__invoke(
             TipoReporte::ENTRANTES_SALIENTES,
@@ -97,7 +99,8 @@ class DetalleLLamadasController
             $request->hasFile('excel') ? $request->file('excel') : null,
             $request->input('numero_documento'),
             $request->input('numero_cuenta'),
-            $request->input('cod_cliente')
+            $request->input('cod_cliente'),
+            $request->input('numeros_primarios')
         );
         return response($export, 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

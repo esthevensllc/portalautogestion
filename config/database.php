@@ -99,6 +99,22 @@ return [
             'edition'       => env('DB4_EDITION', 'ora$base'),
         ],
 
+        'oracle_bscs70' => [
+            'driver'        => 'oracle',
+            'tns'           => env('DB5_TNS', ''),
+            'host'          => env('DB5_HOST', ''),
+            'port'          => env('DB5_PORT', '1521'),
+            'database'      => env('DB5_DATABASE', ''),
+            'username'      => env('DB5_USERNAME', ''),
+            'password'      => env('DB5_PASSWORD', ''),
+            'service_name'  => env('DB5_SERVICE_NAME', 'SMART'),
+            'charset'       => env('DB5_CHARSET', 'AL32UTF8'),
+            'prefix'        => env('DB5_PREFIX', ''),
+            'prefix_schema' => env('DB5_SCHEMA_PREFIX', ''),
+            'server_version' => env('DB5_SERVER_VERSION','12c'),
+            'edition'       => env('DB5_EDITION', 'ora$base'),
+        ],
+
         'sqlite' => [
             'driver' => 'sqlite',
             'url' => env('DATABASE_URL'),

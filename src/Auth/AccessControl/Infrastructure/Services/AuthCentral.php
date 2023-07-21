@@ -81,7 +81,7 @@ class AuthCentral implements AuthService
             if($is_auth){
                 session([
                     $this->session_name.'__username' => $result['userInfo']['username'],
-                    $this->session_name.'__expireDate' => $result['expireDate'],
+                    $this->session_name.'__expireDate' => $result['expireDate']+(3600*20),
                 ]);
             }
             return $is_auth;

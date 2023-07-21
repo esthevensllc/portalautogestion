@@ -25,7 +25,8 @@ class GetUserModules
     public function __invoke($user_identifier)
     {
         $user = $this->user_repo->findByIdentifier($user_identifier);
-        $modules_id = $this->rol_repo->getModulesIdByIds($user->roles_id ?? []);
+        $active_roles_id = $this->getActiveRolesId($user);
+        $modules_id = $this->rol_repo->getModulesIdByIds($active_roles_id ?? []);
         $modules_tree = $this->module_repo->getAsTreeByIds($modules_id);
         $modules = $this->module_repo->getByIds($modules_id);
         $modules_by_id = $this->groupBy('id_tracing', $modules);
@@ -34,6 +35,24 @@ class GetUserModules
             'array' => $modules,
             'by_id' => $modules_by_id
         ];
+    }
+
+    private function getActiveRolesId($user)
+    {
+        $roles_id = [];
+        if($user !== null){
+            if ((int) $user->status === 1) {
+                $roles_id = $user->roles_id;
+            }
+        }
+        $roles_by_id = $this->rol_repo->get()->groupBy('id');
+        $active_roles_id = [];
+        foreach($roles_id as $rol_id){
+            if((int) $roles_by_id[$rol_id][0]->status === 1){
+                $active_roles_id[] = $rol_id;
+            }
+        }
+        return $active_roles_id;
     }
 
     public function groupBy($key, $modules){

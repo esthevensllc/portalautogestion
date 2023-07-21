@@ -1,0 +1,109 @@
+<?php
+
+namespace AMovil\Reports\RepRecargas\Services;
+
+use AMovil\Reports\RepRecargas\Domain\ReporteRecargasRepository;
+use AMovil\Reports\RepRecargas\Domain\TipoReporte;
+use AMovil\Shared\Application\Response;
+use AMovil\Shared\Exports\Domain\ExportService;
+use AMovil\Shared\Exports\Domain\WriterType;
+use DateTime;
+use PhpOffice\PhpSpreadsheet\Style as SpreadsheetStyle;
+
+class ExportDetalleRecargas
+{
+    private $repo;
+    private $exportService;
+    public function __construct(ReporteRecargasRepository $repo, ExportService $exportService)
+    {
+        $this->repo = $repo;
+        $this->exportService = $exportService;
+    }
+
+    public function __invoke($tipo_reporte, ?string $lineas, ?string $fecha1, ?string $fecha2): Response
+    {
+        $lineas = str_replace(" ", "",$lineas);
+        $array_lineas = explode(",", $lineas);
+        $dt_fecha1 = DateTime::createFromFormat("Y-m-d", $fecha1);
+        $dt_fecha2 = DateTime::createFromFormat("Y-m-d", $fecha2);
+        
+        $data = [];
+        $headers = [];
+        $options = [
+            'sheetIndex' => 0,
+            'title' => "",
+            // 'y_start_index' => 0,
+            // 'x_start_index' => 0,
+            'styles' => [
+                'header' => [
+                    'font' => ['bold' => true, 'size' => 9],
+                    /*'borders'=> [
+                        'allBorders' => ['borderStyle' => SpreadsheetStyle\Border::BORDER_THIN, 'color' => array('rgb'=>'000000')]
+                    ]*/
+                ],
+                'body' => [
+                    'font' => ['size' => 9],
+                ]
+            ]
+        ];
+        $numberFormat = ['numberFormat' => ['formatCode' => SpreadsheetStyle\NumberFormat::FORMAT_NUMBER_00]];
+        switch ($tipo_reporte) {
+            case '01':
+                $tipo_reporte = TipoReporte::detalle();
+                $data = $this->repo->getDetalle($array_lineas, $dt_fecha1, $dt_fecha2);
+                $headers = [
+                    "rechargedate" => ["label" => "RECHARGEDATE"],
+                    "msisdn" => ["label" => "MSISDN"],
+                    "proid" => ["label" => "PROID"],
+                    "productid" => ["label" => "PRODUCTID"],
+                    "acc_charge_general" => ["label" => "ACC_CHARGE_GENERAL", 'bodyStyles' => $numberFormat],
+                    "numberrechargegpa" => ["label" => "NUMBERRECHARGEGPA", 'bodyStyles' => $numberFormat],
+                ];
+                break;
+            case '02':
+                $tipo_reporte = TipoReporte::extras();
+                $data = $this->repo->getExtras($array_lineas, $dt_fecha1, $dt_fecha2);
+                $headers = [
+                    "rechargedate" => ["label" => "RECHARGEDATE"],
+                    "msisdn" => ["label" => "MSISDN"],
+                    "proid" => ["label" => "PROID"],
+                    "productid" => ["label" => "PRODUCTID"],
+                    "acc_charge_general" => ["label" => "ACC_CHARGE_GENERAL", 'bodyStyles' => $numberFormat],
+                    "numberrechargegpa" => ["label" => "NUMBERRECHARGEGPA", 'bodyStyles' => $numberFormat],
+                    "bonorecargavoz_charge" => ["label" => "BONORECARGAVOZ_CHARGE", 'bodyStyles' => $numberFormat],
+                    "bonorecargavoz_number_charge" => ["label" => "BONORECARGAVOZ_NUMBER_CHARGE", 'bodyStyles' => $numberFormat],
+                    "bonorecargasms_charge" => ["label" => "BONORECARGASMS_CHARGE", 'bodyStyles' => $numberFormat],
+                    "bonorecargasms_number_charge" => ["label" => "BONORECARGASMS_NUMBER_CHARGE", 'bodyStyles' => $numberFormat],
+                    "paqupromoc_charge" => ["label" => "PAQUPROMOC_CHARGE", 'bodyStyles' => $numberFormat],
+                    "paqupromoc_number_charge" => ["label" => "PAQUPROMOC_NUMBER_CHARGE", 'bodyStyles' => $numberFormat],
+                    "paquprosms_charge" => ["label" => "PAQUPROSMS_CHARGE", 'bodyStyles' => $numberFormat],
+                    "paquprosms_number_charge" => ["label" => "PAQUPROSMS_NUMBER_CHARGE", 'bodyStyles' => $numberFormat],
+                    "paqurecumoc_charge" => ["label" => "PAQURECUMOC_CHARGE", 'bodyStyles' => $numberFormat],
+                    "paqurecumoc_number_charge" => ["label" => "PAQURECUMOC_NUMBER_CHARGE", 'bodyStyles' => $numberFormat],
+                    "creation_date" => ["label" => "CREATION_DATE"],
+                ];
+                break;
+            default:
+                # code...
+                break;
+        }
+
+        $options["title"] = $tipo_reporte->getName();
+
+        $this->exportService->loadData($headers, $data, $options);
+        $sheet = $this->exportService->getExportReference()->getActiveSheet();
+        $columns_to_autosize = ['A','B','C','D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q'];
+        foreach($columns_to_autosize as $col){
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $content = $this->exportService->getWriter(WriterType::XLSX)->getOutput();
+
+
+        return new Response([], [
+            "type" => "xlsx",
+            "content" => $content,
+            "filename" => $tipo_reporte->getName()."_".implode("_", $array_lineas).".xlsx"
+        ]);
+    }
+}

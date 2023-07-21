@@ -93,6 +93,7 @@ class ExportReporteFiscal
             'name' => 'REPORTE_FISCAL',
             'ini' => $ini->format('Y-m-d H:i:s'),
             'fin' => $fin->format('Y-m-d H:i:s'),
+            'trac_name' => 'repote_fiscal.reporte_fiscal'
         ],
         $filename, 'REPORTE_FISCAL');
     }

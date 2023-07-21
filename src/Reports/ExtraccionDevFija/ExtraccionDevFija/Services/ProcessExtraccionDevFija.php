@@ -1,0 +1,101 @@
+<?php
+
+namespace AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Services;
+
+use AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Domain\ExtraccionDevFijaRepository;
+use AMovil\Shared\Application\Response;
+use AMovil\Shared\Exports\Domain\ExportService;
+use AMovil\Shared\Exports\Domain\WriterType;
+use DateTime;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+
+class ProcessExtraccionDevFija
+{
+    private $repo;
+    private $exportService;
+    public function __construct(ExtraccionDevFijaRepository $repo, ExportService $exportService)
+    {
+        $this->repo = $repo;
+        $this->exportService = $exportService;
+    }
+
+    public function __invoke($departamentos, $provincias, $distritos, $planos,
+    $ticket, $servicioAfectado, $fechaIni, $horaIni, $fechaFin, $horaFin, $mesesInteres): Response
+    {
+        $arrayDistritos = [];
+        foreach($departamentos as $index => $departemento){
+            $arrayPlanos = explode(",", $planos[$index]);
+            $arrayDistritos[] = [$departemento, $provincias[$index], $distritos[$index], $arrayPlanos];
+        }
+
+        /*
+        $arrayTickets = [];
+        foreach($tickets as $index => $_){
+            $arrayTickets[] = [
+                $tickets[$index],
+                $servicioAfectado[$index],
+                $fechaIni[$index]." ".$horaIni[$index],
+                $fechaFin[$index]." ".$horaFin[$index]
+            ];
+        }*/
+        // dd(["dist" => $arrayDistritos, "ticket" => $arrayTickets, "int" => $mesesInteres]);
+
+        $dtFechaIni = DateTime::createFromFormat("Y-m-d H:i:s", "{$fechaIni} {$horaIni}");
+        $dtFechaFin = DateTime::createFromFormat("Y-m-d H:i:s", "{$fechaFin} {$horaFin}");
+
+        $data = $this->repo->process(
+            $arrayDistritos,
+            $ticket, $servicioAfectado, $dtFechaIni, $dtFechaFin,
+            $mesesInteres
+        );
+        //$data = [];
+
+        $headers = [
+            "ticket" => ["label" => "TICKET"],
+            "codcli" => ["label" => "CODCLI"],
+            "nomcli" => ["label" => "NOMCLI"],
+            "nro_doc" => ["label" => "NRO_DOC"],
+            "tipdoc" => ["label" => "TIPDOC"],
+            "numero" => ["label" => "NUMERO"],
+            "cid" => ["label" => "CID"],
+            "familia" => ["label" => "FAMILIA"],
+            "codsrv" => ["label" => "CODSRV"],
+            "dscsrv" => ["label" => "DSCSRV"],
+            "idplano" => ["label" => "IDPLANO"],
+            "fec_ini_incidencia" => ["label" => "FEC_INI_INCIDENCIA"],
+            "fec_fin_incidencia" => ["label" => "FEC_FIN_INCIDENCIA"],
+            "minutos_afectacion" => ["label" => "MINUTOS_AFECTACION"],
+            "dpto" => ["label" => "DPTO"],
+            "provincia" => ["label" => "PROVINCIA"],
+            "distrito" => ["label" => "DISTRITO"],
+            "moneda" => ["label" => "MONEDA"],
+            "cr_neto" => ["label" => "CR_NETO"],
+        ];
+        $options = [
+            "sheetIndex" => 0,
+            'title' => "FACTURACION_ADELANTADA",
+            'styles' => [
+                'header' => [
+                    'font' => ['bold' => true, 'size' => 9],
+                    'borders'=> [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_THIN,
+                            'color' => array('rgb'=>'000000')
+                        ]
+                    ]
+                ],
+                'body' => [
+                    'font' => ['size' => 9]
+                ]
+            ]
+        ];
+        $this->exportService->loadData($headers, $data, $options);
+        $content = $this->exportService->getWriter(WriterType::CSV)->getOutput();
+
+        return new Response([], [
+            "filename" => "WRK_DEVOL_INC_MASIV.csv",
+            "type" => "csv",
+            "content" => $content,
+        ]);
+    }
+}

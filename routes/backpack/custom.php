@@ -9,11 +9,12 @@ use Illuminate\Support\Facades\Route;
 // Routes you generate using Backpack\Generators will be placed here.
 
 Route::group([
-    'prefix'     => config('backpack.base.route_prefix', 'admin'),
-    'middleware' => array_merge(
+    //'prefix'     => config('backpack.base.route_prefix', 'admin'),
+    /*'middleware' => array_merge(
         (array) config('backpack.base.web_middleware', 'web'),
         (array) config('backpack.base.middleware_key', 'admin')
-    ),
-    'namespace'  => 'App\Http\Controllers\Admin',
+    ),*/
+    //'middleware' => 'auth.cas',
+    'namespace'  => 'App\Http\Controllers',
 ], function () { // custom admin routes
 }); // this should be the absolute last line of this file

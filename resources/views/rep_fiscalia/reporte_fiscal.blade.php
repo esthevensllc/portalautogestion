@@ -61,7 +61,7 @@ $(function() {
         const formData = new FormData(e.target);
         const string_params = new URLSearchParams(formData).toString();
 
-        fetch(`${config.url_validator}?${string_params}`, {method: 'GET'})
+        utils.fetch(`${config.url_validator}?${string_params}`, {method: 'GET'})
         .then(response => {
             if(!response.ok){
                 throw new Error(response.statusText);
@@ -71,7 +71,7 @@ $(function() {
         .then(response => response.json())
         .then(response => {
             if(response.passes === true){
-                fetch(`${config.url_export}?${string_params}`, {method: 'GET'})
+                utils.fetch(`${config.url_export}?${string_params}`, {method: 'GET'})
                 .then(response => {
                     if(!response.ok){
                         throw new Error(response.statusText);
@@ -81,7 +81,7 @@ $(function() {
                 .then(response => response.blob())
                 .then(response => {
                     let filename = config['filename'];
-                    utils.downloadFile(response , filename);
+                    utils.downloadFile(response , filename, 'default');
                     button.disabled = false;
                     button.innerHTML = 'Descargar';
                 })
