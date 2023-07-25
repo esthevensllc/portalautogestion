@@ -107,7 +107,7 @@ class ProcessExtraccion
             
             try {
                 // Envío del correo
-                Mail::to(['C19884@claro.com.pe','C26282@claro.com.pe','ellanos@indracompany.com'])->send($correo);
+                Mail::to(['C19884@claro.com.pe','C26282@claro.com.pe','ellanos@indracompany.com','lizeth.moya@claro.com.pe','carlos.malpartida@claro.com.pe','FacturacionPostpago@claro.com.pe','factsopfacturacion@claro.com.pe'])->send($correo);
                 //Mail::to(['ellanos@indracompany.com'])->send($correo);
             } catch (\Exception $e) {
                 // Captura cualquier excepción generada durante el envío del correo
