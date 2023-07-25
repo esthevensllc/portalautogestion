@@ -169,7 +169,7 @@ class EloquentDetalleLlamadasRepository implements DetalleLlamadasRepository
 
         $sql2 = ["sql" => "BEGIN
             INSERT INTO usraes.lineas_tmp1_{$this->userIdentifier}(subscription_access_number)
-            SELECT subscription_access_number  FROM (
+            SELECT /*+PARALLEL(4)*/ subscription_access_number  FROM (
             select
             distinct s.customer_account_sc codigo_cliente,s.customer_FULL_name CLIENTE, s.id_card_value NRO_DOC,
                     s.id_card_type_value DOC,s.subscription_status Estado, s.agreement_product_offering_desc PRODUCTO,
@@ -359,7 +359,7 @@ class EloquentDetalleLlamadasRepository implements DetalleLlamadasRepository
         and fechainicio <= to_date('[fecha2]','yyyymmddHH24MISS')
         and ORIENTACION='Originated'";*/
 
-        $sql_entrantes = "SELECT DNICENTRAL NUMERO_ORIGEN,
+        $sql_entrantes = "SELECT /*+PARALLEL(4)*/ DNICENTRAL NUMERO_ORIGEN,
         TO_CHAR(FECHAINICIO,'DD/MM/YYYY') FECHA,
         TO_CHAR(FECHAINICIO,'HH24:MI:SS') HORA_INICIO,
         TO_CHAR(FECHAFIN,'HH24:MI:SS') HORA_FIN,
@@ -375,7 +375,7 @@ class EloquentDetalleLlamadasRepository implements DetalleLlamadasRepository
         OUT_TIPOTRAFICO = 'VoLTE'";
         //OUT_TIPOTRAFICO like 'VoLTE' AND ORIENTACION='Terminated'{$volte_filter}";
 
-        $sql_salientes = "SELECT ANICENTRAL NUMERO_ORIGEN,  
+        $sql_salientes = "SELECT /*+PARALLEL(4)*/ ANICENTRAL NUMERO_ORIGEN,  
         TO_CHAR(FECHAINICIO,'DD/MM/YYYY') FECHA,
         TO_CHAR(FECHAINICIO,'HH24:MI:SS') HORA_INICIO,
         TO_CHAR(FECHAFIN,'HH24:MI:SS') HORA_FIN,
@@ -440,7 +440,7 @@ class EloquentDetalleLlamadasRepository implements DetalleLlamadasRepository
         }*/
         $queries[] = ["sql" => "BEGIN
             INSERT INTO USRAES.T_REP_LLA2_{$this->userIdentifier}(NUMERO_ORIGEN,FECHA,HORA_INICIO,HORA_FIN,NUMERO_DESTINO,CONSUMO,TIPO)
-            SELECT /*+PARALLEL(10)*/
+            SELECT /*+PARALLEL(4)*/
             TIM_NUMBER NUMEROA, 
             TO_CHAR(TO_DATE(SUBSTR(CHARGING_START_TIME,1,8),'YYYYMMDD'),'DD/MM/YYYY') FECHA,
             SUBSTR(CHARGING_START_TIME,9,2)||':'||SUBSTR(CHARGING_START_TIME,11,2)||':'||SUBSTR(CHARGING_START_TIME,13,2) HORA_INICIO,
