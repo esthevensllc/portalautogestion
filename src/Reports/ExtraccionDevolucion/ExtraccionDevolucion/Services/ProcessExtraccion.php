@@ -103,7 +103,7 @@ class ProcessExtraccion
 
             
             $reportes = $this->repo2->getReportesProcesados();
-            $correo = new NotificacionProcesado($reportes);
+            $correo = new NotificacionProcesado($ticketOsiptel, $depatamento);
             
             try {
                 // Envío del correo

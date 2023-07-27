@@ -31,16 +31,12 @@
 
         <tbody>
 
-            @foreach ($reportes as $reporte)
+            <tr>
 
-                <tr>
+                <td style="padding:0;border-bottom-width:1pt;">{{ $ticket }}</td>
+                <td style="padding:0;border-bottom-width:1pt;text-align:right;">{{ $departamento }}</td>
 
-                    <td style="padding:0;border-bottom-width:1pt;">{{ $reporte->ticket }}</td>
-                    <td style="padding:0;border-bottom-width:1pt;text-align:right;">{{ $reporte->departamento }}</td>
-
-                </tr>
-
-            @endforeach
+            </tr>
 
         </tbody>
 

@@ -11,16 +11,18 @@ class NotificacionProcesado extends Mailable
 {
     use Queueable, SerializesModels;
 
-    protected $reportes;
+    protected $ticketOsiptel;
+    protected $depatamento;
 
     /**
      * Create a new message instance.
      *
      * @return void
      */
-    public function __construct($reportes)
+    public function __construct($ticketOsiptel, $depatamento)
     {
-        $this->reportes = $reportes;
+        $this->ticketOsiptel = $ticketOsiptel;
+        $this->depatamento = $depatamento;
     }
 
     /**
@@ -32,6 +34,6 @@ class NotificacionProcesado extends Mailable
     {
         return $this->subject("CARGA DE INFORMES DE FALLAS")
                     ->view('notificacionProcesado')
-                    ->with(['reportes' => $this->reportes]);
+                    ->with(['ticket' => $this->ticketOsiptel,'depatamento' => $this->depatamento]);
     }
 }
