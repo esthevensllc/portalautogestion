@@ -12,6 +12,7 @@ class NotificacionAprobado extends Mailable
     use Queueable, SerializesModels;
 
     protected $reportes;
+    private $subjectToUse;
 
     /**
      * Create a new message instance.
@@ -23,6 +24,11 @@ class NotificacionAprobado extends Mailable
         $this->reportes = $reportes;
     }
 
+    public function setSubject($subject)
+    {
+        $this->subjectToUse = $subject;
+    }
+
     /**
      * Build the message.
      *
@@ -30,7 +36,7 @@ class NotificacionAprobado extends Mailable
      */
     public function build()
     {
-        return $this->subject("CARGA DE INFORMES DE FALLAS")
+        return $this->subject($this->subjectToUse)
                     ->view('notificacionAprobado')
                     ->with(['reportes' => $this->reportes]);
     }

@@ -22,11 +22,13 @@ interface ExtraccionRepository
     public function getReportes();
     public function updateReporte($numero, $excel);
     public function findInputFor($numero);
+    public function findInformeByTicket($ticket);
     public function deleteRecord($numero);
     public function aprobar($id,$ticket);
     public function desaprobar($id);
     public function enEspera($id);
     public function revisado($id);
+    public function procesado($id);
     public function getReportesSnRevisado();
     public function getReportesAprobados();
     public function getReportesProcesados();

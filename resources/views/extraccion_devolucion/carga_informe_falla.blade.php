@@ -165,6 +165,7 @@
         </select>
     </div>
 </div>
+<div class="table-responsive">
 <table
     class="bg-white table table-striped table-hover nowrap rounded shadow-xs border-xs mt-2 w-100" cellspacing="0"
     {{-- data-responsive-table="{{ (int) $crud->getOperationSetting('responsiveTable') }}"
@@ -188,6 +189,7 @@
     <tbody>
     </tbody>
 </table>
+</div>
 @include('includes.spinner_loader')
 @endsection
 

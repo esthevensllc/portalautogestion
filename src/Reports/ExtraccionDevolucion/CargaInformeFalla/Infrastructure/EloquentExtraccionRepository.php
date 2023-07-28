@@ -1435,6 +1435,14 @@ class EloquentExtraccionRepository implements ExtraccionRepository
         ->get();
     }
 
+    public function findInformeByTicket($ticket)
+    {
+        return DB::table("usraes.noc_informe_de_fallas")
+        ->selectRaw("numero_de_reporte,ticket,name_file,fecha_carga,revisado,aprobado,procesado,acreditado_pre,acreditado_post")
+        ->where('ticket', $ticket)
+        ->first();
+    }
+
     public function deleteRecord($numero)
     {
         return DB::table("usraes.noc_informe_de_fallas")
@@ -1476,10 +1484,17 @@ class EloquentExtraccionRepository implements ExtraccionRepository
         ->update(['revisado' => '1']);
     }
 
+    public function procesado($id)
+    {
+        return DB::table("usraes.noc_informe_de_fallas")
+        ->where('numero_de_reporte',$id)
+        ->update(['procesado' => '1']);
+    }
+
     public function getReportesSnRevisado()
     {
         return DB::table("usraes.noc_informe_de_fallas")
-        ->selectRaw("numero_de_reporte,name_file")
+        ->selectRaw("ticket,numero_de_reporte,name_file")
         ->where('revisado','0')
         ->get();
     }
@@ -1487,7 +1502,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
     public function getReportesAprobados()
     {
         return DB::table("usraes.noc_informe_de_fallas")
-        ->selectRaw("numero_de_reporte,name_file")
+        ->selectRaw("ticket,numero_de_reporte,name_file")
         ->where('aprobado','1')
         ->get();
     }
@@ -1495,7 +1510,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
     public function getReportesProcesados()
     {
         return DB::table("usraes.noc_informe_de_fallas")
-        ->selectRaw("numero_de_reporte,name_file")
+        ->selectRaw("ticket,numero_de_reporte,name_file")
         ->where('procesado','1')
         ->get();
     }

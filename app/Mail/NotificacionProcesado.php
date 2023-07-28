@@ -13,6 +13,7 @@ class NotificacionProcesado extends Mailable
 
     protected $ticketOsiptel;
     protected $depatamento;
+    private $subjectToUse;
 
     /**
      * Create a new message instance.
@@ -25,6 +26,11 @@ class NotificacionProcesado extends Mailable
         $this->depatamento = $depatamento;
     }
 
+    public function setSubject($subject)
+    {
+        $this->subjectToUse = $subject;
+    }
+
     /**
      * Build the message.
      *
@@ -32,8 +38,8 @@ class NotificacionProcesado extends Mailable
      */
     public function build()
     {
-        return $this->subject("CARGA DE INFORMES DE FALLAS")
+        return $this->subject($this->subjectToUse)
                     ->view('notificacionProcesado')
-                    ->with(['ticket' => $this->ticketOsiptel,'depatamento' => $this->depatamento]);
+                    ->with(['ticket' => $this->ticketOsiptel,'departamento' => $this->depatamento]);
     }
 }

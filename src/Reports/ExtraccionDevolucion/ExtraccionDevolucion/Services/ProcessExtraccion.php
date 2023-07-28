@@ -32,7 +32,11 @@ class ProcessExtraccion
     public function __invoke(?int $step, $tipoInput, $celdas, $provincias, $excel, $fechaIni, $fechaFin, $ticketOsiptel, $fechaInteres, $corteFechaIni, $corteFechaFin, $minutos_usuarios)
     {
         $dtStart = new DateTime();
+        $inforFalla = $this->repo2->findInformeByTicket($ticketOsiptel);
         try {
+            if($inforFalla === null){
+                throw new Exception("No se puede procesar el reporte debido a que no existe un informe de fallas asociado");
+            }
             $strMaxFechaInteres = DateTime::createFromFormat("Y-m-d H:i:s", $this->tablaInteresRepo->getMaxFechaInteres())->format("Ymd");
             $strMinFechaInteres = (clone $dtStart)->modify("-1 day")->format("Ymd");
             if($strMaxFechaInteres < $strMinFechaInteres){
@@ -101,18 +105,36 @@ class ProcessExtraccion
                 $this->repo->getReporteMontoDevolver($dtFechaInteres, $dtCorteFechaIni);
             }
 
-            
-            $reportes = $this->repo2->getReportesProcesados();
+            $this->repo2->procesado($inforFalla->numero_de_reporte);
+            // $reportes = $this->repo2->getReportesProcesados();
             $correo = new NotificacionProcesado($ticketOsiptel, $depatamento);
+            $correo->setSubject("PROCESADO - TK {$ticketOsiptel} - {$inforFalla->name_file}");
             
-            try {
+            //try {
                 // Envío del correo
-                Mail::to(['C19884@claro.com.pe','C26282@claro.com.pe','ellanos@indracompany.com','lizeth.moya@claro.com.pe','carlos.malpartida@claro.com.pe','FacturacionPostpago@claro.com.pe','factsopfacturacion@claro.com.pe'])->send($correo);
-                //Mail::to(['ellanos@indracompany.com'])->send($correo);
-            } catch (\Exception $e) {
+                Mail::to([
+                    'C19884@claro.com.pe',
+                    'C26282@claro.com.pe',
+                    'ellanos@indracompany.com',
+                    'cclinarez@indracompany.com',
+                    'C25976@claro.com.pe',
+                    'josias.luna@claro.com.pe',
+                    'omori@claro.com.pe',
+                    'cpalacios@claro.com.pe',
+                    'luyciana.rodriguez@claro.com.pe',
+                    'C26311@claro.com.pe',
+                    'marali.huaranca@claro.com.pe',
+                    'pleon@claro.com.pe',
+                    'C26559@claro.com.pe',
+                    'carlos.malpartida@claro.com.pe',
+                    'lizeth.moya@claro.com.pe',
+                    'bryan.robles@claro.com.pe',
+                ])->send($correo);
+                // Mail::to(['C26282@claro.com.pe'])->send($correo);
+            /*} catch (\Exception $e) {
                 // Captura cualquier excepción generada durante el envío del correo
                 return response()->json(['message' => 'Error al enviar el correo: '.$e->getMessage()], 500);
-            }
+            }*/
 
             $this->reportLog(null, $dtStart, new DateTime(), ["estado" => 1]);
 

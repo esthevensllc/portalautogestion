@@ -14,7 +14,7 @@
 
     <h1>Extracción y Devolución / Notificacion de archivo procesado</h1>
 
-    <p>SE TIENE LOS SIGUIENTES REPORTES PROCESADOS, FAVOR DE REALIZAR LAS DEVOLUCIONES:</p>
+    <p>SE TIENE EL SIGUIENTE TICKET PROCESADO, FAVOR DE REALIZAR LAS DEVOLUCIONES:</p>
 
     <table border="1" cellspacing="0" cellpadding="0" width="500px">
 

@@ -19,16 +19,28 @@ class CargarReporte
 
     public function __invoke($numero, $excel)
     {
+        $filename = $excel->getClientOriginalName();
         $reporte = $this->repo->updateReporte($numero, $excel->getClientOriginalName());
         if($reporte){
             $excel->storeAs('carga_informe_falla', $numero.'_'.$excel->getClientOriginalName());
-            $reportes = $this->repo->getReportesSnRevisado();
+            // $reportes = $this->repo->getReportesSnRevisado();
+            $reportes = $this->repo->findInputFor($numero);
             $correo = new NotificacionCarga($reportes);
+            $correo->setSubject("CARGA DE INFORMES DE FALLAS - {$filename}");
             
             try {
                 // Envío del correo
-                Mail::to(['C19884@claro.com.pe','C26282@claro.com.pe','ellanos@indracompany.com','lizeth.moya@claro.com.pe','carlos.malpartida@claro.com.pe'])->send($correo);
-                //Mail::to(['ellanos@indracompany.com'])->send($correo);
+                Mail::to([
+                    'C19884@claro.com.pe',
+                    'C26282@claro.com.pe',
+                    'ellanos@indracompany.com',
+                    'lizeth.moya@claro.com.pe',
+                    'carlos.malpartida@claro.com.pe',
+                    'bryan.robles@claro.com.pe',
+                    'Noc-claro@claro.com.pe',
+                    'cpalacios@claro.com.pe',
+                ])->send($correo);
+                // Mail::to(['C26282@claro.com.pe'])->send($correo);
             } catch (\Exception $e) {
                 // Captura cualquier excepción generada durante el envío del correo
                 return response()->json(['message' => 'Error al enviar el correo: '.$e->getMessage()], 500);
