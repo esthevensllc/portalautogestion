@@ -1423,7 +1423,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
         return DB::table("usraes.noc_informe_de_fallas")
         ->selectRaw("numero_de_reporte,ticket,name_file,fecha_carga,revisado,aprobado,procesado,acreditado_pre,acreditado_post")
         ->orderByDesc('fecha_carga')
-        ->take(10)
+        // ->take(10)
         ->get();
     }
 

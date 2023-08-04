@@ -154,7 +154,7 @@
 </div>
 
 <div class="d-flex">
-    <h4 class="mb-0 mr-3 pt-4">Últimos 10 Reportes</h4>
+    <h4 class="mb-0 mr-3 pt-4">Reportes</h4>
     <div class="col-lg-3 col-md-4 form-group ml-auto">
         <label for="">Buscar Reporte:</label>
         <select name="numero_reporte_select" class="form-control form-control-sm">
