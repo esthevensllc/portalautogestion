@@ -390,6 +390,16 @@ Route::group([
         Route::get('usuarios-minutos', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\UsuarioMinutosController::class, 'getUsuariosByNumReporte']);
         Route::post('process', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\UsuarioMinutosController::class, 'processExtraccion']);
     });
+    Route::group(['prefix' => 'extraccion-devolucion/informe-fallas', 'trac_name' => 'extraccion-devolucion.informe-fallas'], function(){
+        Route::get('/', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\InformeFallasController::class, 'view']);
+        Route::get('search', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'get']);
+        Route::get('search/{id}', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'findInput']);
+        Route::post('/delete/{id}', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'delete']);
+        Route::post('/aprobar', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'aprobar']);
+        Route::post('/desaprobar', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'desaprobar']);
+        Route::post('/en-espera', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'enEspera']);
+        Route::post('/revisado', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'revisado']);
+    });
 
     Route::group(['prefix' => 'michaell-cia-nn', 'trac_name' => 'michaell-cia-nn'], function(){
         Route::get('/', [\AMovil\Reports\General\RepMichaellCIANN\Controllers\RepMichaellCIANNController::class, 'view']);
