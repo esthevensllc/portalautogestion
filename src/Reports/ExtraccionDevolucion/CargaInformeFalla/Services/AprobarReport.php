@@ -45,6 +45,7 @@ class AprobarReport
                     'carlos.malpartida@claro.com.pe',
                     'lizeth.moya@claro.com.pe',
                     'bryan.robles@claro.com.pe',
+                    'cdiazb@claro.com.pe',
                 ])->send($correo);
                 //Mail::to(['ellanos@indracompany.com'])->send($correo);
             } catch (\Exception $e) {

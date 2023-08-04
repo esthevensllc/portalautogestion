@@ -1445,6 +1445,21 @@ class EloquentExtraccionRepository implements ExtraccionRepository
 
     public function deleteRecord($numero)
     {
+        DB::connection($this->connection)
+        ->table("usraes.base_ext_dev_input")
+        ->where("num_reporte", $numero)
+        ->delete();
+
+        DB::connection($this->connection)
+        ->table("usraes.base_ext_dev_celda")
+        ->where("num_reporte", $numero)
+        ->delete();
+
+        DB::connection($this->connection)
+        ->table("usraes.base_ext_dev_dist")
+        ->where("num_reporte", $numero)
+        ->delete();
+
         return DB::table("usraes.noc_informe_de_fallas")
         ->where('numero_de_reporte',$numero)
         ->delete();
@@ -1557,6 +1572,134 @@ class EloquentExtraccionRepository implements ExtraccionRepository
 
             DB::table("USRAES.ACREDITACION_PREPAGO_TEMP")->insert($values);
         }
+    }
+
+    public function saveReportInputs(
+        $num_reporte,
+        array $celdas,
+        array $distritos,
+        DateTime $fechaIni,
+        DateTime $fechaFin,
+        $ticketOsiptel,
+        DateTime $fechaInteres,
+        DateTime $corteFechaIni,
+        Datetime $corteFechaFin
+    ) {
+        $codigo_c = $this->authService->getUserIdentifier();;
+        $departamento = $distritos[0][0];
+        DB::connection($this->connection)
+        ->table("usraes.base_ext_dev_input")
+        ->where("num_reporte", $num_reporte)
+        ->where("departamento", $departamento)
+        ->delete();
+
+        DB::connection($this->connection)
+        ->table("usraes.base_ext_dev_celda")
+        ->where("num_reporte", $num_reporte)
+        ->where("departamento", $departamento)
+        ->delete();
+
+        DB::connection($this->connection)
+        ->table("usraes.base_ext_dev_dist")
+        ->where("num_reporte", $num_reporte)
+        ->where("departamento", $departamento)
+        ->delete();
+
+        DB::connection($this->connection)
+        ->table("usraes.base_ext_dev_input")
+        ->insert([
+            "num_reporte" => $num_reporte,
+            "departamento" => $departamento,
+            "codigo_c" => $codigo_c,
+            "fecha_ini" => $fechaIni->format("Y-m-d H:i:s"),
+            "fecha_fin" => $fechaFin->format("Y-m-d H:i:s"),
+            "corte_fecha_ini" => $corteFechaIni->format("Y-m-d H:i:s"),
+            "corte_fecha_fin" => $corteFechaFin->format("Y-m-d H:i:s"),
+            "fecha_interes" => $fechaInteres->format("Y-m-d H:i:s"),
+        ]);
+
+        foreach($celdas as $celda){
+            DB::connection($this->connection)
+            ->table("USRAES.base_ext_dev_celda")
+            ->insert([
+                "num_reporte" => $num_reporte,
+                "departamento" => $departamento,
+                "codigo_c" => $codigo_c,
+                "celda" => $celda,
+            ]);
+        }
+        foreach($distritos as $row){
+            DB::connection($this->connection)
+            ->table("USRAES.base_ext_dev_dist")
+            ->insert([
+                "num_reporte" => $num_reporte,
+                "codigo_c" => $codigo_c,
+                "departamento" => $row[0],
+                "provincia" => $row[1],
+                "distrito" => $row[2],
+            ]);
+        }
+    }
+
+    public function getInputByNumReporte_Departamento($num_reporte, $departamento)
+    {
+        $input = DB::connection($this->connection)
+        ->table("usraes.base_ext_dev_input")
+        ->where("num_reporte", $num_reporte)
+        ->where("departamento", $departamento)
+        ->first();
+
+        $celdas = DB::connection($this->connection)
+        ->table("usraes.base_ext_dev_celda")
+        ->where("num_reporte", $num_reporte)
+        ->where("departamento", $departamento)
+        ->get();
+
+        $distritos = DB::connection($this->connection)
+        ->table("usraes.base_ext_dev_dist")
+        ->where("num_reporte", $num_reporte)
+        ->where("departamento", $departamento)
+        ->get();
+
+        $reporte = DB::table("usraes.noc_informe_de_fallas")
+        ->selectRaw("ticket,numero_de_reporte,name_file")
+        ->where("numero_de_reporte", $num_reporte)
+        ->first();
+        
+        if($input !== null){
+            $input->celdas = [];
+            foreach($celdas as $row){
+                $input->celdas[] = $row->celda;
+            }
+            $input->distritos = $distritos;
+            $input->ticket = null;
+            if($reporte !== null){
+                $input->ticket = $reporte->ticket;
+            }
+            return $input;
+        }
+        return null;
+    }
+
+    public function getDepartamentosByNumReporte($num_reporte)
+    {
+        $result = DB::connection($this->connection)
+        ->table("usraes.base_ext_dev_input")
+        ->where("num_reporte", $num_reporte)
+        ->get();
+        return $result;
+    }
+
+    public function getReportesByCriteria($filters)
+    {
+        $builder = DB::table("usraes.noc_informe_de_fallas")
+        ->selectRaw("ticket,numero_de_reporte,name_file");
+
+        foreach($filters as $row){
+            $builder->where($row[0], $row[1]);
+        }
+
+        return $builder->get();
     }
 
     private function exec_sql(array $plsql)

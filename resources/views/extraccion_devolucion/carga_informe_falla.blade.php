@@ -9,6 +9,9 @@
     tbody tr td, thead, tr th{
         padding: 0.4rem !important;
     }
+    table.dataTable td, table.dataTable th{
+        padding: 0.4rem !important;
+    }
 </style>
 @include('includes.select2_css')
 @endsection
@@ -145,6 +148,133 @@
                     <label for="">Subir Excel:</label>
                     <input type="file" class="form-control-file" name="excel" accept=".xlsx" required>
                 </div>
+                <div class="col-lg-12">
+                    <h5>Extracción</h5>
+                    <hr>
+                </div>
+                <div class="col-lg-12 form-group">
+                    <div class="mb-3 row">
+                        <div class="col-lg-3 col-md-4 tabs">
+                            <div class="tab-item tab_1">
+                                <div class="form-group">
+                                    <label for="">Cells ID 2G</label>
+                                    <input type="text" class="form-control form-control-sm clean_white_space" name="cell_2g">
+                                    <div class="invalid-feedback d-block text-dark">
+                                        Ej. 44531,44538,44539
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="">Cells ID 3G</label>
+                                    <input type="text" class="form-control form-control-sm clean_white_space" name="cell_3g">
+                                    <div class="invalid-feedback d-block text-dark">
+                                        Ej. 12145,12146,12147
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="">Cells ID 4G</label>
+                                    <input type="text" class="form-control form-control-sm clean_white_space" name="cell_4g">
+                                    <div class="invalid-feedback d-block text-dark">
+                                        Ej. 38711036,38711037
+                                    </div>
+                                </div>
+                                <div class="form-group d-none">
+                                    <label for="">Departamento provincia distrito</label>
+                                    <textarea class="form-control form-control-sm" name="provincias"></textarea>
+                                    <div class="invalid-feedback d-block text-dark">
+                                        Ingrese valores separados por comas para cada distrito y salto de linea para separar entre distritos<br>
+                                        Ej. PIURA,PIURA,TAMBO GRANDE<br>
+                                        PIURA,PIURA,PIURA
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 col-md-4">
+                            <table id="tbl_ubicacion" class="table table-sm table-bordered">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Departamento</th>
+                                        <th>Provincia</th>
+                                        <th>Distrito</th>
+                                        <th>#</th>
+                                    </tr>
+                                    <tr>
+                                        <th>
+                                            <select name="departamento" class="form-control form-control-sm">
+                                                <option value="">Seleccione</option>
+                                                @foreach ($config["departamentos"] as $row)
+                                                    <option>{{ $row->departamento }}</option>
+                                                @endforeach
+                                            </select>
+                                        </th>
+                                        <th>
+                                            <select name="provincia" class="form-control form-control-sm">
+                                                <option data-dep="">Seleccione</option>
+                                                @foreach ($config["provincias"] as $row)
+                                                    <option data-dep="{{ $row->departamento }}">{{ $row->provincia }}</option>
+                                                @endforeach
+                                            </select>
+                                        </th>
+                                        <th>
+                                            <select name="distrito" class="form-control form-control-sm">
+                                            <option data-dep="" data-prov="">Seleccione</option>
+                                            @foreach ($config["distritos"] as $row)
+                                                <option data-dep="{{ $row->departamento }}"data-prov="{{ $row->provincia }}">{{ $row->distrito }}</option>
+                                            @endforeach
+                                        </select>
+                                        </th>
+                                        <th>
+                                            <button type="button" class="btn btn-primary btn-sm btn_add_ubicacion">+</button>
+                                        </th>
+                                    </tr>
+                                    
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                            <p class="text-danger">*Después de seleccionar el departamento, provincia y distrito dar click en el boton de agregar</p>
+                        </div>
+
+                        <div class="col-lg-3 col-md-4">
+                            <div class="form-group">
+                                <p class="text-bold mb-0">Periodo corte</p>
+                                <label for="">Fecha inicio</label>
+                                <input type="date" class="form-control form-control-sm corte_calcular_diff" name="corte_fecha1_date">
+                                <input type="text" class="form-control form-control-sm corte_calcular_diff clean_white_space" name="corte_fecha1_time" placeholder="00:00:00">
+                            </div>
+                            <div class="form-group">
+                                <p class="text-bold mb-0" style="visibility: hidden;">.</p>
+                                <label for="">Fecha fin</label>
+                                <input type="date" class="form-control form-control-sm corte_calcular_diff" name="corte_fecha2_date">
+                                <input type="text" class="form-control form-control-sm corte_calcular_diff clean_white_space" name="corte_fecha2_time" placeholder="00:00:00">
+                                <div class="invalid-feedback d-block text-dark corte_diff_label" style="font-weight: bold;">
+                                    DIFENCIA EN MINUTOS: 
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-4">
+                            <button type="button" class="btn btn-secondary btn-sm btn-add-detalle">Agregar a detalle</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-12">
+                    <div class="table-responsive mb-3">
+                        <table id="tbl_extraccion" class="table table-sm table-bordered mb-0" style="min-width: 1200px;">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Cells ID 2G</th>
+                                    <th>Cells ID 3G</th>
+                                    <th>Cells ID 4G</th>
+                                    <th style="min-width: 300px;">Distrito</th>
+                                    <th>Fecha corte inicio</th>
+                                    <th>Hora Corte inicio</th>
+                                    <th>Fecha Corte fin</th>
+                                    <th>Hora Corte fin</th>
+                                    <th>#</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
                 <div class="col-lg-12 form-group">
                     <button type="submit" class="btn btn-danger btn-sm btn_export">Cargar archivo</button>
                 </div>
@@ -165,9 +295,9 @@
         </select>
     </div>
 </div>
-<div class="table-responsive">
+{{-- <div class="table-responsive"> --}}
 <table
-    class="bg-white table table-striped table-hover nowrap rounded shadow-xs border-xs mt-2 w-100" cellspacing="0"
+    class="bg-white table table-striped table-hover nowrap rounded shadow-xs border-xs mt-2 w-100 tbl-informefallas" cellspacing="0"
     {{-- data-responsive-table="{{ (int) $crud->getOperationSetting('responsiveTable') }}"
     data-has-details-row="{{ (int) $crud->getOperationSetting('detailsRow') }}"
     data-has-bulk-actions="{{ (int) $crud->getOperationSetting('bulkActions') }}" --}}
@@ -189,7 +319,7 @@
     <tbody>
     </tbody>
 </table>
-</div>
+{{-- </div> --}}
 @include('includes.spinner_loader')
 @endsection
 
@@ -210,7 +340,128 @@
     var id,name,_datatable;
     
 $(function() {
-    _datatable = $(".table").DataTable({
+    class SimpleCrudTableComponent
+    {
+        constructor(selector, fields){
+            this._selector = selector;
+            this.fields = fields;
+            this.data = [];
+            this._html_by_ftype = {
+                string: '<input type="text" name="{name}[]" class="form-control form-control-sm" value="{value}" {readonly}/>',
+                largeString: '<textarea name="{name}[]" rows="10" class="form-control form-control-sm" {readonly}>{value}</textarea>',
+                mediumString: '<textarea name="{name}[]" rows="5" class="form-control form-control-sm" {readonly}>{value}</textarea>',
+                date: '<input type="date" name="{name}[]" class="form-control form-control-sm" value="{value}" {readonly} />',
+                time: '<input type="text" name="{name}[]" class="form-control form-control-sm" value="{value}" placeholder="00:00:00" {readonly} />',
+            };
+            let _this = this;
+            document.querySelector(`${this._selector} tbody`)
+            .addEventListener("click", function(e){
+                if(e.target.tagName === "BUTTON" && e.target.classList.contains("btn_delete")){
+                    let _index = e.target.attributes["data-index"].value;
+
+                    _this.deleteByEl(e.target.parentNode.parentNode);
+                }
+            });
+        }
+
+        add(values = {}){
+            let _html_new = Object.keys(this.fields).map(field => {
+                let _html = this._html_by_ftype[this.fields[field].type];
+                let _readonly = (this.fields[field].readonly??false) ? "readonly" : "";
+                let _value = values[field] ?? '';
+                _html = _html.replace("{name}", field);
+                _html = _html.replace("{value}", _value);
+                _html = _html.replace("{readonly}", _readonly);
+                return `<td>${_html}</td>`;
+            }).join("");
+            let _options_html = `<td><button type="button" class="btn btn-secondary btn-sm btn_delete" data-index="${this.data.length}">-</button></td>`;
+            let _body = document.querySelector(`${this._selector} tbody`);
+            let old_html = _body.innerHTML;
+            let new_tr = document.createElement("tr");
+            new_tr.innerHTML = `<tr>${_html_new}${_options_html}</tr>`;
+            _body.appendChild(new_tr);
+        }
+
+        delete(index){
+            let _body = document.querySelector(`${this._selector} tbody`);
+            for (var i = 0; i < _body.childNodes.length; i++) {
+                if(i === index){
+                    _body.removeChild(_body.childNodes[i]);
+                }
+            }
+        }
+
+        deleteByEl(node){
+            let _body = document.querySelector(`${this._selector} tbody`);
+            _body.removeChild(node);
+        }
+
+        render(){
+
+        }
+    }
+
+    class SimpleCrudTableComponent2
+    {
+        constructor(selector, fields){
+            this._selector = selector;
+            this.fields = fields;
+            this.data = [];
+            this._html_by_ftype = {
+                string: '<input type="text" name="{name}[]" class="form-control form-control-sm" value="{value}" />',
+                largeString: '<textarea name="{name}[]" rows="10" class="form-control form-control-sm">{value}</textarea>',
+                mediumString: '<textarea name="{name}[]" rows="5" class="form-control form-control-sm">{value}</textarea>',
+                date: '<input type="date" name="{name}[]" class="form-control form-control-sm" value="{value}" />',
+                time: '<input type="text" name="{name}[]" class="form-control form-control-sm" value="{value}" placeholder="00:00:00" />',
+            };
+            this._handlers = {};
+            this._data = [];
+            let _this = this;
+            document.querySelector(`${this._selector} tbody`)
+            .addEventListener("click", function(e){
+                if(e.target.tagName === "BUTTON" && e.target.classList.contains("btn_delete")){
+                    let _index = e.target.attributes["data-index"].value;
+
+                    _this.delete(parseInt(_index));
+                    (_this._handlers["on_delete"]??[])
+                    .forEach(handler => {
+                        handler(_index);
+                    });
+                }
+            });
+        }
+
+        addHandler(key, value){
+            this._handlers[key] = value;
+        }
+
+        add(row){
+            this._data.push(row);
+            (this._handlers["on_add"]??[])
+            .forEach(handler => {
+                handler();
+            });
+            this.render();
+        }
+
+        delete(index){
+            this._data = this._data.filter((r,i) => index !== i);
+            this.render();
+        }
+
+        render(){
+            let _html = this._data.map((row, index) => {
+                let _html = Object.keys(this.fields).map(field => {
+                    return `<td>${row[field]}</td>`;
+                }).join("");
+                _html += `<td><button type="button" class="btn btn-secondary btn-sm btn_delete" data-index="${index}">-</button></td>`;
+                return `<tr>${_html}</tr>`;
+            }).join("");
+            let _body = document.querySelector(`${this._selector} tbody`).innerHTML = _html;
+        }
+    }
+
+    _datatable = $(".tbl-informefallas").DataTable({
         language: {url: "{{ asset('packages/datatables-language/spanish.json') }}"},
         ajax: {
             url: "{{ asset('extraccion-devolucion/carga-informe-fallas/search') }}",
@@ -270,7 +521,8 @@ $(function() {
         },
         lengthChange: false,
         searching: false,
-        order: [[3, 'desc']]
+        order: [[3, 'desc']],
+        scrollX: true
         //serverSide: true
     });  
 
@@ -278,10 +530,155 @@ $(function() {
 
     // inicio
     $("select[name=numero_reporte_select]").select2({width: '100%'});
+    document.querySelector("select[name=departamento]")
+    .dispatchEvent(new Event("change"));
+
+    let tbl_extraccion = new SimpleCrudTableComponent("#tbl_extraccion", {
+        cell2g: {type: "mediumString"},
+        cell3g: {type: "mediumString"},
+        cell4g: {type: "mediumString"},
+        distritos: {type: "mediumString", readonly: true},
+        corteFechaIni: {type: "date"},
+        corteHoraIni: {type: "time"},
+        corteFechaFin: {type: "date"},
+        corteHoraFin: {type: "time"},
+    });
+
+    let tbl_ubicacion = new SimpleCrudTableComponent2("#tbl_ubicacion", {
+        departamento: {type: "string"},
+        provincia: {type: "string"},
+        distrito: {type: "string"},
+        //plano: {type: "largeString"},
+    });
+    function renderProvinciasInput(){
+        console.log("render provincias");
+        let _value = tbl_ubicacion._data.map(row => `${row["departamento"]},${row["provincia"]},${row["distrito"]}`).join("\n");
+        document.querySelector("*[name=provincias]").value = _value;
+    }
+    tbl_ubicacion.addHandler("on_add", [renderProvinciasInput]);
+    tbl_ubicacion.addHandler("on_delete", [
+        (_index) => renderProvinciasInput(),
+    ]);
+
+    document.querySelector(".btn_add_ubicacion")
+    .addEventListener("click", function(e){
+        let departamento = document.querySelector("select[name=departamento]").value;
+        let provincia = document.querySelector("select[name=provincia]").value;
+        let distrito = document.querySelector("select[name=distrito]").value;
+        let is_added = tbl_ubicacion._data.some(row => row["provincia"] === provincia && row["distrito"] === distrito);
+        if(is_added){
+            alert("La provincia ya esta agregada");
+        } else {
+            tbl_ubicacion.add({
+                departamento: departamento,
+                provincia: provincia,
+                distrito: distrito
+            });
+        }
+    });
+
+    $(".btn-add-detalle").on("click", function(e){
+        let cell_2g = $("input[name=cell_2g]").val();
+        let cell_3g = $("input[name=cell_3g]").val();
+        let cell_4g = $("input[name=cell_4g]").val();
+        let distritos = $("*[name=provincias]").val();
+        let fecha_corte_ini = $("*[name=corte_fecha1_date]").val();
+        let hora_corte_ini = $("*[name=corte_fecha1_time]").val();
+        let fecha_corte_fin = $("*[name=corte_fecha2_date]").val();
+        let hora_corte_fin = $("*[name=corte_fecha2_time]").val();
+        if(hora_corte_fin !== ''){
+            tbl_extraccion.add({
+                cell2g: cell_2g,
+                cell3g: cell_3g,
+                cell4g: cell_4g,
+                distritos: distritos,
+                corteFechaIni: fecha_corte_ini,
+                corteHoraIni: hora_corte_ini,
+                corteFechaFin: fecha_corte_fin,
+                corteHoraFin: hora_corte_fin
+            });
+            $("input[name=cell_2g]").val('');
+            $("input[name=cell_3g]").val('');
+            $("input[name=cell_4g]").val('');
+            // $("*[name=provincias]").val('');
+            $("*[name=corte_fecha1_date]").val('');
+            $("*[name=corte_fecha1_time]").val('');
+            $("*[name=corte_fecha2_date]").val('');
+            $("*[name=corte_fecha2_time]").val('');
+        }else{
+            alert("Antes de agregar completar todos los datos");
+        }
+    });
+
+    function filter_sub_elements(element, callback_filter)
+    {
+        let sub_element = element;
+        let options = sub_element.children;
+        let first_value;
+        options.forEach(op => {
+            //console.log(op);
+            let include_element = callback_filter(op);
+            // let attr_value = op.attributes["data-dep"].value;
+            op.classList.remove("d-none");
+            if(!include_element){
+                // console.log(value, attr_value);
+                op.classList.add("d-none");
+            } else if(!first_value){
+                //console.log("new value", op.value);
+                sub_element.value = op.value;
+                first_value = op.value;
+            }
+        });
+    }
+
+    document.querySelector("select[name=departamento]")
+    .addEventListener("change", function(e) {
+        let sub_element = document.querySelector("select[name=provincia]");
+        filter_sub_elements(sub_element, op => op.attributes["data-dep"].value === e.target.value || op.attributes["data-dep"].value === "");
+        sub_element.dispatchEvent(new Event("change"));
+    });
+
+    document.querySelector("select[name=provincia]")
+    .addEventListener("change", function(e) {
+        let sub_element = document.querySelector("select[name=distrito]");
+        let option;
+        document.querySelector("select[name=provincia]")
+        .children
+        .forEach(op => {
+            if(op.value === e.target.value){
+                option = op;
+            }
+        });
+
+        let _new_html = config["distritos"].filter(op => 
+            (option.attributes["data-dep"].value === op.departamento
+            && e.target.value === op.provincia)
+            || op.departamento === ""
+        ).map(row => `<option data-dep="${row.departamento}"data-prov="${row.provincia}">${row.distrito}</option>`)
+        .join("");
+
+        sub_element.innerHTML = `<option data-dep="" data-prov="">Seleccione</option>`+_new_html;
+
+        /*filter_sub_elements(sub_element, op => 
+            (option.attributes["data-dep"].value === op.attributes["data-dep"].value
+            && e.target.value === op.attributes["data-prov"].value)
+            || op.attributes["data-dep"].value === ""
+        );*/
+        //sub_element.dispatchEvent(new Event("change"));
+    });
+
+    $(".clean_white_space").on("change", function(e){
+        e.target.value = e.target.value.replaceAll(" ", "");
+    });
 
     document.querySelector("#form_export")
     .addEventListener("submit", function(e){
         e.preventDefault();
+        let numDetails = document.querySelectorAll("#tbl_extraccion tbody tr").length;
+        if(numDetails < 1){
+            alert("Se debe agregar como minimo un detalle");
+            return;
+        }
         const loader_component = document.querySelector('.loader_component');
         loader_component.style.display = 'block';
 

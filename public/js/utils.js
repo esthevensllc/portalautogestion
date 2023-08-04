@@ -94,6 +94,18 @@ const utils = {
         }
         return response;
     },
+    fetchErrorMiddleware: async (response) => {
+        if(!response.ok){
+            const _content_type = response.headers.get('Content-Type')??"";
+            if(_content_type.includes("application/json")){
+                const json_response = await response.json();
+                throw new Error(JSON.stringify(json_response));
+            }else{
+                throw new Error(response.statusText);
+            }
+        }
+        return response;
+    },
     fetch: (...args) => {
         console.log(args);
         if(args[1] !== undefined){

@@ -145,10 +145,10 @@ class ExtraccionDevolucionController
             $request->input('fecha1_date')." ".$request->input('fecha1_time'),
             $request->input('fecha2_date')." ".$request->input('fecha2_time'),
             $request->input("ticket_osiptel"),
-            24, // $request->input("fecha_interes"),
+            ProcessExtraccion::MESES_INTERES, // $request->input("fecha_interes"),
             $request->input('corte_fecha1_date')." ".$request->input('corte_fecha1_time'),
             $request->input('corte_fecha2_date')." ".$request->input('corte_fecha2_time'),
-            3 // $request->input("minutos_usuarios")
+            ProcessExtraccion::MINUTOS_USUARIOS // $request->input("minutos_usuarios")
         )->data();
 
         return response()->json(["result" => $resp]);

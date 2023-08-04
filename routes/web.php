@@ -384,6 +384,12 @@ Route::group([
         Route::post('/en-espera', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'enEspera']);
         Route::post('/revisado', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'revisado']);
     });
+    Route::group(['prefix' => 'extraccion-devolucion/usuario-minuto', 'trac_name' => 'extraccion-devolucion.usuario-minuto'], function(){
+        Route::get('/', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\UsuarioMinutosController::class, 'view']);
+        Route::get('departamentos', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\UsuarioMinutosController::class, 'getDepartamentosByNumReporte']);
+        Route::get('usuarios-minutos', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\UsuarioMinutosController::class, 'getUsuariosByNumReporte']);
+        Route::post('process', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\UsuarioMinutosController::class, 'processExtraccion']);
+    });
 
     Route::group(['prefix' => 'michaell-cia-nn', 'trac_name' => 'michaell-cia-nn'], function(){
         Route::get('/', [\AMovil\Reports\General\RepMichaellCIANN\Controllers\RepMichaellCIANNController::class, 'view']);
