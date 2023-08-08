@@ -131,6 +131,7 @@ class ProcessExtraccion
                 'lizeth.moya@claro.com.pe',
                 'bryan.robles@claro.com.pe',
                 'cdiazb@claro.com.pe',
+                'C26670@claro.com.pe',
             ])->send($correo);
             // Mail::to(['cclinarez@indracompany.com','C26282@claro.com.pe'])->send($correo);
 
