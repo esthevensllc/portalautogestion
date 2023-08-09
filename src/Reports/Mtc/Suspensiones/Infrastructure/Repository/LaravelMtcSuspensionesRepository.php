@@ -869,9 +869,9 @@ class LaravelMtcSuspensionesRepository implements MtcSuspensionesRepository
                 LEFT JOIN (
                     select
                     msisdn,
-                    case when estado in ('S','A','G') then 'S' WHEN estado IN ('D') THEN 'N' ELSE '' END estado,
+                    case when estado in ('S','A','G','R') then 'S' WHEN estado IN ('D') THEN 'N' ELSE '' END estado,
                     sysdate FECHA,
-                    case when estado IN ('S','A','G') THEN '' when upper(desc_serv) like '%PORT%OUT%' THEN '01'
+                    case when estado IN ('S','A','G','R') THEN '' when upper(desc_serv) like '%PORT%OUT%' THEN '01'
                         WHEN estado in ('D') THEN '02'
                     ELSE '' END OBSERVACION  
                 from (
