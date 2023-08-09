@@ -781,12 +781,13 @@ class LaravelMtcSuspensionesRepository implements MtcSuspensionesRepository
 
     public function generateReporteNotificacion(DateTime $periodo, $suspensiones)
     {
-        $this->getReporte($periodo, $suspensiones);
+        $this->userIdentifier = $this->authService->getUserIdentifier();
+        $str_periodo = $periodo->format('Ym');
 
         $array_sql = [];
         $array_sql[] = [
             'sql' => "BEGIN
-                EXECUTE IMMEDIATE 'DROP TABLE USRAES.TMP_SUSPENSIONES_{$this->userIdentifier}';
+                EXECUTE IMMEDIATE 'DROP TABLE USRAES.TMP_TXT_NOTIFI_{$this->userIdentifier}';
             EXCEPTION
                 WHEN OTHERS THEN
                 IF SQLCODE != -942 THEN
@@ -795,57 +796,32 @@ class LaravelMtcSuspensionesRepository implements MtcSuspensionesRepository
             END;"
         ];
         $array_sql[] = [
-            'sql' => "CREATE TABLE USRAES.TMP_SUSPENSIONES_{$this->userIdentifier} AS
-            SELECT 
-                   MSISDN, -- CAMPO COMODIN PARA IDENTIFICAR LINEA (quitarlo del resultado final en CSV)
-                   ESTADO,
-                   INICIO_SUSPENSION,
-                   TERMINO_SUSPENSION,
-                   ESTADO_REACTIVACION,    
-                   FECHA_REACTIVACION,    
-                   MOTIVO_NO_SUSPENSION, 
-                   FECHA_BAJA_LINEA,      
-                   TIPO_TITULAR,          
-                   TIP_CONTRATO_LINEA,    
-                   TIPO_DOC,              
-                   NRO_DOCUMENTO,         
-                   NOMBRES,                
-                   FECHA_INICIO_CONTRATO, 
-                   FECHA_FIN_CONTRATO,    
-                   DIRECCION_CLIENT,      
-                   CODIGO_UBIGEO ,        
-                   estado_subs,           
-                   AGREEMENT_REASON_STATUS_DESC, -- CAMPO COMODIN (quitarlo del resultado final en CSV)
-                   'POSTPAGO' MODALIDAD
-              FROM REPORTE_POST_MTC             -- CAMPO COMODIN (quitarlo del resultado final en CSV)
-            UNION ALL
-            SELECT 
-                   MSISDN, -- CAMPO COMODIN PARA IDENTIFICAR LINEA (quitarlo del resultado final en CSV)
-                   ESTADO,
-                   INICIO_SUSPENSION,
-                   TERMINO_SUSPENSION,
-                   ESTADO_REACTIVACION,
-                   FECHA_REACTIVACION, 
-                   MOTIVO_NO_SUSPENSION,         
-                   FECHA_BAJA_LINEA,        
-                   TIPO_TITULAR,            
-                   TIP_CONTRATO_LINEA,      
-                   TIPO_DOC,                
-                   NRO_DOCUMENTO,           
-                   NOMBRES,                 
-                   FECHA_INICIO_CONTRATO,   
-                   FECHA_FIN_CONTRATO,      
-                   DIRECCION_CLIENT,        
-                   CODIGO_UBIGEO ,          
-                   estado_subs,             -- CAMPO COMODIN (quitarlo del resultado final en CSV)
-                   AGREEMENT_REASON_STATUS_DESC,      -- CAMPO COMODIN (quitarlo del resultado final en CSV)
-                   'PREPAGO' MODALIDAD
-              FROM REPORTE_PRE_MTC"
+            'sql' => "CREATE TABLE USRAES.TMP_TXT_NOTIFI_{$this->userIdentifier} (
+                ASNV_IDENTIFICADORGRUPOMTC varchar2(160),
+                ASNN_IDENTIFICADOR varchar2(160),
+                ASNC_TIPO_TELEFONICO varchar2(160),
+                ASNV_NUMERO_LINEA varchar2(160),
+                MENSAJE varchar2(160)
+            )"
         ];
+        $this->exec_sql($array_sql);
+        
+        $array_to_insert = [];
+        foreach($suspensiones as $row){
+            $array_to_insert[] = [
+                'ASNV_IDENTIFICADORGRUPOMTC' => $row[0],
+                'ASNN_IDENTIFICADOR' => $row[1],
+                'ASNC_TIPO_TELEFONICO' => $row[2],
+                'ASNV_NUMERO_LINEA' => $row[3],
+                'MENSAJE' => $row[4]
+            ];
+        }
+        DB::table("USRAES.TMP_TXT_NOTIFI_{$this->userIdentifier}")->insert($array_to_insert);
 
+        $array_sql = [];
         $array_sql[] = [
             'sql' => "BEGIN
-                EXECUTE IMMEDIATE 'DROP TABLE USRAES.TEMP_NOTIFICACIONES_{$this->userIdentifier}';
+                EXECUTE IMMEDIATE 'DROP TABLE USRAES.TMP_NOTIFICACIONES_{$this->userIdentifier}';
             EXCEPTION
                 WHEN OTHERS THEN
                 IF SQLCODE != -942 THEN
@@ -853,65 +829,67 @@ class LaravelMtcSuspensionesRepository implements MtcSuspensionesRepository
                 END IF;
             END;"
         ];
-        $array_sql[]= ["sql" => "CREATE TABLE USRAES.TEMP_NOTIFICACIONES_{$this->userIdentifier}(
-        ASNV_IDENTIFICADORGRUPOMTC  VARCHAR2(20),
-        ASNN_IDENTIFICADOR  VARCHAR2(20),
-        ASNC_TIPO_REPORTE  VARCHAR2(20),
-        ASND_FECHA_REPORTE  VARCHAR2(20),
-        ASNC_TIPO_TELEFONICO  VARCHAR2(20),
-        ASNV_NUMERO_LINEA  VARCHAR2(20),
-        ASNV_MENSAJE_MTC  VARCHAR2(200),
-        ASNC_ESTADO  VARCHAR2(10),
-        ASND_FECHA_NOTIFICACION DATE,
-        ASNC_MOTIVO_NONOTIFICA  VARCHAR2(10),
-        ASNC_TIPO_TITULAR   VARCHAR2(10),
-        ASNC_TIPO_CONTRATO  VARCHAR2(10),
-        ASNC_TIPO_DOCTITULAR  VARCHAR2(10),
-        ASNV_NUM_DOCTITULAR  VARCHAR2(20),
-        ASNV_NOMBRETITULAR  VARCHAR2(50),
-        ASND_FEC_INICONTRATO  DATE,
-        ASND_FEC_FINCONTRATO  DATE,
-        ASNV_DIRECCION  VARCHAR2(200),
-        ASNV_UBIGEO  VARCHAR2(20)
-        )"];
-
+        $array_sql[] = [
+            'sql' => "CREATE TABLE USRAES.TMP_NOTIFICACIONES_{$this->userIdentifier} (
+                ASNV_IDENTIFICADORGRUPOMTC varchar2(160),
+                ASNN_IDENTIFICADOR varchar2(160),
+                ASNC_TIPO_REPORTE varchar2(160),
+                ASND_FECHA_REPORTE varchar2(160),
+                ASNC_TIPO_TELEFONICO varchar2(160), 
+                ASNV_NUMERO_LINEA varchar2(160),
+                ASNV_MENSAJE_MTC varchar2(160),
+                ASNC_ESTADO varchar2(160),
+                ASND_FECHA_NOTIFICACION varchar2(160),
+                ASNC_MOTIVO_NONOTIFICA varchar2(160),
+                ASNC_TIPO_TITULAR varchar2(160),
+                ASNC_TIPO_CONTRATO varchar2(160),
+                ASNC_TIPO_DOCTITULAR varchar2(160),
+                ASNV_NUM_DOCTITULAR varchar2(160),
+                ASNV_NOMBRETITULAR varchar2(160),
+                ASND_FEC_INICONTRATO varchar2(160),
+                ASND_FEC_FINCONTRATO varchar2(160),
+                ASNV_DIRECCION varchar2(160),
+                ASNV_UBIGEO varchar2(160)
+            )"
+        ];
         $array_sql[] = [
             'sql' => "BEGIN
-                INSERT INTO USRAES.TEMP_NOTIFICACIONES_{$this->userIdentifier}(
-                    ASNV_IDENTIFICADORGRUPOMTC, ASNN_IDENTIFICADOR, ASNC_TIPO_REPORTE,
-                    ASND_FECHA_REPORTE, ASNC_TIPO_TELEFONICO, ASNV_NUMERO_LINEA
-                )
-                SELECT ASNV_IDENTIFICADORGRUPOMTC,
-                ASNN_IDENTIFICADOR,
-                ASNC_TIPO_REPORTE,
-                ASND_FECHA_REPORTE,
-                ASNC_TIPO_TELEFONICO,
-                ASNV_NUMERO_LINEA
-                FROM  USRAES.TMP_PLANTILLA_{$this->userIdentifier};
+                INSERT INTO USRAES.TMP_NOTIFICACIONES_{$this->userIdentifier}
+                (ASNV_IDENTIFICADORGRUPOMTC,ASNN_IDENTIFICADOR,ASNC_TIPO_TELEFONICO,
+                    ASNV_NUMERO_LINEA,ASNC_ESTADO,ASND_FECHA_NOTIFICACION,ASNC_MOTIVO_NONOTIFICA)
+                select  
+                AA.ASNV_IDENTIFICADORGRUPOMTC,
+                AA.ASNN_IDENTIFICADOR,
+                AA.ASNC_TIPO_TELEFONICO,
+                AA.ASNV_NUMERO_LINEA,
+                BB.estado ASNC_ESTADO,
+                BB.FECHA ASND_FECHA_NOTIFICACION,
+                BB.OBSERVACION ASNC_MOTIVO_NONOTIFICA 
+                from USRAES.TMP_TXT_NOTIFI_{$this->userIdentifier} AA 
+                LEFT JOIN (
+                    select
+                    msisdn,
+                    case when estado in ('S','A','G') then 'S' WHEN estado IN ('D') THEN 'N' ELSE '' END estado,
+                    sysdate FECHA,
+                    case when estado IN ('S','A','G') THEN '' when upper(desc_serv) like '%PORT%OUT%' THEN '01'
+                        WHEN estado in ('D') THEN '02'
+                    ELSE '' END OBSERVACION  
+                from (
+                    select  SUBSCRIPTION_ACCESS_NUMBER msisdn,
+                            agreement_status estado,
+                            agreement_start_date fch_inio,
+                            AGREEMENT_REASON_STATUS_DESC desc_serv,
+                            row_number() over(partition by SUBSCRIPTION_ACCESS_NUMBER order by agreement_start_date desc) flag 
+                    from DWA.DW_M_SUBSCRIPTION_HIST PARTITION (P_{$str_periodo})  -- <---- colocar el periodo de la fecha (202307--14).
+                    where SUBSCRIPTION_ACCESS_NUMBER in 
+                    (select '51'||to_char(to_number(regexp_replace(ASNV_NUMERO_LINEA, '[^0-9]+', ''))) ASNV_NUMERO_LINEA 
+                    from USRAES.TMP_TXT_NOTIFI_{$this->userIdentifier})
+                ) 
+                where flag=1) BB 
+                ON '51'||to_char(to_number(regexp_replace(AA.ASNV_NUMERO_LINEA, '[^0-9]+', '')))=BB.msisdn;
                 COMMIT;
-
-                MERGE INTO USRAES.TEMP_NOTIFICACIONES_{$this->userIdentifier} A
-                USING USRAES.TMP_SUSPENSIONES_{$this->userIdentifier} B
-                ON (A.ASNV_NUMERO_LINEA = B.MSISDN)
-                WHEN MATCHED THEN UPDATE SET
-                A.ASNC_ESTADO=B.ESTADO,
-                A.ASND_FECHA_NOTIFICACION = CASE WHEN B.ESTADO IS NOT NULL THEN TRUNC(SYSDATE, 'DD') ELSE NULL END;
-                COMMIT;
-
-                MERGE INTO USRAES.TEMP_NOTIFICACIONES_{$this->userIdentifier} A
-                USING USRAES.TMP_SUSPENSIONES_{$this->userIdentifier} B
-                ON (A.ASNV_NUMERO_LINEA = B.MSISDN)
-                WHEN MATCHED THEN UPDATE SET
-                A.ASNC_MOTIVO_NONOTIFICA = (CASE 
-                WHEN B.AGREEMENT_REASON_STATUS_DESC LIKE '%PORT-OUT%' THEN '01'
-                WHEN B.AGREEMENT_REASON_STATUS_DESC LIKE '%BAJA%' THEN '02'
-                ELSE NULL END)
-                WHERE ASNC_ESTADO = 'N';
-                COMMIT;
-
             END;"
         ];
-
         $this->exec_sql($array_sql);
     }
 
@@ -1014,7 +992,7 @@ class LaravelMtcSuspensionesRepository implements MtcSuspensionesRepository
     }
 
     public function getReporteNotificacion(){
-        return DB::table("USRAES.TEMP_NOTIFICACIONES_{$this->userIdentifier}")->get();
+        return DB::table("USRAES.TMP_NOTIFICACIONES_{$this->userIdentifier}")->get();
     }
 
     private function exec_sql($sqls){
