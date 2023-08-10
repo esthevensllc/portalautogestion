@@ -13,12 +13,15 @@
             @csrf
             <div class="row">
                 <div class="col-lg-3 col-md-4 form-group">
+                    <label for="">Ticket</label>
+                    <select name="ticket" class="form-control form-control-sm" required>
+                        <option value="">Seleccione</option>
+                    </select>
+                </div>
+                <div class="col-lg-3 col-md-4 form-group">
                     <label for="">Nro Reporte</label>
                     <select name="num_reporte" class="form-control form-control-sm" required>
                         <option value="">Seleccione</option>
-                        @foreach ($config["reports"] as $row)
-                            <option>{{ $row->numero_de_reporte }}</option>
-                        @endforeach
                     </select>
                 </div>
                 <div class="col-lg-3 col-md-4 form-group">
@@ -47,28 +50,53 @@
 @include('includes.noty_js')
 @include('includes.select2_js')
 <script>
-$(function() {
     const config = @json($config);
+$(function() {
 
+    let tickets = {};
+    config.reports.forEach(row => {
+        tickets[row.ticket] = row;
+    });
+    let htmlTickets = Object.keys(tickets)
+    .map(ticket => `<option value="${ticket}">${ticket}</option>`)
+    .join("");
+    htmlTickets = `<option value="">Seleccione</option>${htmlTickets}`;
+
+    $("select[name=ticket]").html(htmlTickets).select2({width: '100%'});
     $("select[name=num_reporte]").select2({width: '100%'});
     $("select[name=departamento]").select2({width: '100%'});
     $(".btn-process").hide();
 
+    $("select[name=ticket]")
+    .on("change", function(e){
+        ;
+        let htmlReports = config.reports.filter(row => row.ticket === e.target.value)
+        .map(row =>  `<option>${row.numero_de_reporte}</option>`);
+        htmlReports = `<option value="">Seleccione</option>${htmlReports}`;
+        $("select[name=num_reporte]").html(htmlReports).select2({width: '100%'});
+        $("select[name=num_reporte]").trigger("change");
+    });
+
     $("select[name=num_reporte]")
     .on("change", function(e){
-        utils.fetch(`${config.getDepartamentosApi}?num_reporte=${e.target.value}`)
-        .then(utils.fetchErrorMiddleware)
-        .then(response => response.json())
-        .then(response => {
-            let _html = response.map(r => `<option data-num_reporte="${r.num_reporte}">${r.departamento}</option>`)
-            .join("");
-            document.querySelector("select[name=departamento]").innerHTML = `<option value="">Seleccione</option>` + _html;
+        if(e.target.value === ""){
+            document.querySelector("select[name=departamento]").innerHTML = `<option value="">Seleccione</option>`;
             $("select[name=departamento]").select2({width: '100%'});
-        })
-        .catch(error => {
-            let jsonError = JSON.parse(error.message);
-            alert(jsonError.message);
-        });
+        }else{
+            utils.fetch(`${config.getDepartamentosApi}?num_reporte=${e.target.value}`)
+            .then(utils.fetchErrorMiddleware)
+            .then(response => response.json())
+            .then(response => {
+                let _html = response.map(r => `<option data-num_reporte="${r.num_reporte}">${r.departamento}</option>`)
+                .join("");
+                document.querySelector("select[name=departamento]").innerHTML = `<option value="">Seleccione</option>` + _html;
+                $("select[name=departamento]").select2({width: '100%'});
+            })
+            .catch(error => {
+                let jsonError = JSON.parse(error.message);
+                alert(jsonError.message);
+            });
+        }
     });
 
     document.querySelector("#form_export")
@@ -114,7 +142,6 @@ $(function() {
                 departamento: $("select[name=departamento]").val(),
                 minutos_usuarios: num_minutos
             };
-            console.log(body);
             const loader_component = document.querySelector('.loader_component');
             loader_component.style.display = 'block';
             utils.fetch(`${config.processApi}`, {
