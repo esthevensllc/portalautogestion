@@ -7,7 +7,7 @@
 </head>
 <body>
     <h1>Extracción y Devolución / Informe Aprobado</h1>
-    <p>TIENES EL SIGUIENTE INFORME APROBADO:</p>
+    <p>CONTROL REGULATORIO APROBO EL SIGUIENTE INFORME DE FALLAS CON EL SIGUIENTE TICKET:</p>
     <table border="1" cellspacing="0" cellpadding="0" width="500px">
         <thead>
             <tr style="background-color:#dc3545;color:white;margin:0;">

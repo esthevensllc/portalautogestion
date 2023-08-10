@@ -24,15 +24,13 @@ class AprobarReport
         if($data){
             $reporteFinded = $reportes[0];
             $correo = new NotificacionAprobado($reportes);
-            $correo->setSubject("APROBRADO - TK {$ticket} - {$reporteFinded->name_file}");
+            $correo->setSubject("CONTROL REGULATORIO - APROBRADO - TK {$ticket} - {$reporteFinded->name_file}");
             
             try {
                 // Envío del correo
                 Mail::to([
                     'C19884@claro.com.pe',
                     'C26282@claro.com.pe',
-                    'ellanos@indracompany.com',
-                    'cclinarez@indracompany.com',
                     'C25976@claro.com.pe',
                     'josias.luna@claro.com.pe',
                     'omori@claro.com.pe',

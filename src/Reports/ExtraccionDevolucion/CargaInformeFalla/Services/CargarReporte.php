@@ -48,7 +48,6 @@ class CargarReporte
                 Mail::to([
                     'C19884@claro.com.pe',
                     'C26282@claro.com.pe',
-                    'ellanos@indracompany.com',
                     'lizeth.moya@claro.com.pe',
                     'carlos.malpartida@claro.com.pe',
                     'bryan.robles@claro.com.pe',
