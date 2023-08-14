@@ -242,7 +242,7 @@
                                 <label for="">Fecha fin</label>
                                 <input type="date" class="form-control form-control-sm corte_calcular_diff" name="corte_fecha2_date">
                                 <input type="text" class="form-control form-control-sm corte_calcular_diff clean_white_space" name="corte_fecha2_time" placeholder="00:00:00">
-                                <div class="invalid-feedback d-block text-dark corte_diff_label" style="font-weight: bold;">
+                                <div class="invalid-feedback d-block text-dark corte_diff_label" data-min="" style="font-weight: bold;">
                                     DIFENCIA EN MINUTOS: 
                                 </div>
                             </div>
@@ -574,6 +574,35 @@ $(function() {
         }
     });
 
+    document.querySelectorAll(".corte_calcular_diff")
+    .forEach(el => {
+        el.addEventListener("change", function(e){
+            let fecha1_date = document.querySelector("input[name=corte_fecha1_date]").value;
+            let fecha1_time = document.querySelector("input[name=corte_fecha1_time]").value;
+            let fecha1 = fecha1_date+" "+fecha1_time;
+            let fecha2_date = document.querySelector("input[name=corte_fecha2_date]").value;
+            let fecha2_time = document.querySelector("input[name=corte_fecha2_time]").value;
+            let fecha2 = fecha2_date+" "+fecha2_time;
+
+            fecha1 = new Date(fecha1);
+            fecha2 = new Date(fecha2);
+            let diff = ((fecha2.getTime() - fecha1.getTime())/1000/60).toFixed(0);
+            console.log(diff);
+
+            document.querySelector(".corte_diff_label").setAttribute("data-min", diff);
+            document.querySelector(".corte_diff_label").innerHTML = "DIFENCIA EN MINUTOS: "+diff+" minutos";
+        });
+    });
+
+    document.querySelector("input[name=corte_fecha1_date]").addEventListener("change", function(e){
+        let fecha2 = document.querySelector("input[name=corte_fecha2_date]");
+        fecha2.min = e.target.value;
+    });
+    document.querySelector("input[name=corte_fecha2_date]").addEventListener("change", function(e){
+        let fecha1 = document.querySelector("input[name=corte_fecha1_date]");
+        fecha1.max = e.target.value;
+    });
+
     $(".btn-add-detalle").on("click", function(e){
         let cell_2g = $("input[name=cell_2g]").val();
         let cell_3g = $("input[name=cell_3g]").val();
@@ -583,7 +612,17 @@ $(function() {
         let hora_corte_ini = $("*[name=corte_fecha1_time]").val();
         let fecha_corte_fin = $("*[name=corte_fecha2_date]").val();
         let hora_corte_fin = $("*[name=corte_fecha2_time]").val();
+        let minutes_diff = document.querySelector(".corte_diff_label").attributes["data-min"].value;
+        minutes_diff = parseInt(minutes_diff);
         if(hora_corte_fin !== ''){
+            if(isNaN(minutes_diff)){
+                alert("La diferencia de minutos no es valida");
+                return;
+            }
+            if(minutes_diff <= 0){
+                alert("La diferencia de minutos debe ser mayor a cero");
+                return;
+            }
             tbl_extraccion.add({
                 cell2g: cell_2g,
                 cell3g: cell_3g,
@@ -602,6 +641,8 @@ $(function() {
             $("*[name=corte_fecha1_time]").val('');
             $("*[name=corte_fecha2_date]").val('');
             $("*[name=corte_fecha2_time]").val('');
+            document.querySelector("input[name=corte_fecha1_date]").dispatchEvent(new Event("change"));
+            document.querySelector("input[name=corte_fecha2_date]").dispatchEvent(new Event("change"));
         }else{
             alert("Antes de agregar completar todos los datos");
         }
