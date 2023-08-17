@@ -38,11 +38,11 @@
                             </div>
                         </div>
                         <div class="col-lg-12 form-group tab-item 2">
-                            <label for="">Fecha1</label>
+                            <label for="">Fecha Inicio</label>
                             <input type="date" class="form-control form-control-sm" name="fecha1" required>
                         </div>
                         <div class="col-lg-12 form-group tab-item 2">
-                            <label for="">Fecha2</label>
+                            <label for="">Fecha Fin</label>
                             <input type="date" class="form-control form-control-sm" name="fecha2" required>
                         </div>
                     </div>
@@ -187,6 +187,15 @@ $(function() {
         .catch(error => {
             $(".min_periodo").html("Periodo mínimo: yyyymm<br>Periodo máximo: yyyymm");
         });
+    });
+
+    document.querySelector("input[name=fecha1]").addEventListener("change", function(e){
+        let fecha2 = document.querySelector("input[name=fecha2]");
+        fecha2.min = e.target.value;
+    });
+    document.querySelector("input[name=fecha2]").addEventListener("change", function(e){
+        let fecha1 = document.querySelector("input[name=fecha1]");
+        fecha1.max = e.target.value;
     });
 
     // select
