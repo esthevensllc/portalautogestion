@@ -115,6 +115,19 @@ return [
             'edition'       => env('DB5_EDITION', 'ora$base'),
         ],
 
+        'ch-dn02' => [
+            'driver' => 'bavix::clickhouse',
+            'host' => env('DB6_HOST', 'localhost'),
+            'port' => env('DB6_PORT', '1433'),
+            'database' => env('DB6_DATABASE', 'default'),
+            'username' => env('DB6_USERNAME', 'default'),
+            'password' => env('DB6_PASSWORD', ''),
+            'options' => [
+                'timeout' => 30,
+                'protocol' => 'http'
+            ]
+        ],
+
         'sqlite' => [
             'driver' => 'sqlite',
             'url' => env('DATABASE_URL'),
