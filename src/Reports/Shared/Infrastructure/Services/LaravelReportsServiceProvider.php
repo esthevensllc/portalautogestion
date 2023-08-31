@@ -136,5 +136,9 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\SolicitudDatosConfirmacion\Domain\SolicitudDatosConfirmacionRepository::class,
             \AMovil\Reports\SolicitudDatosConfirmacion\Infrastructure\EloquentSolicitudDatosConfirmacionRepository::class
         );
+        $this->app->bind(
+            \AMovil\Reports\GeoMarketing\Domain\GeoMarketingRepository::class,
+            \AMovil\Reports\GeoMarketing\Infrastructure\EloquentGeoMarketingRepository::class
+        );
     }
 }

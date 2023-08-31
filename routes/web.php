@@ -454,4 +454,11 @@ Route::group([
         Route::get('/getTable', [\AMovil\Reports\SolicitudDatosConfirmacion\Controllers\SolicitudDatosConfirmacionController::class, 'getTable'])->name('solicitud-datos-confirmacion.getTable');
         Route::post('/export', [\AMovil\Reports\SolicitudDatosConfirmacion\Controllers\SolicitudDatosConfirmacionController::class, 'export']);
     });
+
+    // GEOMARKETING
+    Route::group(['prefix' => 'geomarketing', 'trac_name' => 'geomarketing'], function(){
+        Route::get('/', [\AMovil\Reports\GeoMarketing\Controllers\GeoMarketingController::class, 'view']);
+        Route::post('/export', [\AMovil\Reports\GeoMarketing\Controllers\GeoMarketingController::class, 'export']);
+    });
+
 });
