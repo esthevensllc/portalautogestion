@@ -15,7 +15,7 @@ class ExportGeoMarketing
         $this->repository = $repo;
     }
 
-    public function __invoke($fechaIni, $fechaFin)
+    public function __invoke($nintex, $base, $fechaIni, $fechaFin)
     {
         $dtFechaIni = DateTime::createFromFormat("Y-m-d H:i", $fechaIni);
         $dtFechaFin = DateTime::createFromFormat("Y-m-d H:i", $fechaFin);
@@ -28,10 +28,14 @@ class ExportGeoMarketing
             $content .= $row["msisdn"].PHP_EOL;
         }
 
-        $strNow = (new DateTime())->format("YmdHis");
+        $now = new DateTime();
+        $strNow = $now->format("YmdHis");
+        $filename = "BASE_ESTADIO_NACIONAL_{$strNow}.csv";
+
+        $this->repository->saveLog($nintex, $base, $dtFechaIni, $dtFechaFin, $now, $filename);
 
         return new Response([], [
-            "filename" => "BASE_ESTADIO_NACIONAL_{$strNow}.csv",
+            "filename" => $filename,
             "type" => "csv",
             "content" => $content,
         ]);

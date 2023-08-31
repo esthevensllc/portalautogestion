@@ -91,6 +91,21 @@ class EloquentGeoMarketingRepository implements GeoMarketingRepository
         return $data;
     }
 
+    public function saveLog($nintex, $base, DateTime $fechaIni, DateTime $fechaFin, DateTime $createAt, $filename)
+    {
+        $this->userIdentifier = $this->authService->getUserIdentifier();
+        DB::connection("ch-dn02")->table("cdrdatos.table_nintex_geomarketing")
+        ->insert([
+            "codigo_c" => $this->userIdentifier,
+            "nintex" => $nintex,
+            "base" => $base,
+            "fecha_inicio" => $fechaIni->format("Y-m-d H:i:s"),
+            "fecha_fin" => $fechaFin->format("Y-m-d H:i:s"),
+            "created_at" => $createAt->format("Y-m-d H:i:s"),
+            "filename_exported" => $filename
+        ]);
+    }
+
     private function exec_sql(array $queries)
     {
         foreach($queries as $row){

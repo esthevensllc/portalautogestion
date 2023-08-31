@@ -9,7 +9,14 @@
             <div class="mb-3 row">
                 <div class="col-lg-3 col-md-4">
                     <div class="form-group">
-                        <select name="" class="form-control form-control-sm" required>
+                        <label for="">INGRESE NINTEX</label>
+                        <input type="text" class="form-control form-control-sm primary-input" name="nintex" placeholder="Ingrese Nintex" required>
+                    </div>
+                </div>
+                <div class="col-12"></div>
+                <div class="col-lg-3 col-md-4">
+                    <div class="form-group">
+                        <select name="" class="form-control form-control-sm primary-input" name="base" required>
                             <option value="">Seleccione Base</option>
                             @foreach ($config["bases"] as $row)
                                 <option value="{{ $row["id"] }}">{{ $row["label"] }}</option>
@@ -18,7 +25,7 @@
                     </div>
                 </div>
             </div>
-            <div class="mb-3 row">
+            <div class="mb-3 row form-section-2" style="display: none;">
                 <div class="col-lg-3 col-md-4">
                     <div class="form-group">
                         <label for="">Fecha Inicio</label>
@@ -58,6 +65,21 @@ $(function() {
             requestOptions: {headers: {"Accept": "application/json"}}
         }, e);
     });
+    
+    document.querySelectorAll(".primary-input")
+    .forEach(inputEl => {
+        inputEl.addEventListener("change", function(e){
+            let passes = true;
+            document.querySelectorAll(".primary-input")
+            .forEach(input => {
+                if(input.value === ''){
+                    passes = false;
+                }
+            });
+            document.querySelector(".form-section-2").style.display = passes ? '': 'none';
+        });
+    });
+
 });
 </script>
 @endsection
