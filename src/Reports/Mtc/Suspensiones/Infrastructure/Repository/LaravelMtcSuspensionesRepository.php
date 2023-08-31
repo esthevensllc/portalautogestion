@@ -863,7 +863,7 @@ class LaravelMtcSuspensionesRepository implements MtcSuspensionesRepository
                 AA.ASNC_TIPO_TELEFONICO,
                 AA.ASNV_NUMERO_LINEA,
                 BB.estado ASNC_ESTADO,
-                TO_CHAR(BB.FECHA, 'DD/MM/YYYY') ASND_FECHA_NOTIFICACION,
+                CASE WHEN ESTADO='S' THEN TO_CHAR(BB.FECHA, 'DD/MM/YYYY') WHEN ESTADO='N' THEN '' END  ASND_FECHA_NOTIFICACION,
                 BB.OBSERVACION ASNC_MOTIVO_NONOTIFICA 
                 from USRAES.TMP_TXT_NOTIFI_{$this->userIdentifier} AA 
                 LEFT JOIN (
