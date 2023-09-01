@@ -1421,7 +1421,8 @@ class EloquentExtraccionRepository implements ExtraccionRepository
     public function getReportes()
     {
         return DB::table("usraes.noc_informe_de_fallas")
-        ->selectRaw("numero_de_reporte,ticket,name_file,fecha_carga,revisado,aprobado,procesado,acreditado_pre,acreditado_post")
+        ->selectRaw("numero_de_reporte,ticket,name_file,fecha_carga,revisado,aprobado,procesado,acreditado_pre,acreditado_post,
+        en_ejecucion_pre, en_ejecucion_post")
         ->orderByDesc('fecha_carga')
         // ->take(10)
         ->get();
@@ -1504,6 +1505,30 @@ class EloquentExtraccionRepository implements ExtraccionRepository
         return DB::table("usraes.noc_informe_de_fallas")
         ->where('numero_de_reporte',$id)
         ->update(['procesado' => '1']);
+    }
+
+    public function enEjecucionPre($id){
+        DB::table("usraes.noc_informe_de_fallas")
+        ->where('numero_de_reporte', $id)
+        ->update(['en_ejecucion_pre' => '1']);
+    }
+
+    public function enEsperaPre($id){
+        DB::table("usraes.noc_informe_de_fallas")
+        ->where('numero_de_reporte', $id)
+        ->update(['en_ejecucion_pre' => '0']);
+    }
+
+    public function enEjecucionPost($id){
+        DB::table("usraes.noc_informe_de_fallas")
+        ->where('numero_de_reporte', $id)
+        ->update(['en_ejecucion_post' => '1']);
+    }
+
+    public function enEsperaPost($id){
+        DB::table("usraes.noc_informe_de_fallas")
+        ->where('numero_de_reporte', $id)
+        ->update(['en_ejecucion_post' => '0']);
     }
 
     public function getReportesSnRevisado()

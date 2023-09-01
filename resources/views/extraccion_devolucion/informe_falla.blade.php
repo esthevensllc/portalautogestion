@@ -35,6 +35,30 @@
     </div>
 </div>
 
+<div class="modal" id="update-status-modal" tabindex="-1" role="dialog">
+    <form id="frm-update-status">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">¿Estás seguro?</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="status" value="">
+                    <input type="hidden" name="id" value="">
+                    <p class="label">¿Estás seguro de que quieres eliminar este reporte?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
 <!-- Modal para poner en espera-->
 <div class="modal" id="enEsperaModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
@@ -160,6 +184,8 @@
             <th>Procesado</th>
             <th>Acreditado Pre</th>
             <th>Acreditado Post</th>
+            <th>En Ejecución Pre</th>
+            <th>En Ejecución Post</th>
             <th>Acciones</th>
         </tr>
     </thead>
@@ -205,6 +231,8 @@ $(function() {
             {data: 'procesado'},
             {data: 'acreditado_pre'},
             {data: 'acreditado_post'},
+            {data: 'en_ejecucion_pre'},
+            {data: 'en_ejecucion_post'},
             {render: function(data, type, row){
                 var buttonAprobar = `<div class="dropdown d-inline-block">
                     <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -215,6 +243,25 @@ $(function() {
                         <a class="dropdown-item" href="#" data-toggle="modal" data-target="#aprobarModal"  data-id="${row['numero_de_reporte']}"><li class="la la-check-circle text-success"></li> Aprobar</a>
                         <a class="dropdown-item" href="#" data-toggle="modal" data-target="#desaprobarModal" data-id="${row['numero_de_reporte']}"><li class="la la-times-circle text-danger"></li> Desaprobar</a>
                         <a class="dropdown-item" href="#" data-toggle="modal" data-target="#enEsperaModal" data-id="${row['numero_de_reporte']}"><li class="la la-circle"></li> En Espera</a>
+                    </div>
+                </div>
+                <div class="dropdown d-inline-block">
+                    <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="dropdownMenuEnEjecucion" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Ejecución
+                    </button>
+                    <div class="dropdown-menu" aria-labelledby="dropdownMenuEnEjecucion">
+                        <a class="dropdown-item show-alert-confirmation" href="#" data-id="${row['numero_de_reporte']}" data-name="enEjecucionPre" data-label="En Ejecución Pre">
+                            <li class="la la-check-circle text-success"></li> En Ejecución Pre
+                        </a>
+                        <a class="dropdown-item show-alert-confirmation" href="#" data-id="${row['numero_de_reporte']}" data-name="enEsperaPre" data-label="En Espera Pre">
+                            <li class="la la-circle"></li> En Espera Pre
+                        </a>
+                        <a class="dropdown-item show-alert-confirmation" href="#" data-id="${row['numero_de_reporte']}" data-name="enEjecucionPost" data-label="En Ejecución Post">
+                            <li class="la la-check-circle text-success"></li> En Ejecución Post
+                        </a>
+                        <a class="dropdown-item show-alert-confirmation" href="#" data-id="${row['numero_de_reporte']}" data-name="enEsperaPost" data-label="En Espera Post">
+                            <li class="la la-circle"></li> En Espera Post
+                        </a>
                     </div>
                 </div>`;
                 return `<button
@@ -240,6 +287,15 @@ $(function() {
                 if($(cell).text() === '2') {
                     $(cell).html('<li class="la la-times-circle text-danger"></li>');
                 }
+            });
+            $(".show-alert-confirmation").on("click", function(e){
+                let id = e.target.attributes["data-id"].value;
+                let name = e.target.attributes["data-name"].value;
+                let label = e.target.attributes["data-label"].value;
+                $("#frm-update-status input[name=status]").val(name);
+                $("#frm-update-status input[name=id]").val(id);
+                $("#frm-update-status .label").text(`¿Estás seguro de que quieres poner ${label} este reporte?`);
+                $("#update-status-modal").modal("show");
             });
         },
         lengthChange: false,
@@ -499,6 +555,34 @@ $(function() {
             }
         });
     });
+
+    $('#frm-update-status').on("submit", function(e) {
+        e.preventDefault();
+        $("#update-status-modal").modal("hide");
+        let status = $("#frm-update-status input[name=status]").val();
+        let id = $("#frm-update-status input[name=id]").val();
+        $.ajax({
+            url: "{{ asset('extraccion-devolucion/informe-fallas/update-status') }}",
+            type: 'POST',
+            data: {status: status, id: id},
+            success: function(response) {
+                _datatable.ajax.reload();
+                new Noty({
+                    type: 'success',
+                    layout: 'topRight',
+                    text: "Se actualizo correctamente"
+                }).show();
+            },
+            error: function(xhr, status, error) {
+                new Noty({
+                    type: 'error',
+                    layout: 'topRight',
+                    text: "Error: "+xhr.responseText
+                }).show();
+            }
+        });
+    });
+
 });
 </script>
 @endsection

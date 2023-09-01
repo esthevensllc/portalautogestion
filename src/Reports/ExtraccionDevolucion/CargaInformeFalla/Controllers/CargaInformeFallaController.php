@@ -11,6 +11,7 @@ use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Services\AprobarReport
 use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Services\DesaprobarReport;
 use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Services\EnEsperaReport;
 use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Services\RevisadoReport;
+use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Services\UpdateReportStatus;
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services\ExportExtraccion;
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services\ExportMontoDevolucion;
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services\ExportRepPostpago;
@@ -32,6 +33,7 @@ class CargaInformeFallaController
     private $desaprobarReport;
     private $enEsperaReport;
     private $revisadoReport;
+    private $updateReportStatus;
     private $service;
     private $exportRepMontoDevolucion;
     private $processExtraccion;
@@ -50,6 +52,7 @@ class CargaInformeFallaController
         DesaprobarReport $desaprobarReport,
         EnEsperaReport $enEsperaReport,
         RevisadoReport $revisadoReport,
+        UpdateReportStatus $updateReportStatus,
         ExportExtraccion $service,
         ExportMontoDevolucion $exportRepMontoDevolucion,
         ProcessExtraccion $processExtraccion,
@@ -67,6 +70,7 @@ class CargaInformeFallaController
         $this->desaprobarReport = $desaprobarReport;
         $this->enEsperaReport = $enEsperaReport;
         $this->revisadoReport = $revisadoReport;
+        $this->updateReportStatus = $updateReportStatus;
         $this->exportRepMontoDevolucion = $exportRepMontoDevolucion;
         $this->processExtraccion = $processExtraccion;
         $this->exportUsuarioAfectados = $exportUsuarioAfectados;
@@ -211,6 +215,12 @@ class CargaInformeFallaController
     {
         $response = $this->revisadoReport->__invoke($request->input('id'));
         return response()->json(["result" => $response]);
+    }
+
+    public function updateReportStatus(Request $request)
+    {
+        $this->updateReportStatus->__invoke($request->input('status'), $request->input('id'));
+        return response()->json(["passes" => true]);
     }
 
     public function updateView()

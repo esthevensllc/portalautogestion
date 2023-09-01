@@ -29,6 +29,10 @@ interface ExtraccionRepository
     public function enEspera($id);
     public function revisado($id);
     public function procesado($id);
+    public function enEjecucionPre($id);
+    public function enEsperaPre($id);
+    public function enEjecucionPost($id);
+    public function enEsperaPost($id);
     public function getReportesSnRevisado();
     public function getReportesAprobados();
     public function getReportesProcesados();
