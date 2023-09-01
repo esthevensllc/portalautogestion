@@ -11,6 +11,9 @@
                     <div class="form-group">
                         <label for="">INGRESE NINTEX</label>
                         <input type="text" class="form-control form-control-sm primary-input" name="nintex" placeholder="Ingrese Nintex" required>
+                        <div class="invalid-feedback d-block text-dark">
+                            Es obligatorio ingresar el req de nintex debido a que es información sensible
+                        </div>
                     </div>
                 </div>
                 <div class="col-12"></div>
