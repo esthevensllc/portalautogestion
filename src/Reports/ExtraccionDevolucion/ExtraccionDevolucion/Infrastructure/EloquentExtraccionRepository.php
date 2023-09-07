@@ -1314,7 +1314,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
     public function getBaseDevolucionPrepago(Datetime $fechaCorteIni)
     {
         $this->userIdentifier = $this->authService->getUserIdentifier();
-        $strFechaCorteIni = $fechaCorteIni->format("d-m-Y");
+        $strFechaCorteIni = $fechaCorteIni->format("d/m/Y");
         return DB::connection("oracle_reptdm")
         ->table("USRAES.BASE_PREV_BASEDEV_{$this->userIdentifier}")
         ->selectRaw("MSISDN,MSISDN_ACTUAL MSISDN_DEVOL,MTO_TOTAL_DEV_IGV*100 CENTIMOS,'Dev. por interrupcion del {$strFechaCorteIni}. Tasa aplicada  0.01%' GLOSA")
@@ -1324,7 +1324,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
 
     public function saveResultsInlog(string $log_id, DateTime $fechaCorteIni)
     {
-        $strFechaCorteIni = $fechaCorteIni->format("d-m-Y");
+        $strFechaCorteIni = $fechaCorteIni->format("d/m/Y");
         DB::connection("oracle_reptdm")
         ->statement("BEGIN
             INSERT INTO USRAES.BASE_ABONADOS_WEB_MOVIL_LOG(ID_UNIQUE,TICKET,ID_CLIENTE,NOMBRES,APELLIDOS,MSISDN,TIPO_DOCUMENTO,
@@ -1391,7 +1391,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
         return DB::connection("oracle_reptdm")
         ->select(DB::raw("SELECT 
         MSISDN,ID_CLIENTE,NRO_DOCUMENTO,MSISDN_DEVOLVER MSISDN_DEVOL,MTO_TOTAL_DEV_IGV*100 CENTIMOS,
-        'Dev. por interrupcion del ' || TO_CHAR(FECHA_CORTE, 'DD-MM-YYYY') || '. Tasa aplicada  0.01%' GLOSA
+        'Dev. por interrupcion del ' || TO_CHAR(FECHA_CORTE, 'DD/MM/YYYY') || '. Tasa aplicada  0.01%' GLOSA
         FROM USRAES.BASE_PREV_BASEDEV
         WHERE TICKET= :p_ticket
         AND MODALIDAD_DEV LIKE '%PREPAGO%'
