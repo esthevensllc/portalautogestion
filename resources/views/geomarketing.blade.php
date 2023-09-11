@@ -88,7 +88,7 @@ $(function() {
         fecha2.min = e.target.value;
 
         let date = "2023-01-01T" + e.target.value + ":00";
-        let timestamp = (new Date(date)).getTime() + 1000*60*119;
+        let timestamp = (new Date(date)).getTime() + 1000*60*179;
         let maxDate = new Date(timestamp);
         let maxTime = maxDate.getHours().toString().padStart(2, "0") + ":" + maxDate.getMinutes().toString().padStart(2, "0");
         console.log(maxTime);
@@ -100,7 +100,7 @@ $(function() {
         fecha1.max = e.target.value;
 
         let date = "2023-01-01T" + e.target.value + ":00";
-        let timestamp = (new Date(date)).getTime() - 1000*60*119;
+        let timestamp = (new Date(date)).getTime() - 1000*60*179;
         let minDate = new Date(timestamp);
         let minTime = minDate.getHours().toString().padStart(2, "0") + ":" + minDate.getMinutes().toString().padStart(2, "0");
 
