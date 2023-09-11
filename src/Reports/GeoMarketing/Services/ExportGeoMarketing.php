@@ -4,7 +4,9 @@ namespace AMovil\Reports\GeoMarketing\Services;
 
 use AMovil\Reports\GeoMarketing\Domain\GeoMarketingRepository;
 use AMovil\Shared\Application\Response;
+use DateInterval;
 use DateTime;
+use Exception;
 
 class ExportGeoMarketing
 {
@@ -19,6 +21,15 @@ class ExportGeoMarketing
     {
         $dtFechaIni = DateTime::createFromFormat("Y-m-d H:i", $fechaIni);
         $dtFechaFin = DateTime::createFromFormat("Y-m-d H:i", $fechaFin);
+        $now = new DateTime();
+        $diff = $dtFechaFin->getTimestamp() - $dtFechaIni->getTimestamp();
+        $max_diff_hours = 2*3600;
+        if($max_diff_hours < $diff){
+            throw new Exception("No se puede consultar un rango mayor a 2 horas");
+        }
+        if($dtFechaIni->format("Y-m-d") !== $now->format("Y-m-d") || $dtFechaFin->format("Y-m-d") !== $now->format("Y-m-d")){
+            throw new Exception("No se puede consultar un dia diferente al dia actual");
+        }
 
         $data = $this->repository->getReport($dtFechaIni, $dtFechaFin);
 
