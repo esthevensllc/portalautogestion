@@ -23,7 +23,7 @@ class ExportGeoMarketing
         $dtFechaFin = DateTime::createFromFormat("Y-m-d H:i", $fechaFin);
         $now = new DateTime();
         $diff = $dtFechaFin->getTimestamp() - $dtFechaIni->getTimestamp();
-        $max_diff_hours = 3*3600;
+        $max_diff_hours = 4*3600;
         if($max_diff_hours < $diff){
             throw new Exception("No se puede consultar un rango mayor a 2 horas");
         }
