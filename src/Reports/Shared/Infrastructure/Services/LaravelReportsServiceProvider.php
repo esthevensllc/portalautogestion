@@ -140,5 +140,9 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\GeoMarketing\Domain\GeoMarketingRepository::class,
             \AMovil\Reports\GeoMarketing\Infrastructure\EloquentGeoMarketingRepository::class
         );
+        $this->app->bind(
+            \AMovil\Reports\General\BloqueoImei\Domain\BloqueoImeiRepository::class,
+            \AMovil\Reports\General\BloqueoImei\Infrastructure\EloquentBloqueoImeiRepository::class
+        );
     }
 }

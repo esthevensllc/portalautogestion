@@ -466,7 +466,8 @@ Route::group([
     Route::group(['prefix' => 'bloqueo-imei', 'trac_name' => 'bloqueo-imei'], function(){
         Route::get('/', [\AMovil\Reports\General\BloqueoImei\Controllers\BloqueoImeiController::class, 'view']);
         Route::get('search', [\AMovil\Reports\General\BloqueoImei\Controllers\BloqueoImeiController::class, 'search']);
-        // Route::post('/export', [\AMovil\Reports\GeoMarketing\Controllers\GeoMarketingController::class, 'export']);
+        Route::post('/export', [\AMovil\Reports\General\BloqueoImei\Controllers\BloqueoImeiController::class, 'export']);
+        Route::delete('reportlog/{id}', [\AMovil\Reports\General\BloqueoImei\Controllers\BloqueoImeiController::class, 'deleteReportlog']);
     });
 
 });

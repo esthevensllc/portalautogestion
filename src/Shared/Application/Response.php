@@ -13,6 +13,10 @@ class Response
         $this->data = $data;
     }
 
+    public static function respData($data = null){
+        return new self([], $data);
+    }
+
     public function data(){
         return $this->data;
     }

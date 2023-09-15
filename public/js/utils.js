@@ -72,6 +72,9 @@ const utils = {
             }else{
                 utils.downloadFile(blob_text, filename);
             }
+            if(config['successCallback']){
+                await config['successCallback']();
+            }
         } catch (error) {
             console.log(error);
             alert(error.message);
