@@ -19,6 +19,7 @@ use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services\ExportRepP
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services\ExportUsuarioAfectados;
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services\ProcessExtraccion;
 use AMovil\Reports\ExtraccionDevolucion\TicketReports\Services\GetTicketReports;
+use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Services\GetReportesByCriteria;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -41,6 +42,7 @@ class CargaInformeFallaController
     private $exportRepPostpago;
     private $exportRepPrepago;
     private $getTicketReports;
+    private $getReportesByCriteria;
 
     public function __construct(
         CargarReporte $cargarReporte,
@@ -60,6 +62,7 @@ class CargaInformeFallaController
         ExportRepPostpago $exportRepPostpago,
         ExportRepPrepago $exportRepPrepago,
         GetTicketReports $getTicketReports,
+        GetReportesByCriteria $getReportesByCriteria,
     ){
         $this->service = $service;
         $this->getReports = $getReports;
@@ -78,6 +81,7 @@ class CargaInformeFallaController
         $this->exportRepPrepago = $exportRepPrepago;
         $this->cargarReporte = $cargarReporte;
         $this->getTicketReports = $getTicketReports;
+        $this->getReportesByCriteria = $getReportesByCriteria;
     }
 
     public function view()
@@ -173,6 +177,13 @@ class CargaInformeFallaController
     {
         $response = $this->findReportInput->__invoke($id);
         return response()->json($response);
+    }
+
+    public function getReportesByTicket($ticket){
+        $reports = $this->getReportesByCriteria->__invoke([
+            ["ticket", $ticket],
+        ])->data();
+        return response()->json(["data" => $reports]);
     }
 
     public function reportView($id)

@@ -1431,7 +1431,8 @@ class EloquentExtraccionRepository implements ExtraccionRepository
     public function findInputFor($numero)
     {
         return DB::table("usraes.noc_informe_de_fallas")
-        ->selectRaw("numero_de_reporte,ticket,name_file,fecha_carga,revisado,aprobado,procesado,acreditado_pre,acreditado_post")
+        ->selectRaw("numero_de_reporte,ticket,name_file,fecha_carga,revisado,aprobado,procesado,acreditado_pre,acreditado_post,
+        en_ejecucion_pre, en_ejecucion_post")
         ->where('numero_de_reporte',$numero)
         ->get();
     }
@@ -1439,7 +1440,8 @@ class EloquentExtraccionRepository implements ExtraccionRepository
     public function findInformeByTicket($ticket)
     {
         return DB::table("usraes.noc_informe_de_fallas")
-        ->selectRaw("numero_de_reporte,ticket,name_file,fecha_carga,revisado,aprobado,procesado,acreditado_pre,acreditado_post")
+        ->selectRaw("numero_de_reporte,ticket,name_file,fecha_carga,revisado,aprobado,procesado,acreditado_pre,acreditado_post,
+        en_ejecucion_pre, en_ejecucion_post")
         ->where('ticket', $ticket)
         ->first();
     }
@@ -1718,7 +1720,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
     public function getReportesByCriteria($filters)
     {
         $builder = DB::table("usraes.noc_informe_de_fallas")
-        ->selectRaw("ticket,numero_de_reporte,name_file");
+        ->selectRaw("*");
 
         foreach($filters as $row){
             $builder->where($row[0], $row[1]);

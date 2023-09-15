@@ -9,6 +9,9 @@
     table.dataTable td, table.dataTable th{
         padding: 0.4rem;
     }
+    .dataTables_scrollBody{
+        position: unset !important;
+    }
 </style>
 @include('includes.select2_css')
 @endsection
@@ -156,14 +159,26 @@
 @section('content')
 <h4>{{ $config["title"] }}</h4>
 <div class="d-flex">
-    <div class="col-lg-3 col-md-4 form-group ml-auto">
+    <div class="col-lg-4 col-md-4 form-group ml-auto">
         <label for="">Buscar Reporte:</label>
-        <select name="numero_reporte_select" class="form-control form-control-sm">
-            <option value="">Todos</option>
-            @foreach ($config["numero_reportes"] as $row)
-                <option>{{ $row->numero_de_reporte }}</option>
-            @endforeach
-        </select>
+        <div class="d-flex">
+            <select name="filter_type" class="form-control form-control-sm">
+                <option value="numero_reporte_select">N° Reporte</option>
+                <option value="ticket">Ticket</option>
+            </select>
+            <select name="numero_reporte_select" class="form-control form-control-sm slc-filter">
+                <option value="">Todos</option>
+                @foreach ($config["numero_reportes"] as $row)
+                    <option>{{ $row->numero_de_reporte }}</option>
+                @endforeach
+            </select>
+            <select name="ticket" class="form-control form-control-sm slc-filter">
+                <option value="">Todos</option>
+                @foreach ($config["tickets"] as $row)
+                    <option>{{ $row->ticket }}</option>
+                @endforeach
+            </select>
+        </div>
     </div>
 </div>
 
@@ -234,7 +249,7 @@ $(function() {
             {data: 'en_ejecucion_pre'},
             {data: 'en_ejecucion_post'},
             {render: function(data, type, row){
-                var buttonAprobar = `<div class="dropdown d-inline-block">
+                var buttonAprobar = `<div class="dropdown d-inline-block" style="position: unset;">
                     <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         Aprobación
                     </button>
@@ -245,7 +260,7 @@ $(function() {
                         <a class="dropdown-item" href="#" data-toggle="modal" data-target="#enEsperaModal" data-id="${row['numero_de_reporte']}"><li class="la la-circle"></li> En Espera</a>
                     </div>
                 </div>
-                <div class="dropdown d-inline-block">
+                <div class="dropdown d-inline-block" style="position: unset;">
                     <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="dropdownMenuEnEjecucion" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         Ejecución
                     </button>
@@ -309,6 +324,10 @@ $(function() {
 
     // inicio
     $("select[name=numero_reporte_select]").select2({width: '100%'});
+    $("select[name=ticket]").select2({width: '100%'});
+    setTimeout(() => {
+        $("select[name=ticket]").next().hide();
+    }, 100);
 
     function filter_sub_elements(element, callback_filter)
     {
@@ -331,9 +350,23 @@ $(function() {
         });
     }
 
+    $("select[name=filter_type]")
+    .on("change", function(e){
+        let type = e.target.value;
+        $("select[name=numero_reporte_select]").next().hide();
+        $("select[name=ticket]").next().hide();
+        $(`select[name=${type}]`).val('').trigger('change').next().show();
+    });
+
     $("select[name=numero_reporte_select]")
     .on("change", function(e){
-        _datatable.ajax.url(`{{ asset('extraccion-devolucion/informe-fallas/search') }}/${e.target.value}`).load();
+        let subUrl = e.target.value !== '' ? '/n-reporte' : '';
+        _datatable.ajax.url(`{{ asset('extraccion-devolucion/informe-fallas/search') }}${subUrl}/${e.target.value}`).load();
+    });
+    $("select[name=ticket]")
+    .on("change", function(e){
+        let subUrl = e.target.value !== '' ? '/ticket' : '';
+        _datatable.ajax.url(`{{ asset('extraccion-devolucion/informe-fallas/search') }}${subUrl}/${e.target.value}`).load();
     });
 
     $(document).on('click', '#eliminar', function() {

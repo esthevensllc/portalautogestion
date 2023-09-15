@@ -15,6 +15,12 @@ class InformeFallasController
             ->select("numero_de_reporte")
             ->orderBy("numero_de_reporte")
             ->get(),
+            "tickets" => DB::table("usraes.noc_informe_de_fallas")
+            ->select("ticket")
+            ->whereNotNull("ticket")
+            ->groupBy("ticket")
+            ->orderBy("ticket")
+            ->get(),
         ];
         return view("extraccion_devolucion.informe_falla", compact("config"));
     }

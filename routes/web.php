@@ -393,7 +393,8 @@ Route::group([
     Route::group(['prefix' => 'extraccion-devolucion/informe-fallas', 'trac_name' => 'extraccion-devolucion.informe-fallas'], function(){
         Route::get('/', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\InformeFallasController::class, 'view']);
         Route::get('search', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'get']);
-        Route::get('search/{id}', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'findInput']);
+        Route::get('search/n-reporte/{id}', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'findInput']);
+        Route::get('search/ticket/{ticket}', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'getReportesByTicket']);
         Route::post('/delete/{id}', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'delete']);
         Route::post('/aprobar', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'aprobar']);
         Route::post('/desaprobar', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'desaprobar']);
@@ -460,6 +461,12 @@ Route::group([
     Route::group(['prefix' => 'geomarketing', 'trac_name' => 'geomarketing'], function(){
         Route::get('/', [\AMovil\Reports\GeoMarketing\Controllers\GeoMarketingController::class, 'view']);
         Route::post('/export', [\AMovil\Reports\GeoMarketing\Controllers\GeoMarketingController::class, 'export']);
+    });
+
+    Route::group(['prefix' => 'bloqueo-imei', 'trac_name' => 'bloqueo-imei'], function(){
+        Route::get('/', [\AMovil\Reports\General\BloqueoImei\Controllers\BloqueoImeiController::class, 'view']);
+        Route::get('search', [\AMovil\Reports\General\BloqueoImei\Controllers\BloqueoImeiController::class, 'search']);
+        // Route::post('/export', [\AMovil\Reports\GeoMarketing\Controllers\GeoMarketingController::class, 'export']);
     });
 
 });
