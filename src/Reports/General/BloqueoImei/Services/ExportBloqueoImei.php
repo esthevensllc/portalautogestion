@@ -66,7 +66,7 @@ class ExportBloqueoImei
             "losd_datavolume_fbc_downlink" => ['label' => 'losd_datavolume_fbc_downlink'],
             "pgw_address" => ['label' => 'pgw_address'],
             "charging_id" => ['label' => 'charging_id'],
-            "served_pdppdn_address" => ['label' => 'served_pdppdn_address'],
+            "served_pdppdn_address1" => ['label' => 'served_pdppdn_address'],
             "duration" => ['label' => 'duration'],
             "charging_characteristics" => ['label' => 'charging_characteristics'],
             "losd_rating_group" => ['label' => 'losd_rating_group'],
@@ -101,7 +101,7 @@ class ExportBloqueoImei
         $this->repo->saveReporteLog($id, $this->authService->getUserIdentifier(), $filename, count($inputFile["values"]));
 
         return new Response([], [
-            "filename" => "BASE_BLOQUEO_IMEI_{$id}.xlsx",
+            "filename" => "CONSULTA_IMEI_{$id}.xlsx",
             "type" => "xlsx",
             "content" => $content
         ]);
