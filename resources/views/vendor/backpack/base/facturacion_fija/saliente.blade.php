@@ -97,7 +97,7 @@ $(function() {
 
         $.ajax({
             type: "GET",
-            url: '/portalautogestion/public/facturacion-fija/salientes/validReport',
+            url: "{{ url('facturacion-fija/salientes/validReport') }}",
             data: {
                 cod_cliente: cod_cliente,
                 f_ini: f_ini,
@@ -130,7 +130,7 @@ $(function() {
                 }
                 else
                 {
-                    fetch("http://172.19.192.170/portalautogestion/public/facturacion-fija/salientes/export"+`?cod_cliente=${cod_cliente}&f_ini=${f_ini}&f_fin=${f_fin}`, {
+                    fetch("{{ url('facturacion-fija/salientes/export') }}"+`?cod_cliente=${cod_cliente}&f_ini=${f_ini}&f_fin=${f_fin}`, {
                         method: 'GET'
                     })
                     .then(response => {

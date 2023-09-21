@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers\FacturacionFija;
 
+use AMovil\Auth\AccessControl\Domain\AuthService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use DB;
@@ -11,6 +12,14 @@ use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
 
 class FacturacionFijaController extends Controller {
+    private $authService;
+    private $userIdentifier;
+
+    public function __construct(AuthService $authService)
+    {
+        $this->authService = $authService;
+    }
+
     public function index(){
         $data = [
             'title' => 'Faturacion Fija / Saliente'
@@ -49,6 +58,7 @@ class FacturacionFijaController extends Controller {
     }
 
     public function generar_reporte(Request $request){
+        $this->userIdentifier = $this->authService->getUserIdentifier();
         //$now = Carbon::now();
         //$v_log_id = (int) $now->format('YmdHis');
         $v_cod_clie = $request->get('cod_cliente');
@@ -61,8 +71,16 @@ class FacturacionFijaController extends Controller {
 
         $resp = [];
         $plsql = [];
-        $plsql[] = "drop table USRAES.TB_FIJA_FACTURADA";
-        $plsql[] = "CREATE TABLE USRAES.TB_FIJA_FACTURADA as(
+        // $plsql[] = "drop table USRAES.TB_FIJA_FACTURADA";
+        $plsql[] = "BEGIN
+            EXECUTE IMMEDIATE 'DROP TABLE USRAES.TB_FIJA_FACTURADA_{$this->userIdentifier}';
+        EXCEPTION
+            WHEN OTHERS THEN
+                IF SQLCODE != -942 THEN
+                    RAISE;
+                END IF;
+        END;";
+        $plsql[] = "CREATE TABLE USRAES.TB_FIJA_FACTURADA_{$this->userIdentifier} as(
                 select distinct a.codcli, a.numser serie_recibo, a.numsut num_recibo, ani telefono_origen, 
                 dscisdest telefono_destino,dscserv servicio, b.nomdes nombre_destino,
                 tipdest tipo_destino,
@@ -90,7 +108,7 @@ class FacturacionFijaController extends Controller {
             $resp[] = DB::statement(DB::Raw($sql));
         }
 
-        $result = DB::select(DB::RAW("select telefono_origen from USRAES.TB_FIJA_FACTURADA where rownum = 1"));
+        $result = DB::select(DB::RAW("select telefono_origen from USRAES.TB_FIJA_FACTURADA_{$this->userIdentifier} where rownum = 1"));
         if(isset($result[0])){
             $tel_fijo = $result[0]->telefono_origen;
         }else{
@@ -114,7 +132,7 @@ class FacturacionFijaController extends Controller {
             'mensaje' => 'se generó el archivo'
         ]);*/
 
-        return Excel::download(new FacturacionfijaExport, 'facturacion_fija.xlsx');
+        return Excel::download(new FacturacionfijaExport($this->authService), 'facturacion_fija.xlsx');
     }
 
     public function test()
