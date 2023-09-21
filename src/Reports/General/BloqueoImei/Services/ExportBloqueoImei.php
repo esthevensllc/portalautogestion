@@ -64,6 +64,18 @@ class ExportBloqueoImei
             "cause_for_rec_closing" => ['label' => 'cause_for_rec_closing'],
             "losd_datavolume_fbc_uplink" => ['label' => 'losd_datavolume_fbc_uplink'],
             "losd_datavolume_fbc_downlink" => ['label' => 'losd_datavolume_fbc_downlink'],
+            "pgw_address" => ['label' => 'pgw_address'],
+            "charging_id" => ['label' => 'charging_id'],
+            "served_pdppdn_address" => ['label' => 'served_pdppdn_address'],
+            "duration" => ['label' => 'duration'],
+            "charging_characteristics" => ['label' => 'charging_characteristics'],
+            "losd_rating_group" => ['label' => 'losd_rating_group'],
+            "uli_lac" => ['label' => 'uli_lac'],
+            "uli_sac" => ['label' => 'uli_sac'],
+            "uli_ci" => ['label' => 'uli_ci'],
+            "uli_tai" => ['label' => 'uli_tai'],
+            "uli_ecgi" => ['label' => 'uli_ecgi'],
+            "losd_time_of_report" => ['label' => 'losd_time_of_report'],
         ];
 
         $this->exportService->loadData($headers, $data, [

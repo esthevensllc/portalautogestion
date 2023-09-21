@@ -469,5 +469,21 @@ Route::group([
         Route::post('/export', [\AMovil\Reports\General\BloqueoImei\Controllers\BloqueoImeiController::class, 'export']);
         Route::delete('reportlog/{id}', [\AMovil\Reports\General\BloqueoImei\Controllers\BloqueoImeiController::class, 'deleteReportlog']);
     });
+    Route::group(['prefix' => 'imei-cdr-automatico', 'trac_name' => 'imei-cdr-automatico'], function(){
+        Route::get('/', [\AMovil\Reports\General\BloqueoImei\Controllers\ImeiCRDAutomaticoController::class, 'view']);
+        Route::get('search', [\AMovil\Reports\General\BloqueoImei\Controllers\ImeiCRDAutomaticoController::class, 'search']);
+        Route::post('reportlog/base-imei', [\AMovil\Reports\General\BloqueoImei\Controllers\ImeiCRDAutomaticoController::class, 'importBaseImei']);
+        Route::post('reportlog/base-imei/delete', [\AMovil\Reports\General\BloqueoImei\Controllers\ImeiCRDAutomaticoController::class, 'deleteBaseImei']);
+        Route::delete('reportlog/{id}', [\AMovil\Reports\General\BloqueoImei\Controllers\ImeiCRDAutomaticoController::class, 'deleteReportlog']);
+    });
+    Route::group(['prefix' => 'imei-cdr-automatico/reports', 'trac_name' => 'imei-cdr-automatico.reports'], function(){
+        Route::get('/', [\AMovil\Reports\General\BloqueoImei\Controllers\ImeiCRDAutomaticoController::class, 'reportsView']);
+        Route::get('search', [\AMovil\Reports\General\BloqueoImei\Controllers\ImeiCRDAutomaticoController::class, 'reportSearch']);
+        Route::get('{id}/download', [\AMovil\Reports\General\BloqueoImei\Controllers\ImeiCRDAutomaticoController::class, 'downloadReport']);
+    });
+    Route::group(['prefix' => 'imei-cdr-automatico/config', 'trac_name' => 'imei-cdr-automatico.config'], function(){
+        Route::get('/', [\AMovil\Reports\General\BloqueoImei\Controllers\ImeiCDRConfigController::class, 'view']);
+        Route::post('/', [\AMovil\Reports\General\BloqueoImei\Controllers\ImeiCDRConfigController::class, 'saveConfig']);
+    });
 
 });

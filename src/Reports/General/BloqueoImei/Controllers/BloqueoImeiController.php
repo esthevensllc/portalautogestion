@@ -23,7 +23,7 @@ class BloqueoImeiController
     public function view()
     {
         $config = [
-            'title' => 'BLOQUEO IMEI',
+            'title' => 'Búsqueda IMEIs - CDR',
             'url' => url('bloqueo-imei/export'),
             'deleteUrl' => url('bloqueo-imei/reportlog/[id]'),
         ];

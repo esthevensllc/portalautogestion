@@ -14,31 +14,51 @@
 
 @section('content')
 <h4 style="">{{ $config["title"] }}</h4>
-<div class="card">
-    <div class="card-body">
-        <form id="form_export">
-            @csrf
-            <div class="mb-3 row">
-                <div class="col-lg-3 col-md-4">
-                    <div class="form-group">
-                        <label for="">Ingrese Base IMEI</label>
-                        <input type="file" name="base_imei" placeholder="Ingrese Nintex" accept=".csv,.txt" required>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <form id="form_import">
+                    @csrf
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="">Ingrese Base IMEI</label>
+                                <input type="file" name="import_base_imei" class="d-block" accept=".csv,.txt" required>
+                            </div>
+                        </div>
+                        <div class="col-12" style="display: flex; align-items: end;">
+                            <div class="form-group">
+                                <button type="submit" class="btn btn-primary btn-sm btn_export mb-0">Cargar</button>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="col-12"></div>
-                <div class="col-lg-3 col-md-4">
-                    <div class="form-group">
-                        <label for="">Fecha Inicio - Fin</label>
-                        <input type="text" class="form-control form-control-sm" name="date_range" required>
-                    </div>
-                </div>
-                <div class="col-12" style="display: flex; align-items: end;">
-                    <div class="form-group">
-                        <button type="submit" class="btn btn-primary btn-sm btn_export">Descargar</button>
-                    </div>
-                </div>
+                </form>
             </div>
-        </form>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <form id="form_delete">
+                    @csrf
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="">Ingrese Base IMEI</label>
+                                <input type="file" name="delete_base_imei" class="d-block" accept=".csv,.txt" required>
+                            </div>
+                        </div>
+                        <div class="col-12" style="display: flex; align-items: end;">
+                            <div class="form-group">
+                                <button type="submit" class="btn btn-danger btn-sm btn_export mb-0">Eliminar</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -80,15 +100,61 @@
 $(function() {
     const config = @json($config);
 
-    document.querySelector("#form_export")
+    document.querySelector("#form_import")
     .addEventListener("submit", function(e){
-        utils.downloadHandler({
-            url: config.url,
-            requestOptions: {headers: {"Accept": "application/json"}},
-            successCallback: () => {
+        e.preventDefault();
+        const data = new FormData(e.target);
+        utils.fetch(config.importBaseImeiUrl, {
+            method: 'POST',
+            body: data,
+            headers: {"Accept": "application/json"}
+        })
+        .then(resp => {
+            if(resp.ok){
+                new Noty({
+                    type: 'success',
+                    layout: 'topRight',
+                    text: 'Se cargo correctamente'
+                }).show();
                 _datatable.ajax.reload();
+            } else {
+                new Noty({
+                    type: 'error',
+                    layout: 'topRight',
+                    text: 'Ocurrió un error al cargar el archivo'
+                }).show();
             }
-        }, e);
+        });
+    });
+
+    document.querySelector("#form_delete")
+    .addEventListener("submit", function(e){
+        e.preventDefault();
+        let passes = confirm(`Esta seguro que desea eliminar?`);
+        if(passes){
+            const data = new FormData(e.target);
+            utils.fetch(config.deleteBaseImeiUrl, {
+                method: 'POST',
+                body: data,
+                headers: {"Accept": "application/json"}
+            })
+            .then(resp => {
+                if(resp.ok){
+                    new Noty({
+                        type: 'success',
+                        layout: 'topRight',
+                        text: 'Se elimino correctamente'
+                    }).show();
+                    _datatable.ajax.reload();
+                } else {
+                    new Noty({
+                        type: 'error',
+                        layout: 'topRight',
+                        text: 'Ocurrió un error al eliminar'
+                    }).show();
+                }
+            });
+        }
     });
 
     function deleteFilenameHandler(e)
@@ -140,13 +206,8 @@ $(function() {
     let _datatable = $(".tbl-informefallas").DataTable({
         language: {url: "{{ url('packages/datatables-language/spanish.json') }}"},
         ajax: {
-            url: "{{ url('bloqueo-imei/search') }}",
+            url: "{{ url('imei-cdr-automatico/search') }}",
             type: "GET",
-            dataSrc: function(resp){
-                //console.log(resp);
-                //store.relationships = resp.relationships;
-                return resp.data;
-            }
         },
         columns: [
             {data: 'username'},
