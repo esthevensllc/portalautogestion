@@ -30,7 +30,7 @@ class EloquentGeoMarketingRepository implements GeoMarketingRepository
         $this->db->ping(true);*/
     }
 
-    public function getReport(DateTime $fechaIni, DateTime $fechaFin)
+    public function getReport($baseFlag, DateTime $fechaIni, DateTime $fechaFin)
     {
         $this->userIdentifier = $this->authService->getUserIdentifier();
         $strDay = $fechaIni->format("Ymd");
@@ -56,9 +56,9 @@ class EloquentGeoMarketingRepository implements GeoMarketingRepository
             SELECT a.served_msisdn AS MSISDN,
             max(a.record_opening_time) AS RECORD_TIME  
             FROM cdrdatos.cdr{$strDay} a
-            INNER JOIN mlac.celdas_estadio_nacional_pap b
+            INNER JOIN mlac.base_place_celdas_pap b
             ON toInt64(a.uli_sac+a.uli_ci+a.uli_ecgi) = toInt64(b.cellid) AND  toInt64(a.uli_lac+a.uli_tai) = toInt64(b.lac_tac)  
-            WHERE a.record_opening_time >='{$strFechaIni}' and a.record_opening_time <= '{$strFechaFin}'
+            WHERE a.record_opening_time >='{$strFechaIni}' and a.record_opening_time <= '{$strFechaFin}' and b.flag_place = '{$baseFlag}'
             group by 1"
         ];
         $queries[] = [
@@ -73,9 +73,10 @@ class EloquentGeoMarketingRepository implements GeoMarketingRepository
              and fromUnixTimestamp(starttime) >= '{$strFechaIni}' and fromUnixTimestamp(starttime) <= '{$strFechaFin}'
              group by 1,2,3,4
             ) x
-            INNER JOIN  mlac.celdas_estadio_nacional_pap y
+            INNER JOIN  mlac.base_place_celdas_pap y
             ON toInt64(x.cellid) = toInt64(y.cellid) AND  toInt64(x.lac) = toInt64(y.lac_tac)
             where x.msisdn2 not in (select msisdn from cdrdatos.usuarios_estadio_{$this->userIdentifier} group by 1)
+            and y.flag_place = '{$baseFlag}'
             group by 1"
         ];
         $this->exec_sql($queries);

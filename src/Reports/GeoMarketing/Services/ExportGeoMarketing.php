@@ -10,6 +10,10 @@ use Exception;
 
 class ExportGeoMarketing
 {
+    private $baseById = [
+        "1" => ["name" => "ESTADIO_NACIONAL"],
+        "2" => ["name" => "ESTADIO_MONUMENTAL"],
+    ];
     private $repository;
 
     public function __construct(GeoMarketingRepository $repo)
@@ -31,7 +35,7 @@ class ExportGeoMarketing
             throw new Exception("No se puede consultar un dia diferente al dia actual");
         }
 
-        $data = $this->repository->getReport($dtFechaIni, $dtFechaFin);
+        $data = $this->repository->getReport($base, $dtFechaIni, $dtFechaFin);
 
         $content = "";
         $content .= "MSISDN".PHP_EOL;
@@ -39,9 +43,11 @@ class ExportGeoMarketing
             $content .= $row["msisdn"].PHP_EOL;
         }
 
+        $baseName = $this->baseById[$base]["name"];
+
         $now = new DateTime();
         $strNow = $now->format("YmdHis");
-        $filename = "BASE_ESTADIO_NACIONAL_{$strNow}.csv";
+        $filename = "BASE_{$baseName}_{$strNow}.csv";
 
         $this->repository->saveLog($nintex, $base, $dtFechaIni, $dtFechaFin, $now, $filename);
 

@@ -20,7 +20,8 @@ class GeoMarketingController
             'title' => 'GEOMARKETING',
             'url' => url('geomarketing/export'),
             "bases" => [
-                ["id" => "ESTADIO_NACIONAL", "label" => "ESTADIO NACIONAL"]
+                ["id" => "1", "label" => "ESTADIO NACIONAL"],
+                ["id" => "2", "label" => "ESTADIO MONUMENTAL"],
             ]
         ];
         return view("geomarketing", compact("config"));
