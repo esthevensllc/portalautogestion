@@ -19,7 +19,7 @@
                 <div class="col-12"></div>
                 <div class="col-lg-3 col-md-4">
                     <div class="form-group">
-                        <select name="" class="form-control form-control-sm primary-input" name="base" required>
+                        <select class="form-control form-control-sm primary-input" name="base" required>
                             <option value="">Seleccione Base</option>
                             @foreach ($config["bases"] as $row)
                                 <option value="{{ $row["id"] }}">{{ $row["label"] }}</option>
