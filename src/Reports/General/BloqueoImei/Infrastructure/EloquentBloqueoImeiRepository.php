@@ -70,7 +70,7 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
             from cdrdatos.cdr{$strFecha}
             where (toDateTime('{$strFechaIni}') <= record_opening_time and record_opening_time <= toDateTime('{$strFechaFin}'))
             AND substr(toString(served_imeisv),1,14)
-            in (select imei from bloqueo_imei.base_imei where delete_flag=0 group by 1)
+            in (select imei from bloqueo_imei.base_imei_automatico where delete_flag=0 group by 1)
             --and toString(rattype) not in ('3')
             group by served_imeisv2, served_msisdn,serving_node_address1,serving_node_plmn_identifier,
             record_opening_time,rattype,access_point_name_ni,cause_for_rec_closing,losd_datavolume_fbc_uplink,
