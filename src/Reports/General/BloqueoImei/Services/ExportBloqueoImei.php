@@ -64,7 +64,7 @@ class ExportBloqueoImei
             "cause_for_rec_closing" => ['label' => 'cause_for_rec_closing'],
             "losd_datavolume_fbc_uplink" => ['label' => 'losd_datavolume_fbc_uplink'],
             "losd_datavolume_fbc_downlink" => ['label' => 'losd_datavolume_fbc_downlink'],
-            "pgw_address" => ['label' => 'pgw_address'],
+            "pgw_address1" => ['label' => 'pgw_address'],
             "charging_id" => ['label' => 'charging_id'],
             "served_pdppdn_address1" => ['label' => 'served_pdppdn_address'],
             "duration" => ['label' => 'duration'],
