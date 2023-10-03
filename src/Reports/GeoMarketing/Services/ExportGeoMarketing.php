@@ -27,12 +27,12 @@ class ExportGeoMarketing
         $dtFechaFin = DateTime::createFromFormat("Y-m-d H:i", $fechaFin);
         $now = new DateTime();
         $diff = $dtFechaFin->getTimestamp() - $dtFechaIni->getTimestamp();
-        $max_diff_hours = 4*3600;
+        $max_diff_hours = 3*24*3600;
         if($max_diff_hours < $diff){
-            throw new Exception("No se puede consultar un rango mayor a 2 horas");
+            throw new Exception("No se puede consultar un rango mayor a 3 dias");
         }
         if($dtFechaIni->format("Y-m-d") !== $now->format("Y-m-d") || $dtFechaFin->format("Y-m-d") !== $now->format("Y-m-d")){
-            throw new Exception("No se puede consultar un dia diferente al dia actual");
+            // throw new Exception("No se puede consultar un dia diferente al dia actual");
         }
 
         $data = $this->repository->getReport($base, $dtFechaIni, $dtFechaFin);

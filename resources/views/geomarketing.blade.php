@@ -32,14 +32,14 @@
                 <div class="col-lg-3 col-md-4">
                     <div class="form-group">
                         <label for="">Fecha Inicio</label>
-                        <input type="date" class="form-control form-control-sm" name="fecha_inicio" required readonly>
+                        <input type="date" class="form-control form-control-sm" name="fecha_inicio" required>
                         <input type="time" class="form-control form-control-sm" name="hora_inicio" placeholder="00:00:00" required>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-4">
                     <div class="form-group">
                         <label for="">Fecha Fin</label>
-                        <input type="date" class="form-control form-control-sm" name="fecha_fin" required readonly>
+                        <input type="date" class="form-control form-control-sm" name="fecha_fin" required>
                         <input type="time" class="form-control form-control-sm" name="hora_fin" placeholder="00:00:00" required>
                     </div>
                 </div>
@@ -83,34 +83,39 @@ $(function() {
         });
     });
 
-    document.querySelector("input[name=hora_inicio]").addEventListener("change", function(e){
-        let fecha2 = document.querySelector("input[name=hora_fin]");
-        fecha2.min = e.target.value;
+    function modifyDate(strDateTime, minute){
+        let timestamp = (new Date(strDateTime)).getTime() + 1000*60*minute;
+        let _date = new Date(timestamp);
+        return _date;
+    }
 
-        let date = "2023-01-01T" + e.target.value + ":00";
-        let timestamp = (new Date(date)).getTime() + 1000*60*(240-1);
-        let maxDate = new Date(timestamp);
-        let maxTime = maxDate.getHours().toString().padStart(2, "0") + ":" + maxDate.getMinutes().toString().padStart(2, "0");
-        console.log(maxTime);
-
-        fecha2.max = maxTime;
+    document.querySelector("input[name=fecha_inicio]")
+    .addEventListener("change", function(e){
+        let fechaInicio = document.querySelector("input[name=fecha_inicio]");
+        let fechaFin = document.querySelector("input[name=fecha_fin]");
+        
+        let maxDate = modifyDate(fechaInicio.value + "T00:00:00", (3*24*60) - 1);
+        fechaFin.min = fechaInicio.value;
+        fechaFin.max = maxDate.toLocaleDateString("sv-SE");
+        // console.log('maxDate', maxDate);
     });
-    document.querySelector("input[name=hora_fin]").addEventListener("change", function(e){
-        let fecha1 = document.querySelector("input[name=hora_inicio]");
-        fecha1.max = e.target.value;
-
-        let date = "2023-01-01T" + e.target.value + ":00";
-        let timestamp = (new Date(date)).getTime() - 1000*60*(240-1);
-        let minDate = new Date(timestamp);
-        let minTime = minDate.getHours().toString().padStart(2, "0") + ":" + minDate.getMinutes().toString().padStart(2, "0");
-
-        fecha1.min = minTime;
+    document.querySelector("input[name=fecha_fin]")
+    .addEventListener("change", function(e){
+        let fechaInicio = document.querySelector("input[name=fecha_inicio]");
+        let fechaFin = document.querySelector("input[name=fecha_fin]");
+        
+        let minDate = modifyDate(fechaFin.value + "T00:00:00", -(3*24*60) + 1);
+        fechaInicio.max = fechaFin.value;
+        fechaInicio.min = minDate.toLocaleDateString("sv-SE");
+        // console.log('minDate', minDate);
     });
 
     let now = (new Date()).toLocaleDateString("sv-SE");
 
     document.querySelector("input[name=fecha_inicio]").value = now;
     document.querySelector("input[name=fecha_fin]").value = now;
+    document.querySelector("input[name=fecha_inicio]").dispatchEvent(new Event("change"));
+    document.querySelector("input[name=fecha_fin]").dispatchEvent(new Event("change"));
 
 });
 </script>
