@@ -29,4 +29,12 @@ class SpreedSheetWriter implements Writer
         unlink($filename);
         return $contents;
     }
+
+    public function saveToTempfile(): string
+    {
+        $filename = sys_get_temp_dir() ."/phpexport-". Uuid::uuid4()->toString().".tmp";
+        // $tempfile = tempnam(sys_get_temp_dir(), "php-tempfilename");
+        $this->writer->save($filename);
+        return $filename;
+    }
 }

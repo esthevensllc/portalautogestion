@@ -6,4 +6,5 @@ interface Writer
 {
     public function save($filename, int $flags = 0): void;
     public function getOutput(): ?string;
+    public function saveToTempfile(): string;
 }

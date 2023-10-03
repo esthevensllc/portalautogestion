@@ -18,126 +18,6 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/auth-user', function () {
-    $date = new DateTime();
-    $date->modify("+1 day");
-    session([
-        "cas__username" => "C19884",
-        "cas__expireDate" => $date->getTimestamp()
-    ]);
-});
-
-Route::get('/test', function () {
-    $response = \Illuminate\Support\Facades\Http::withHeaders([
-        "x-user-identifier" => "C19884",
-    ])
-    ->timeout(-1)
-    ->get("http://172.19.10.171/recursos/cobertura_fija_20230505.zip");
-    //dd([]);
-    if($response->ok()){
-	dd($response->header("Content-Type"));
-        return response($response->body(), 200, [
-            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment;filename="TEST.xlsx"'
-        ]);
-    }else{
-        throw new Exception($response->body());
-    }
-});
-
-Route::get('/export-test', function () {
-    ini_set('max_execution_time', '7200');
-    set_time_limit(7200);
-    
-$exportService = app(\AMovil\Shared\Exports\Domain\ExportService::class);
-
-$headers = [
-    "numero_origen" => ['label' => 'NUMERO_ORIGEN'],
-    "fecha" => ['label' => 'FECHA'],
-    "hora_inicio" => ['label' => 'HORA_INICIO'],
-    "hora_fin" => ['label' => 'HORA_FIN'],
-    "numero_destino" => ['label' => 'NUMBERO_DESTINO'],
-    "consumo" => ['label' => 'CONSUMO'],
-    "tipo" => ['label' => 'TIPO'],
-];
-
-$data = DB::connection("oracle_reptdm")
-->select(DB::raw("SELECT NUMERO_ORIGEN,FECHA,HORA_INICIO,HORA_FIN,NUMERO_DESTINO,CONSUMO,TIPO FROM USRAES.T_REP_LLA2_C26282"));
-
-$exportService->loadData($headers, $data, [
-    'sheetIndex' => 0,
-    'title' => "2023-03-06 - 2023-04-05",
-    'styles' => [
-        'header' => [
-            'font' => ['bold' => true, 'size' => 9],
-            'borders'=> [
-                'allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN, 'color' => array('rgb'=>'000000')]
-            ]
-        ],
-        'body' => [
-            'font' => ['size' => 9],
-        ]
-    ]
-]);
-
-$columns_to_autosize = ['A','B','C','D', 'E', 'F', 'G'];
-$sheet = $exportService->getExportReference()->getActiveSheet();
-foreach($columns_to_autosize as $col){
-    $sheet->getColumnDimension($col)->setAutoSize(true);
-}
-
-$export = [];
-$export["content"] = $exportService->getWriter(\AMovil\Shared\Exports\Domain\WriterType::XLSX)->getOutput();
-
-    //return $export;
-    $headers_by_type = [
-        'xlsx' => [
-            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment;filename="REPORTE.xlsx"'
-        ],
-        'zip' => [
-            'Content-Type' => 'application/zip',
-            'Content-Transfer-Encoding' => 'Binary',
-            'Content-Disposition' => 'attachment;filename="REPORTE_CONSUMO_DETALLADO.zip"'
-        ]
-    ];
-    return response($export['content'], 200, $headers_by_type["xlsx"]);
-});
-
-Route::get('api/user', function (Request $request) {
-$expireTimestamp = session('cas__expireDate');
-    $now = new DateTime();
-    $expireDate = new DateTime();
-    $expireDate->setTimestamp($expireTimestamp);
-return [$expireDate];
-//$service = app(\AMovil\Auth\AccessControl\Domain\AuthService::class);
-    //return [$service->getUserIdentifier()];
-//return file_get_contents(storage_path('app/public')."/c40692df-110d-48f7-8990-9f0d0c738969_temp.csv");
-$data = \DB::select(DB::raw("SELECT A.* FROM (
-  SELECT A.*,B.ASNC_TIPO_TITULAR ASNC_TIPO_TITULAR,B.ASNC_TIPO_CONTRATO ASNC_TIPO_CONTRATO,B.ASNC_TIPO_DOCTITULAR ASNC_TIPO_DOCTITULAR,
-  B.ASNV_NUM_DOCTITULAR ASNV_NUM_DOCTITULAR,B.ASNV_NOMBRETITULAR  ASNV_NOMBRETITULAR,B.ASND_FEC_INICONTRATO ASND_FEC_INICONTRATO,
-  B.ASND_FEC_FINCONTRATO  ASND_FEC_FINCONTRATO,B.ASNV_DIRECCION ASNV_DIRECCION,B.ASNV_UBIGEO  ASNV_UBIGEO,NULL  ASND_FECHAHORA_LLAMADA
-  FROM USRAES.TMP_PLANTILLA_REPOMENSUAL A
-  JOIN (SELECT * FROM USRAES.TMP_REPOMENSUAL_1 WHERE ESTADO_SUBS NOT LIKE 'D')  B
-  ON (B.MSISDN=A.ASNV_NUMERO_LINEA)
-) A
-FULL JOIN DUAL B ON 1=1"));
-dd($data);
-
-$service = app(\AMovil\Shared\Exports\Domain\ExportService::class);
-$service->loadData(['asnv_direccion' => ['label' => 'A']], $data);
-    return $service->download("export.xlsx");
-
-    $auth_service = app(\AMovil\Auth\AccessControl\Domain\AuthService::class);
-    $service = app(\AMovil\Auth\User\Services\GetUserModules::class);
-
-    $username = $auth_service->getUserIdentifier();
-    return [
-        'username' => $username,
-        'modules' => $service->__invoke($username)['tree'],
-    ];
-});
-
 Route::group([
     'middleware' => 'auth.cas',
 ], function () {
@@ -484,6 +364,10 @@ Route::group([
     Route::group(['prefix' => 'imei-cdr-automatico/config', 'trac_name' => 'imei-cdr-automatico.config'], function(){
         Route::get('/', [\AMovil\Reports\General\BloqueoImei\Controllers\ImeiCDRConfigController::class, 'view']);
         Route::post('/', [\AMovil\Reports\General\BloqueoImei\Controllers\ImeiCDRConfigController::class, 'saveConfig']);
+    });
+    Route::group(['prefix' => 'comprobante-pago', 'trac_name' => 'comprobante-pago'], function(){
+        Route::get('/', [\AMovil\Reports\General\ComprobantePago\Controllers\ComprobantePagoController::class, 'view']);
+        Route::post('export', [\AMovil\Reports\General\ComprobantePago\Controllers\ComprobantePagoController::class, 'export']);
     });
 
 });
