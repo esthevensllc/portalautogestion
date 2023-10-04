@@ -20,16 +20,18 @@ class ProcessExtraccion
     private $repo2;
     private $saveReportLog;
     private $tablaInteresRepo;
+    private $notifyProcessExtraccionPrepago;
 
     const MESES_INTERES = 24;
     const MINUTOS_USUARIOS = 3;
     
-    public function __construct(ExtraccionRepository1 $repo, ExtraccionRepository2 $repo2,SaveReportLog $saveReportLog, TablaInteresRepository $tablaInteresRepo)
+    public function __construct(ExtraccionRepository1 $repo, ExtraccionRepository2 $repo2,SaveReportLog $saveReportLog, TablaInteresRepository $tablaInteresRepo, NotifyProcessExtraccionPrepago $notifyProcessExtraccionPrepago)
     {
         $this->repo = $repo;
         $this->repo2 = $repo2;
         $this->saveReportLog = $saveReportLog;
         $this->tablaInteresRepo = $tablaInteresRepo;
+        $this->notifyProcessExtraccionPrepago = $notifyProcessExtraccionPrepago;
     }
 
     public function __invoke(?int $step, $tipoInput, $celdas, $provincias, $excel, $fechaIni, $fechaFin, $ticketOsiptel, $fechaInteres, $corteFechaIni, $corteFechaFin, $minutos_usuarios)
@@ -138,6 +140,8 @@ class ProcessExtraccion
                 'cdiazb@claro.com.pe',
                 'C26670@claro.com.pe',
             ])->send($correo);
+
+            $this->notifyProcessExtraccionPrepago->__invoke($ticketOsiptel, $depatamento);
             // Mail::to(['cclinarez@indracompany.com','C26282@claro.com.pe'])->send($correo);
 
             $this->reportLog(null, $dtStart, new DateTime(), ["estado" => 1]);

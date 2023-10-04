@@ -16,5 +16,9 @@ class LaravelSharedServiceProvider extends ServiceProvider
             \AMovil\Shared\FileStorage\Domain\StorageService::class,
             \AMovil\Shared\FileStorage\Infrastructure\LaravelStorageService::class
         );
+        $this->app->bind(
+            \AMovil\Shared\Remedy\Domain\RemedyService::class,
+            \AMovil\Shared\Remedy\Infrastructure\SoapRemedyService::class
+        );
     }
 }
