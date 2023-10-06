@@ -31,7 +31,7 @@ class DetalleConsumoController
 
     public function detallado(){
         $data = [
-            'title' => 'Detalle consumo / detallado',
+            'title' => 'Detalle consumo / detallado (Tráfico Facturado)',
             'url_export' => asset('rep-det-consumo/detalle-consumo/detallado/export'),
             'url_validator' => asset('rep-det-consumo/detalle-consumo/detallado/validator'),
             'url_cliente_validator' => asset('rep-det-consumo/detalle-consumo/detallado/clientes'),
@@ -42,7 +42,7 @@ class DetalleConsumoController
 
     public function consolidado(){
         $data = [
-            'title' => 'Detalle consumo / consolidado',
+            'title' => 'Detalle consumo / consolidado (Tráfico Facturado)',
             'url_export' => asset('rep-det-consumo/detalle-consumo/consolidado/export'),
             'url_validator' => asset('rep-det-consumo/detalle-consumo/consolidado/validator'),
             'url_cliente_validator' => asset('rep-det-consumo/detalle-consumo/consolidado/clientes'),

@@ -22,7 +22,7 @@ class FacturacionFijaController extends Controller {
 
     public function index(){
         $data = [
-            'title' => 'Faturacion Fija / Saliente'
+            'title' => 'Facturación Fija / Saliente'
         ];
         return view('backpack::facturacion_fija.saliente', compact('data'));
     }
