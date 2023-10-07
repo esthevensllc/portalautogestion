@@ -35,7 +35,7 @@ class DetalleLLamadasController
 
     public function entrantes_salientes(){
         $data = [
-            'title' => 'Detalle llamadas / entrantes y entrantes (Tráfico Cursado)',
+            'title' => 'Detalle llamadas / entrantes y salientes (Tráfico Cursado)',
             'url_export' => asset('rep-det-consumo/detalle-llamadas/entrantes-salientes/export'),
             'filename' => 'Detalle_llamadas_entrantes_salientes.xlsx',
         ];
