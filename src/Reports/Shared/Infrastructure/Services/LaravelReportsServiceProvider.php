@@ -148,5 +148,13 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\General\ComprobantePago\Domain\ComprobantePagoRepository::class,
             \AMovil\Reports\General\ComprobantePago\Infrastructure\EloquentComprobantePagoRepository::class
         );
+        $this->app->bind(
+            \AMovil\Reports\BloqueoControlReg\Domain\BloqueoControlRegRepository::class,
+            \AMovil\Reports\BloqueoControlReg\Infrastructure\EloquentBloqueoControlRegRepository::class
+        );
+        $this->app->bind(
+            \AMovil\Reports\BloqueoControlReg\Domain\BloqueoControlRegLogRepository::class,
+            \AMovil\Reports\BloqueoControlReg\Infrastructure\EloquentBloqueoControlRegLogRepository::class
+        );
     }
 }
