@@ -370,4 +370,15 @@ Route::group([
         Route::post('export', [\AMovil\Reports\General\ComprobantePago\Controllers\ComprobantePagoController::class, 'export']);
     });
 
+    Route::group(['prefix' => 'bloqueo-control-regulatorio', 'trac_name' => 'bloqueo-control-regulatorio'], function(){
+        Route::get('/', [\AMovil\Reports\BloqueoControlReg\Controllers\BloqueoControlRegController::class, 'cargarView']);
+        Route::post('import', [\AMovil\Reports\BloqueoControlReg\Controllers\BloqueoControlRegController::class, 'import']);
+        // Route::get('{id}/download', [\AMovil\Reports\BloqueoControlReg\Controllers\BloqueoControlRegController::class, 'downloadDocument']);
+    });
+    Route::group(['prefix' => 'bloqueo-control-regulatorio/logs', 'trac_name' => 'bloqueo-control-regulatorio.logs'], function(){
+        Route::get('/', [\AMovil\Reports\BloqueoControlReg\Controllers\BloqueoControlRegLogController::class, 'view']);
+        Route::get('search', [\AMovil\Reports\BloqueoControlReg\Controllers\BloqueoControlRegLogController::class, 'getData']);
+        Route::get('{id}/download', [\AMovil\Reports\BloqueoControlReg\Controllers\BloqueoControlRegController::class, 'downloadDocument']);
+    });
+
 });
