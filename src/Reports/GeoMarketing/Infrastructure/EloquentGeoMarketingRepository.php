@@ -30,7 +30,7 @@ class EloquentGeoMarketingRepository implements GeoMarketingRepository
         $this->db->ping(true);*/
     }
 
-    public function getReport($baseFlag, DateTime $fechaIni, DateTime $fechaFin)
+    public function getReport($baseFlag, DateTime $fechaIni, DateTime $fechaFin, int $whiteList)
     {
         $this->userIdentifier = $this->authService->getUserIdentifier();
         $strDay = $fechaIni->format("Ymd");
@@ -102,18 +102,27 @@ class EloquentGeoMarketingRepository implements GeoMarketingRepository
         }
         $this->exec_sql($queries);
 
-        $sql = "SELECT msisdn FROM cdrdatos.usuarios_estadio_{$this->userIdentifier} where toString(msisdn) like '519%' group by 1";
+
+        $sql = null;
+        if($whiteList === 1){
+            $sql = "SELECT msisdn FROM cdrdatos.usuarios_estadio_{$this->userIdentifier} a
+            inner join dwa.f_d_base_wl_bl b on toString(a.msisdn)=toString(b.msisdn)
+            where toString(msisdn) like '519%' and b.wl='X' group by 1";
+        }else{
+            $sql = "SELECT msisdn FROM cdrdatos.usuarios_estadio_{$this->userIdentifier}
+            where toString(msisdn) like '519%' group by 1";
+        }
         $data = DB::connection("ch-dn02")->select($sql);
 
         $queries = [];
         $queries[] = [
             "sql" => "DROP TABLE cdrdatos.usuarios_estadio_{$this->userIdentifier}"
         ];
-        $this->exec_sql($queries);
+        // $this->exec_sql($queries);
         return $data;
     }
 
-    public function saveLog($nintex, $base, DateTime $fechaIni, DateTime $fechaFin, DateTime $createAt, $filename)
+    public function saveLog($nintex, $base, DateTime $fechaIni, DateTime $fechaFin, DateTime $createAt, $filename, int $whiteList)
     {
         $this->userIdentifier = $this->authService->getUserIdentifier();
         DB::connection("ch-dn02")->table("cdrdatos.table_nintex_geomarketing")
@@ -124,7 +133,8 @@ class EloquentGeoMarketingRepository implements GeoMarketingRepository
             "fecha_inicio" => $fechaIni->format("Y-m-d H:i:s"),
             "fecha_fin" => $fechaFin->format("Y-m-d H:i:s"),
             "created_at" => $createAt->format("Y-m-d H:i:s"),
-            "filename_exported" => $filename
+            "filename_exported" => $filename,
+            "whitelist_flag" => $whiteList,
         ]);
     }
 

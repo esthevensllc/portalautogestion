@@ -21,7 +21,7 @@ class ExportGeoMarketing
         $this->repository = $repo;
     }
 
-    public function __invoke($nintex, $base, $fechaIni, $fechaFin)
+    public function __invoke($nintex, $base, $fechaIni, $fechaFin, $whiteList)
     {
         $dtFechaIni = DateTime::createFromFormat("Y-m-d H:i", $fechaIni);
         $dtFechaFin = DateTime::createFromFormat("Y-m-d H:i", $fechaFin);
@@ -35,7 +35,7 @@ class ExportGeoMarketing
             // throw new Exception("No se puede consultar un dia diferente al dia actual");
         }
 
-        $data = $this->repository->getReport($base, $dtFechaIni, $dtFechaFin);
+        $data = $this->repository->getReport($base, $dtFechaIni, $dtFechaFin, $whiteList);
 
         $content = "";
         $content .= "MSISDN".PHP_EOL;
@@ -47,25 +47,15 @@ class ExportGeoMarketing
 
         $now = new DateTime();
         $strNow = $now->format("YmdHis");
-        $filename = "BASE_{$baseName}_{$strNow}.csv";
+        $whiteListSubName = (int) $whiteList === 1 ? "WHITE_LIST_" : "";
+        $filename = "BASE_{$baseName}_{$whiteListSubName}{$strNow}.csv";
 
-        $this->repository->saveLog($nintex, $base, $dtFechaIni, $dtFechaFin, $now, $filename);
+        $this->repository->saveLog($nintex, $base, $dtFechaIni, $dtFechaFin, $now, $filename, $whiteList);
 
         return new Response([], [
             "filename" => $filename,
             "type" => "csv",
             "content" => $content,
         ]);
-
-        /*
-        $tempFilename = "{$this->temp_storage_path}/".Uuid::uuid4()->toString().".csv";
-        $file = fopen($tempFilename, "w");
-        fwrite($file, "SUBSCRIPTION_ACCESS_NUMBER".PHP_EOL);
-        foreach($data as $row){
-            fwrite($file, $row->msisdn.PHP_EOL);
-        }
-        fclose($file);
-        */
-
     }
 }

@@ -33,7 +33,8 @@ class GeoMarketingController
             $request->input("nintex"),
             $request->input("base"),
             $request->input("fecha_inicio")." ".$request->input("hora_inicio"),
-            $request->input("fecha_fin")." ".$request->input("hora_fin")
+            $request->input("fecha_fin")." ".$request->input("hora_fin"),
+            $request->input("white_list")
         )->data();
         return response($response["content"], 200, [
             'Content-Encoding' => 'UTF-8',

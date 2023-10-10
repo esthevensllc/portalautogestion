@@ -29,6 +29,18 @@
                 </div>
             </div>
             <div class="mb-3 row form-section-2" style="display: none;">
+                <div class="col-12">
+                    <div class="form-group">
+                        <div class="d-inline-block pr-3">
+                            <input type="radio" class="" id="without_white_list" name="white_list" value="0" required>
+                            <label for="without_white_list">Base Completa</label>
+                        </div>
+                        <div class="d-inline-block pr-3">
+                            <input type="radio" class="" id="white_list" name="white_list" value="1" required>
+                            <label for="white_list">Base White List</label>
+                        </div>
+                    </div>
+                </div>
                 <div class="col-lg-3 col-md-4">
                     <div class="form-group">
                         <label for="">Fecha Inicio</label>
