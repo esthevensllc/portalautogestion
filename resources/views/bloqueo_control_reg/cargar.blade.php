@@ -34,7 +34,7 @@
                         <div class="col-lg-4 col-md-4">
                             <div class="form-group">
                                 <label for="archivo">Archivo</label>
-                                <input type="file" class="" name="documento" id="archivo" required>
+                                <input type="file" class="d-block" name="documento" id="archivo" required>
                             </div>
                         </div>
                         <div class="col-lg-3 col-md-4 inputs-panel tipodocumento-2-inputs">
