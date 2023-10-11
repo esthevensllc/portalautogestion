@@ -18,34 +18,36 @@
                         </select>
                     </div>
                 </div>
-                <div class="col-lg-3 col-md-4">
-                    <div class="form-group">
-                        <label for="tipo_documento_id">Tipo Documento</label>
-                        <select class="form-control form-control-sm" name="tipo_documento_id" id="tipo_documento_id">
-                            <option value="">Seleccione</option>
-                            @foreach ($config["tiposDocumento"] as $row)
-                                <option value="{{ $row->id }}">{{ $row->label }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-4">
-                    <div class="form-group">
-                        <label for="archivo">Archivo</label>
-                        <input type="file" class="" name="documento" id="archivo" required>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-4 inputs-panel tipodocumento-2-inputs">
-                    <div class="form-group">
-                        <label for="imei">Imei</label>
-                        <input type="number" class="form-control form-control-sm" name="imei" id="imei" required>
-                    </div>
-                </div>
-            </div>
-            <div class="row form-section-2">                
-                <div class="col-12" style="display: flex; align-items: end;">
-                    <div class="form-group">
-                        <button type="submit" class="btn btn-primary btn-sm btn_export">Cargar</button>
+                <div class="col-12 form-section" style="display: none;">
+                    <div class="row">
+                        <div class="col-lg-3 col-md-4 form-section" style="display: none;">
+                            <div class="form-group">
+                                <label for="tipo_documento_id">Tipo Documento</label>
+                                <select class="form-control form-control-sm" name="tipo_documento_id" id="tipo_documento_id">
+                                    <option value="">Seleccione</option>
+                                    @foreach ($config["tiposDocumento"] as $row)
+                                        <option value="{{ $row->id }}">{{ $row->label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 col-md-4">
+                            <div class="form-group">
+                                <label for="archivo">Archivo</label>
+                                <input type="file" class="" name="documento" id="archivo" required>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-4 inputs-panel tipodocumento-2-inputs">
+                            <div class="form-group">
+                                <label for="imei">Imei</label>
+                                <input type="number" class="form-control form-control-sm" name="imei" id="imei" required>
+                            </div>
+                        </div>
+                        <div class="col-12" style="display: flex; align-items: end;">
+                            <div class="form-group">
+                                <button type="submit" class="btn btn-primary btn-sm btn_export">Cargar</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -107,6 +109,13 @@ $(function() {
         }
     }
 
+    $("#tipo_operacion_id").on("change", function(e){
+        if(e.target.value !== ''){
+            $(".form-section").show();
+        }else{
+            $(".form-section").hide();
+        }
+    });
 
     $("#tipo_documento_id").on("change", function(e){
         renderInputsByTipoDocumento(e.target.value);
