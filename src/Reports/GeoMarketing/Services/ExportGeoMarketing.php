@@ -15,6 +15,7 @@ class ExportGeoMarketing
         "2" => ["name" => "ESTADIO_MONUMENTAL"],
     ];
     private $repository;
+    const MAX_DAYS = 3;
 
     public function __construct(GeoMarketingRepository $repo)
     {
@@ -27,12 +28,18 @@ class ExportGeoMarketing
         $dtFechaFin = DateTime::createFromFormat("Y-m-d H:i", $fechaFin);
         $now = new DateTime();
         $diff = $dtFechaFin->getTimestamp() - $dtFechaIni->getTimestamp();
-        $max_diff_hours = 3*24*3600;
+        $maxDays = self::MAX_DAYS;
+        $max_diff_hours = $maxDays*24*3600;
         if($max_diff_hours < $diff){
-            throw new Exception("No se puede consultar un rango mayor a 3 dias");
+            throw new Exception("No se puede consultar un rango mayor a {$maxDays} dias");
         }
-        if($dtFechaIni->format("Y-m-d") !== $now->format("Y-m-d") || $dtFechaFin->format("Y-m-d") !== $now->format("Y-m-d")){
-            // throw new Exception("No se puede consultar un dia diferente al dia actual");
+        $minDateTime = new DateTime();
+        $minDateTime->modify("-{$maxDays} day");
+        if($minDateTime->format("Ymd") > $dtFechaIni->format("Ymd")){
+            throw new Exception("No se puede consultar un rango mayor a {$maxDays} dias");
+        }
+        if($dtFechaFin->format("Y-m-d") > $now->format("Y-m-d")){
+            throw new Exception("No se puede consultar una fecha superior al dia actual");
         }
 
         $data = $this->repository->getReport($base, $dtFechaIni, $dtFechaFin, $whiteList);

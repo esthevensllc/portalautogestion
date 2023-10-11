@@ -72,6 +72,9 @@
 <script>
 $(function() {
     const config = @json($config);
+    let now = (new Date()).toLocaleDateString("sv-SE");
+    let strMinDate = modifyDate(now+"T00:00:00", - (config.maxDays*24*60) + 1).toLocaleDateString("sv-SE");
+    let strMaxDate = now;
 
     document.querySelector("#form_export")
     .addEventListener("submit", function(e){
@@ -105,24 +108,16 @@ $(function() {
     .addEventListener("change", function(e){
         let fechaInicio = document.querySelector("input[name=fecha_inicio]");
         let fechaFin = document.querySelector("input[name=fecha_fin]");
-        
-        let maxDate = modifyDate(fechaInicio.value + "T00:00:00", (3*24*60) - 1);
         fechaFin.min = fechaInicio.value;
-        fechaFin.max = maxDate.toLocaleDateString("sv-SE");
-        // console.log('maxDate', maxDate);
+        fechaFin.max = strMaxDate;
     });
     document.querySelector("input[name=fecha_fin]")
     .addEventListener("change", function(e){
         let fechaInicio = document.querySelector("input[name=fecha_inicio]");
         let fechaFin = document.querySelector("input[name=fecha_fin]");
-        
-        let minDate = modifyDate(fechaFin.value + "T00:00:00", -(3*24*60) + 1);
         fechaInicio.max = fechaFin.value;
-        fechaInicio.min = minDate.toLocaleDateString("sv-SE");
-        // console.log('minDate', minDate);
+        fechaInicio.min = strMinDate;
     });
-
-    let now = (new Date()).toLocaleDateString("sv-SE");
 
     document.querySelector("input[name=fecha_inicio]").value = now;
     document.querySelector("input[name=fecha_fin]").value = now;

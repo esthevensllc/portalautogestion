@@ -3,15 +3,18 @@
 namespace AMovil\Reports\GeoMarketing\Controllers;
 
 use AMovil\Reports\GeoMarketing\Services\ExportGeoMarketing;
+use AMovil\Reports\GeoMarketing\Services\GeoMarketingFinder;
 use Illuminate\Http\Request;
 
 class GeoMarketingController
 {
     private $service;
+    private $finder;
 
-    public function __construct(ExportGeoMarketing $service)
+    public function __construct(ExportGeoMarketing $service, GeoMarketingFinder $finder)
     {
         $this->service = $service;
+        $this->finder = $finder;
     }
 
     public function view()
@@ -22,9 +25,10 @@ class GeoMarketingController
             "bases" => [
                 ["id" => "1", "label" => "ESTADIO NACIONAL"],
                 ["id" => "2", "label" => "ESTADIO MONUMENTAL"],
-            ]
+            ],
+            "maxDays" => ExportGeoMarketing::MAX_DAYS,
         ];
-        return view("geomarketing", compact("config"));
+        return view("geomarketing.export_geomarketing", compact("config"));
     }
 
     public function export(Request $request)
@@ -41,5 +45,24 @@ class GeoMarketingController
                 'Content-Type' => 'text/csv; charset=UTF-8',
                 'Content-Disposition' => 'attachment;filename="'.$response['filename'].'"'
         ]);
+    }
+
+    public function logView()
+    {
+        $config = [
+            'title' => 'GEOMARKETING LOGS',
+            'url' => url('geomarketing/logs/search'),
+            "bases" => [
+                ["id" => "1", "label" => "ESTADIO NACIONAL"],
+                ["id" => "2", "label" => "ESTADIO MONUMENTAL"],
+            ]
+        ];
+        return view("geomarketing.geomarketing_log", compact("config"));
+    }
+
+    public function logSearch()
+    {
+        $data = $this->finder->getLogs();
+        return response()->json(["data" => $data]);
     }
 }

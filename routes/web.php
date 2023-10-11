@@ -342,6 +342,10 @@ Route::group([
         Route::get('/', [\AMovil\Reports\GeoMarketing\Controllers\GeoMarketingController::class, 'view']);
         Route::post('/export', [\AMovil\Reports\GeoMarketing\Controllers\GeoMarketingController::class, 'export']);
     });
+    Route::group(['prefix' => 'geomarketing/logs', 'trac_name' => 'geomarketing.logs'], function(){
+        Route::get('/', [\AMovil\Reports\GeoMarketing\Controllers\GeoMarketingController::class, 'logView']);
+        Route::get('search', [\AMovil\Reports\GeoMarketing\Controllers\GeoMarketingController::class, 'logSearch']);
+    });
 
     Route::group(['prefix' => 'bloqueo-imei', 'trac_name' => 'bloqueo-imei'], function(){
         Route::get('/', [\AMovil\Reports\General\BloqueoImei\Controllers\BloqueoImeiController::class, 'view']);

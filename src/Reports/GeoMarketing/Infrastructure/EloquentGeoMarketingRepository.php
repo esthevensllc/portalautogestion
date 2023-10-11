@@ -138,6 +138,11 @@ class EloquentGeoMarketingRepository implements GeoMarketingRepository
         ]);
     }
 
+    public function getLogs()
+    {
+        return DB::connection("ch-dn02")->table("cdrdatos.table_nintex_geomarketing")->get();
+    }
+
     private function exec_sql(array $queries)
     {
         foreach($queries as $row){
