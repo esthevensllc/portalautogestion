@@ -13,9 +13,11 @@
     <thead class="bg-danger">
         <tr>
             <th>Fecha</th>
+            <th>Tipo Operación</th>
             <th>Tipo Documento</th>
             <th>Documento</th>
             <th>Peso</th>
+            <th>EIR</th>
         </tr>
     </thead>
     <tbody>
@@ -30,6 +32,16 @@
 <script>
 $(function() {
     const config = @json($config);
+    const tiposOperacionById = {};
+    const tiposDocumentoById = {};
+
+    config.tiposOperacion.forEach(r => {
+        tiposOperacionById[r.id] = r;
+    });
+
+    config.tiposDocumento.forEach(r => {
+        tiposDocumentoById[r.id] = r;
+    });
 
     let _datatable = $(".tbl-documentlog").DataTable({
         language: {url: "{{ url('packages/datatables-language/spanish.json') }}"},
@@ -40,22 +52,25 @@ $(function() {
         columns: [
             {data: 'fecha'},
             {render: function(data, type, row){
-                let labelsByTipo = {"1": "SIBMED", "2": "DAPU"}
-                return labelsByTipo[row['tipo_documento_id']];
+                return tiposOperacionById[row['tipo_operacion_id']].label;
+            }},
+            {render: function(data, type, row){
+                return tiposDocumentoById[row['tipo_documento_id']].label;
             }},
             {render: function(data, type, row){
                 if(parseInt(row['tipo_documento_id']) === 2){
+                }
                     let url = config.downloadUrl.replace('[id]', row['id']);
                     let html = `<a href="${url}" target="_blank">${row['filename']}</a>`;
                     return html;
-                }
                 return row['filename'];
             }},
             {render: function(data, type, row){
                 let kb = (row['size_bytes']/1024).toFixed(1);
                 let html = `<span>${kb}K</span>`;
                 return html;
-            }}
+            }},
+            {data: 'eir_filename'}
         ],
         "fnDrawCallback": function() {
             // $(".btn-delete").on("click", deleteFilenameHandler);

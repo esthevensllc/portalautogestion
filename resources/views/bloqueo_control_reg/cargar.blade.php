@@ -9,11 +9,22 @@
             <div class="mb-3 row">
                 <div class="col-lg-3 col-md-4">
                     <div class="form-group">
+                        <label for="tipo_operacion_id">Tipo Operación</label>
+                        <select class="form-control form-control-sm" name="tipo_operacion_id" id="tipo_operacion_id">
+                            <option value="">Seleccione</option>
+                            @foreach ($config["tiposOperacion"] as $row)
+                                <option value="{{ $row->id }}">{{ $row->label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-4">
+                    <div class="form-group">
                         <label for="tipo_documento_id">Tipo Documento</label>
                         <select class="form-control form-control-sm" name="tipo_documento_id" id="tipo_documento_id">
                             <option value="">Seleccione</option>
                             @foreach ($config["tiposDocumento"] as $row)
-                                <option value="{{ $row['id'] }}">{{ $row['label'] }}</option>
+                                <option value="{{ $row->id }}">{{ $row->label }}</option>
                             @endforeach
                         </select>
                     </div>
