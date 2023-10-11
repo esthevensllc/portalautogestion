@@ -3,6 +3,7 @@
 namespace AMovil\Reports\BloqueoControlReg\Infrastructure;
 
 use AMovil\Reports\BloqueoControlReg\Domain\BloqueoControlRegRepository;
+use DateTime;
 use Illuminate\Support\Facades\DB;
 use PDO;
 
@@ -10,8 +11,10 @@ class EloquentBloqueoControlRegRepository implements BloqueoControlRegRepository
 {
     public function saveReporteSIBMED($id, array $values)
     {
+        $now = new DateTime();
         foreach($values as $row){
             $row["documento_id"] = $id;
+            $row["created_at"] = $now;
             DB::table("usraes.sibmed_table_control_imei")->insert($row);
         }
     }

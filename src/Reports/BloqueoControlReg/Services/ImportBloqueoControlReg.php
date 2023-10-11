@@ -5,12 +5,14 @@ namespace AMovil\Reports\BloqueoControlReg\Services;
 use AMovil\Reports\BloqueoControlReg\Domain\BloqueoControlRegRepository;
 use AMovil\Reports\BloqueoControlReg\Domain\BloqueoControlRegLogRepository;
 use AMovil\Reports\BloqueoControlReg\Domain\TipoDocumento;
+use AMovil\Reports\BloqueoControlReg\Domain\TipoOperacion;
 use AMovil\Shared\FileStorage\Domain\StorageService;
 use AMovil\Shared\FileStorage\Domain\StorageSystemName;
 use DateTime;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use Ramsey\Uuid\Uuid;
 
 class ImportBloqueoControlReg
 {
@@ -29,7 +31,7 @@ class ImportBloqueoControlReg
         $this->storage = $storageService->getStorageSystemByName(StorageSystemName::LOCAL2);
     }
 
-    public function __invoke($tipoDocumentoId, $documento, $imei)
+    public function __invoke($tipoOperacionId, $tipoDocumentoId, $documento, $imei)
     {
         $tempFilePath = $documento->getPathname();
         $originalFilename = $documento->getClientOriginalName();
@@ -37,28 +39,39 @@ class ImportBloqueoControlReg
         // $newId = $this->getNewId();
         $newId = str_replace([".xlsx", ".pdf"], ["", ""], $originalFilename);
 
+        if(!(TipoOperacion::idIsBloqueo($tipoOperacionId) || TipoOperacion::idIsDesbloqueo($tipoOperacionId))){
+            throw new Exception("El tipo de operación no es valido");
+        }
+
         $documentos = $this->logRepo->getByCriteria([["filename", $originalFilename]]);
         if(count($documentos) > 0){
             throw new Exception("El documento '$originalFilename' ya fue cargado anteriormente");
         }
 
+        $tempEIRFilePath = null;
+        $strNow = (new DateTime())->format("YmdHis");
+        $tempEIRFilename = "ILBATCH.dat.{$strNow}1.PROV_BLOQIMEI_GSMA";
         if (TipoDocumento::idIsSIBMED($tipoDocumentoId)) {
             if($extension !== "xlsx"){
                 throw new Exception("El formato '{$extension}' del documento no es valido");
             }
             $fileValues = $this->getDataFromFile($tempFilePath);
             $this->repo->saveReporteSIBMED($newId, $fileValues);
+            $tempEIRFilePath = $this->generateEIRFile($tipoDocumentoId, $fileValues);
         } else if (TipoDocumento::idIsDAPU($tipoDocumentoId)) {
             if($extension !== "pdf"){
                 throw new Exception("El formato '{$extension}' del documento no es valido");
             }
             $this->repo->saveReporteDAPU($newId, $tempFilePath, $imei);
+            $tempEIRFilePath = $this->generateEIRFile($tipoDocumentoId, [["imei" => $imei]]);
         } else {
             throw new Exception("El tipo de documento no es valido");
         }
-        $this->storage->put("{$this->baseStoragePath}/{$originalFilename}", file_get_contents($tempFilePath));
-        $sizeBytes = $this->storage->size("{$this->baseStoragePath}/{$originalFilename}");
-        $this->logRepo->saveLog($newId, $tipoDocumentoId, $originalFilename, $sizeBytes);
+        $this->storage->put("{$this->baseStoragePath}/{$tempEIRFilename}", file_get_contents($tempEIRFilePath));
+        unlink($tempEIRFilePath);
+        // $sizeBytes = $this->storage->size("{$this->baseStoragePath}/{$tempEIRFilename}");
+        $sizeBytes = filesize($tempFilePath);
+        $this->logRepo->saveLog($newId, $tipoOperacionId, $tipoDocumentoId, $originalFilename, $sizeBytes, $tempFilePath, $tempEIRFilename);
     }
 
     private function getNewId(): string {
@@ -91,5 +104,23 @@ class ImportBloqueoControlReg
             $values[] = $row;
         }
         return $values;
+    }
+
+    private function generateEIRFile($tipoOperacionId, $imeis)
+    {
+        $eirOperation = "";
+        if(TipoOperacion::idIsBloqueo($tipoOperacionId)){
+            $eirOperation = "BIMEI";
+        }else if (TipoOperacion::idIsDesbloqueo($tipoOperacionId)){
+            $eirOperation = "AIMEI";
+        }
+        $tempFilename = sys_get_temp_dir() ."/phpexport-". Uuid::uuid4()->toString().".tmp";
+        $file = fopen($tempFilename, "w");
+        foreach($imeis as $row){
+            $imei = substr($row["imei"], 0, 14);
+            fwrite($file, "{$eirOperation},0,5,0,0,0,0,0,0,0,0,0,0,0,DWH,{$imei},0,0,0,0,0,0,,1".PHP_EOL);
+        }
+        fclose($file);
+        return $tempFilename;
     }
 }

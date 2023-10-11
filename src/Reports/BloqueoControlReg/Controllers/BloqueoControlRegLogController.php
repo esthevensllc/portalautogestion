@@ -15,9 +15,11 @@ class BloqueoControlRegLogController
     public function view()
     {
         $config = [
-            "title" => "Bloqueo Control Regulatorio Log",
+            "title" => "Bloqueo / Desbloqueo Control Regulatorio Log",
             "url" => url("bloqueo-control-regulatorio/logs/search"),
             "downloadUrl" => url("bloqueo-control-regulatorio/logs/[id]/download"),
+            "tiposOperacion" => $this->getLogs->getTiposOperacion(),
+            "tiposDocumento" => $this->getLogs->getTiposDocumento(),
         ];
         return view("bloqueo_control_reg.document_log", compact("config"));
     }

@@ -25,6 +25,9 @@ class DownloadBloqueoDocument
         $report = $this->repo->findReporteDAPU($id);
         // dd($report);
         if($report === null){
+            $report = $this->logRepo->findFileContentById($id);
+        }
+        if($report === null){
             throw new Exception("El archivo no existe");
         }
         $documentos = $this->logRepo->getByCriteria([["id", $id]]);
@@ -32,6 +35,7 @@ class DownloadBloqueoDocument
         $content = base64_decode($report->filecontent);
         return Response::respData([
             "filename" => $documentos[0]->filename,
+            "type" => str_ends_with($documentos[0]->filename, ".pdf") ? "pdf" : "xlsx",
             "content" => $content
         ]);
     }

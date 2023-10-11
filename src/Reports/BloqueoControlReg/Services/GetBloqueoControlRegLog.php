@@ -19,4 +19,14 @@ class GetBloqueoControlRegLog
         $data = $this->logRepo->getByCriteria();
         return Response::respData($data);
     }
+
+    public function getTiposOperacion()
+    {
+        return $this->logRepo->getTiposOperacion();
+    }
+
+    public function getTiposDocumento()
+    {
+        return $this->logRepo->getTiposDocumento();
+    }
 }
