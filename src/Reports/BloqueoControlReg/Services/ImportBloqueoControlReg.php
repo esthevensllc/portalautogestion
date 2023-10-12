@@ -18,8 +18,10 @@ class ImportBloqueoControlReg
 {
     private $logRepo;
     private $repo;
-    private $storage;
-    private $baseStoragePath = "/space/reportes/bloqueo_control_regulatorio";
+    private $localStorage;
+    private $eirStorage;
+    private $localBaseStoragePath = "/space/reportes/bloqueo_control_regulatorio";
+    private $baseStoragePath = "/comptel/BATCH/DWH/pre_output";
 
     public function __construct(
         BloqueoControlRegLogRepository $logRepo,
@@ -28,7 +30,8 @@ class ImportBloqueoControlReg
     ) {
         $this->logRepo = $logRepo;
         $this->repo = $repo;
-        $this->storage = $storageService->getStorageSystemByName(StorageSystemName::LOCAL2);
+        $this->localStorage = $storageService->getStorageSystemByName(StorageSystemName::LOCAL2);
+        $this->eirStorage = $storageService->getStorageSystemByName(StorageSystemName::EIR);
     }
 
     public function __invoke($tipoOperacionId, $tipoDocumentoId, $documento, $imei)
@@ -56,22 +59,27 @@ class ImportBloqueoControlReg
                 throw new Exception("El formato '{$extension}' del documento no es valido");
             }
             $fileValues = $this->getDataFromFile($tempFilePath);
+            $this->validateFileData($fileValues);
             $this->repo->saveReporteSIBMED($newId, $fileValues);
-            $tempEIRFilePath = $this->generateEIRFile($tipoDocumentoId, $fileValues);
+            $tempEIRFilePath = $this->generateEIRFile($tipoOperacionId, $fileValues);
         } else if (TipoDocumento::idIsDAPU($tipoDocumentoId)) {
             if($extension !== "pdf"){
                 throw new Exception("El formato '{$extension}' del documento no es valido");
             }
+            $fileValues = [["imei" => trim($imei)]];
+            $this->validateFileData($fileValues);
             $this->repo->saveReporteDAPU($newId, $tempFilePath, $imei);
-            $tempEIRFilePath = $this->generateEIRFile($tipoDocumentoId, [["imei" => $imei]]);
+            $tempEIRFilePath = $this->generateEIRFile($tipoOperacionId, $fileValues);
         } else {
             throw new Exception("El tipo de documento no es valido");
         }
-        $this->storage->put("{$this->baseStoragePath}/{$tempEIRFilename}", file_get_contents($tempEIRFilePath));
-        unlink($tempEIRFilePath);
         // $sizeBytes = $this->storage->size("{$this->baseStoragePath}/{$tempEIRFilename}");
         $sizeBytes = filesize($tempFilePath);
         $this->logRepo->saveLog($newId, $tipoOperacionId, $tipoDocumentoId, $originalFilename, $sizeBytes, $tempFilePath, $tempEIRFilename);
+
+        $this->localStorage->put("{$this->localBaseStoragePath}/{$tempEIRFilename}", file_get_contents($tempEIRFilePath));
+        $this->eirStorage->put("{$this->baseStoragePath}/{$tempEIRFilename}", file_get_contents($tempEIRFilePath));
+        unlink($tempEIRFilePath);
     }
 
     private function getNewId(): string {
@@ -89,7 +97,7 @@ class ImportBloqueoControlReg
             $row = [
                 "empresa" => $sheet->getCellByColumnAndRow(1, $i)->getValue(),
                 "registro" => $sheet->getCellByColumnAndRow(2, $i)->getValue(),
-                "imei" => $sheet->getCellByColumnAndRow(3, $i)->getValue(),
+                "imei" => trim($sheet->getCellByColumnAndRow(3, $i)->getValue()),
                 "nombres_apellidos_razon" => $sheet->getCellByColumnAndRow(4, $i)->getValue(),
                 "tipo_documento" => $sheet->getCellByColumnAndRow(5, $i)->getValue(),
                 "numero_documento" => $sheet->getCellByColumnAndRow(6, $i)->getValue(),
@@ -104,6 +112,15 @@ class ImportBloqueoControlReg
             $values[] = $row;
         }
         return $values;
+    }
+
+    private function validateFileData($data){
+        foreach($data as $row){
+            $imei = $row["imei"];
+            if(!is_numeric($imei)){
+                throw new Exception("El imei '{$imei}' no es valido");
+            }
+        }
     }
 
     private function generateEIRFile($tipoOperacionId, $imeis)
