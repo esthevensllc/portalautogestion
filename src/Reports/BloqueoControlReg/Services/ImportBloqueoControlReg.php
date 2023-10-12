@@ -21,7 +21,7 @@ class ImportBloqueoControlReg
     private $localStorage;
     private $eirStorage;
     private $localBaseStoragePath = "/space/reportes/bloqueo_control_regulatorio";
-    private $baseStoragePath = "/comptel/BATCH/DWH/pre_output";
+    private $baseStoragePath = "/comptel/BATCH/DWH/pre_input";
 
     public function __construct(
         BloqueoControlRegLogRepository $logRepo,
