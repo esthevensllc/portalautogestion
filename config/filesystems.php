@@ -70,6 +70,18 @@ return [
             'privateKey' => env('SFTP2_PRIVATE_KEY'),
             'password' => env('SFTP2_PASSWORD'),
         ],
+        'sftp_eir' => [
+            'driver' => 'sftp',
+            'host' => env('SFTP3_HOST'),
+         
+            // Settings for basic authentication...
+            'username' => env('SFTP3_USERNAME'),
+            'password' => env('SFTP3_PASSWORD'),
+         
+            // Settings for SSH key based authentication with encryption password...
+            'privateKey' => env('SFTP3_PRIVATE_KEY'),
+            'password' => env('SFTP3_PASSWORD'),
+        ],
 
     ],
 
