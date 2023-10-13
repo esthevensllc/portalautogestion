@@ -24,7 +24,7 @@
                         <div class="form-group">
                             <label for="">Tipo Busqueda</label>
                             <select class="form-control form-control-sm" name="tipobusqueda_id" required>
-                                <option value=''>kSeleccione</option>
+                                <option value=''>Seleccione</option>
                                 @foreach ($config["tiposBusqueda"] as $row)
                                     <option value='{{ $row["id"] }}'>{{ $row["label"] }}</option>
                                 @endforeach
