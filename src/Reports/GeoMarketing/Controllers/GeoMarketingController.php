@@ -27,6 +27,7 @@ class GeoMarketingController
                 ["id" => "2", "label" => "ESTADIO MONUMENTAL"],
             ],
             "maxDays" => ExportGeoMarketing::MAX_DAYS,
+            "whiteBlackList" => $this->finder->getBlackAndWhiteListSummary()
         ];
         return view("geomarketing.export_geomarketing", compact("config"));
     }

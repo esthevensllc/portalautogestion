@@ -27,6 +27,28 @@
                         </select>
                     </div>
                 </div>
+                <div class="col-lg-3">
+                </div>
+                <div class="col-lg-6">
+                    <table class="table table-sm table-bordered">
+                        <thead class="bg-secondary">
+                            <tr>
+                                <th>Fecha Actualización</th>
+                                <th>UserWhiteList</th>
+                                <th>UserBlackList</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($config["whiteBlackList"] as $row)
+                                <tr>
+                                    <td>{{ $row["fecha_actualizacion"] }}</td>
+                                    <td>{{ $row["UserWhiteList"] }}</td>
+                                    <td>{{ $row["UserBlackList"] }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
             <div class="mb-3 row form-section-2" style="display: none;">
                 <div class="col-12">

@@ -142,6 +142,15 @@ class EloquentGeoMarketingRepository implements GeoMarketingRepository
     {
         return DB::connection("ch-dn02")->table("cdrdatos.table_nintex_geomarketing")->get();
     }
+    
+    public function getBlackAndWhiteListSummary()
+    {
+        return DB::connection("ch-dn02")
+        ->select(DB::raw("SELECT date(fecha_carga) as fecha_actualizacion,
+        count(distinct if(toString(wl)='X',msisdn,null)) as UserWhiteList,
+        count(distinct if(toString(bl)='X',msisdn,null)) as UserBlackList
+        from dwa.f_d_base_wl_bl group by 1"));
+    }
 
     private function exec_sql(array $queries)
     {

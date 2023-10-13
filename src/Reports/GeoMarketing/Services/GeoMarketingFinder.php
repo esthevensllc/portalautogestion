@@ -16,4 +16,9 @@ class GeoMarketingFinder
     {
         return $this->repo->getLogs();
     }
+
+    public function getBlackAndWhiteListSummary()
+    {
+        return $this->repo->getBlackAndWhiteListSummary();
+    }
 }
