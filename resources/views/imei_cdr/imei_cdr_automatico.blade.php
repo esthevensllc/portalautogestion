@@ -16,7 +16,7 @@
 <h4 style="">{{ $config["title"] }}</h4>
 
 <div class="row">
-    <div class="col-md-6">
+    <div class="col-md-4">
         <div class="card">
             <div class="card-body">
                 <form id="form_import">
@@ -38,7 +38,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-6">
+    <div class="col-md-4">
         <div class="card">
             <div class="card-body">
                 <form id="form_delete">
@@ -57,6 +57,28 @@
                         </div>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <table class="table table-striped table-sm mb-0">
+                    <thead class="bg-danger">
+                        <tr>
+                            <th>RAT Type</th>
+                            <th>Values(Decimal)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($config["ratTypes"] as $row)
+                            <tr>
+                                <td>{{ $row["type"] }}</td>
+                                <td>{{ $row["value"] }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

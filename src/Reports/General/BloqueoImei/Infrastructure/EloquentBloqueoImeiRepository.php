@@ -3,26 +3,46 @@
 namespace AMovil\Reports\General\BloqueoImei\Infrastructure;
 
 use AMovil\Reports\General\BloqueoImei\Domain\BloqueoImeiRepository;
+use AMovil\Reports\General\BloqueoImei\Domain\TipoBusqueda;
 use DateTime;
 use Illuminate\Support\Facades\DB;
 
 class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
 {
-    public function getReporte($id, $filename, $imeis, DateTime $fechaIni, DateTime $fechaFin)
+    public function getReporte($id, $tipoBusquedaId, $filename, $imeis, DateTime $fechaIni, DateTime $fechaFin)
     {
         $strFechaIni = $fechaIni->format("Y-m-d H:i:s");
         $strFechaFin = $fechaFin->format("Y-m-d H:i:s");
         $strFecha = $fechaIni->format("Ymd");
 
-        foreach($imeis as $imei){
-            DB::connection("ch-dn02")
-            ->table("bloqueo_imei.base_imei")
-            ->insert([
-                "id_report" => $id,
-                "filename" => $filename,
-                "imei" => $imei
-            ]);
+        $cdrField = "";
+        $filterQuery = "";
+        if(TipoBusqueda::idIsImei($tipoBusquedaId)){
+            $cdrField = "substr(toString(served_imeisv),1,14)";
+            $filterQuery = "SELECT imei from bloqueo_imei.base_imei where id_report = '{$id}' group by 1";
+            foreach($imeis as $imei){
+                DB::connection("ch-dn02")
+                ->table("bloqueo_imei.base_imei")
+                ->insert([
+                    "id_report" => $id,
+                    "filename" => $filename,
+                    "imei" => $imei
+                ]);
+            }
+        }else if(TipoBusqueda::idIsMsisdn($tipoBusquedaId)){
+            $cdrField = "served_msisdn";
+            $filterQuery = "SELECT msisdn from bloqueo_imei.base_msisdn where id_report = '{$id}' group by 1";
+            foreach($imeis as $imei){
+                DB::connection("ch-dn02")
+                ->table("bloqueo_imei.base_msisdn")
+                ->insert([
+                    "id_report" => $id,
+                    "filename" => $filename,
+                    "msisdn" => $imei
+                ]);
+            }
         }
+
 
         $sql = "SELECT
         x.served_imeisv2,x.served_msisdn,x.serving_node_address1,x.serving_node_plmn_identifier,
@@ -37,8 +57,8 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
             losd_rating_group,uli_lac,uli_sac,uli_ci,uli_tai,uli_ecgi,losd_time_of_report
             from cdrdatos.cdr{$strFecha}
             where (toDateTime('{$strFechaIni}') <= record_opening_time and record_opening_time <= toDateTime('{$strFechaFin}'))
-            AND substr(toString(served_imeisv),1,14)
-            in (select imei from bloqueo_imei.base_imei where id_report = '{$id}' group by 1)
+            AND {$cdrField}
+            in ({$filterQuery})
             --and toString(rattype) not in ('3')
             group by served_imeisv2, served_msisdn,serving_node_address1,serving_node_plmn_identifier,
             record_opening_time,rattype,access_point_name_ni,cause_for_rec_closing,losd_datavolume_fbc_uplink,
@@ -92,13 +112,14 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
         return $builder->get();
     }
 
-    public function saveReporteLog($id, $username, $filename, $nRegistros)
+    public function saveReporteLog($id, $tipoBusquedaId, $username, $filename, $nRegistros)
     {
         $now = new DateTime();
         DB::connection("ch-dn02")
         ->table("bloqueo_imei.base_imei_log")
         ->insert([
             "id_report" => $id,
+            "tipobusqueda_id" => $tipoBusquedaId,
             "username" => $username,
             "filename" => $filename,
             "n_registros" => $nRegistros,
@@ -113,6 +134,8 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
 
         DB::connection("ch-dn02")
         ->statement(DB::raw("alter table bloqueo_imei.base_imei update delete_flag = 1 where id_report = '{$id}'"));
+        DB::connection("ch-dn02")
+        ->statement(DB::raw("alter table bloqueo_imei.base_msisdn update delete_flag = 1 where id_report = '{$id}'"));
     }
 
     public function getAutomaticReportLogByCriteria($filters)

@@ -25,7 +25,7 @@ class ExportBloqueoImei
         $this->authService = $authService;
     }
 
-    public function __invoke($file, $fechaIni, $fechaFin): Response
+    public function __invoke($tipoBusquedaId, $file, $fechaIni, $fechaFin): Response
     {
         $dtFechaIni = DateTime::createFromFormat("d/m/Y H:i:s", $fechaIni);
         $dtFechaFin = DateTime::createFromFormat("d/m/Y H:i:s", $fechaFin);
@@ -50,7 +50,7 @@ class ExportBloqueoImei
         $inputFile = $this->getDataFromFile($file);
 
         $id = (new DateTime())->format("YmdHis");
-        $data = $this->repo->getReporte($id, $inputFile["filename"], $inputFile["values"], $dtFechaIni, $dtFechaFin);
+        $data = $this->repo->getReporte($id, $tipoBusquedaId, $inputFile["filename"], $inputFile["values"], $dtFechaIni, $dtFechaFin);
         // dd($data);
 
         $headers = [
@@ -98,7 +98,7 @@ class ExportBloqueoImei
         ]);
         $content = $this->exportService->getWriter(WriterType::XLSX)->getOutput();
 
-        $this->repo->saveReporteLog($id, $this->authService->getUserIdentifier(), $filename, count($inputFile["values"]));
+        $this->repo->saveReporteLog($id, $tipoBusquedaId, $this->authService->getUserIdentifier(), $filename, count($inputFile["values"]));
 
         return new Response([], [
             "filename" => "CONSULTA_IMEI_{$id}.xlsx",

@@ -16,26 +16,58 @@
 <h4 style="">{{ $config["title"] }}</h4>
 <div class="card">
     <div class="card-body">
-        <form id="form_export">
+        <form id="form_export" class="row">
             @csrf
-            <div class="mb-3 row">
-                <div class="col-lg-3 col-md-4">
-                    <div class="form-group">
-                        <label for="">Ingrese Base IMEI</label>
-                        <input type="file" name="base_imei" placeholder="Ingrese Nintex" accept=".csv,.txt" required>
+            <div class="mb-3 col-6">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="form-group">
+                            <label for="">Tipo Busqueda</label>
+                            <select class="form-control form-control-sm" name="tipobusqueda_id" required>
+                                <option value=''>kSeleccione</option>
+                                @foreach ($config["tiposBusqueda"] as $row)
+                                    <option value='{{ $row["id"] }}'>{{ $row["label"] }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 col-md-6">
+                        <div class="form-group">
+                            <label for="">Ingrese Base</label>
+                            <input type="file" name="base_imei" placeholder="Ingrese Nintex" accept=".csv,.txt" required>
+                        </div>
+                    </div>
+                    <div class="col-lg-8">
+                        <div class="form-group">
+                            <label for="">Fecha Inicio - Fin</label>
+                            <input type="text" class="form-control form-control-sm" name="date_range" required>
+                        </div>
+                    </div>
+                    <div class="col-12" style="display: flex; align-items: end;">
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary btn-sm btn_export">Descargar</button>
+                        </div>
                     </div>
                 </div>
-                <div class="col-12"></div>
-                <div class="col-lg-3 col-md-4">
-                    <div class="form-group">
-                        <label for="">Fecha Inicio - Fin</label>
-                        <input type="text" class="form-control form-control-sm" name="date_range" required>
-                    </div>
-                </div>
-                <div class="col-12" style="display: flex; align-items: end;">
-                    <div class="form-group">
-                        <button type="submit" class="btn btn-primary btn-sm btn_export">Descargar</button>
-                    </div>
+            </div>
+            <div class="col-md-4">
+                <div class="">
+                    <table class="table table-striped table-sm mb-0">
+                        <thead class="bg-danger">
+                            <tr>
+                                <th>RAT Type</th>
+                                <th>Values(Decimal)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($config["ratTypes"] as $row)
+                                <tr>
+                                    <td>{{ $row["type"] }}</td>
+                                    <td>{{ $row["value"] }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </form>

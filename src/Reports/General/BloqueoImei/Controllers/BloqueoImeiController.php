@@ -26,6 +26,20 @@ class BloqueoImeiController
             'title' => 'Búsqueda IMEIs - CDR',
             'url' => url('bloqueo-imei/export'),
             'deleteUrl' => url('bloqueo-imei/reportlog/[id]'),
+            "tiposBusqueda" => [
+                ["id" => "1", "label" => "IMEI"],
+                ["id" => "2", "label" => "MSISDN"],
+            ],
+            "ratTypes" => [
+                ["type" => "<Reserved>", "value" => "0"],
+                ["type" => "UTRAN", "value" => "1"],
+                ["type" => "GERAN", "value" => "2"],
+                ["type" => "WLAN", "value" => "3"],
+                ["type" => "GAN", "value" => "4"],
+                ["type" => "HSPA Evolution", "value" => "5"],
+                ["type" => "E-UTRAN", "value" => "6"],
+                ["type" => "<Spare>", "value" => "7-255"],
+            ]
         ];
         return view("bloqueo_imei", compact("config"));
     }
@@ -40,11 +54,12 @@ class BloqueoImeiController
 
     public function export(Request $request)
     {
+        $tipoBusquedaId = $request->input("tipobusqueda_id");
         $file = $request->file("base_imei");
         $date_range = $request->input("date_range", "");
         $dates = explode(" - ", $date_range);
 
-        $response = $this->export->__invoke($file, $dates[0], $dates[1])->data();
+        $response = $this->export->__invoke($tipoBusquedaId, $file, $dates[0], $dates[1])->data();
 
         return response($response['content'], 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

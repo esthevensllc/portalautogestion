@@ -6,9 +6,9 @@ use DateTime;
 
 interface BloqueoImeiRepository
 {
-    public function getReporte($id, $filename, $imeis, DateTime $fechaIni, DateTime $fechaFin);
+    public function getReporte($id, $tipoBusquedaId, $filename, $imeis, DateTime $fechaIni, DateTime $fechaFin);
     public function getReporteLogByCriteria($filters);
-    public function saveReporteLog($id, $username, $filename, $nRegistros);
+    public function saveReporteLog($id, $tipoBusquedaId, $username, $filename, $nRegistros);
     public function deleteReporteLog($id);
     
     public function getReporteFromBaseImei(DateTime $fechaIni, DateTime $fechaFin);

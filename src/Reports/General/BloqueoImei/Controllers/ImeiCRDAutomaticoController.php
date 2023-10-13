@@ -47,6 +47,16 @@ class ImeiCRDAutomaticoController
             'deleteUrl' => url('imei-cdr-automatico/reportlog/[id]'),
             'importBaseImeiUrl' => url('imei-cdr-automatico/reportlog/base-imei'),
             'deleteBaseImeiUrl' => url('imei-cdr-automatico/reportlog/base-imei/delete'),
+            "ratTypes" => [
+                ["type" => "<Reserved>", "value" => "0"],
+                ["type" => "UTRAN", "value" => "1"],
+                ["type" => "GERAN", "value" => "2"],
+                ["type" => "WLAN", "value" => "3"],
+                ["type" => "GAN", "value" => "4"],
+                ["type" => "HSPA Evolution", "value" => "5"],
+                ["type" => "E-UTRAN", "value" => "6"],
+                ["type" => "<Spare>", "value" => "7-255"],
+            ],
         ];
         return view("imei_cdr.imei_cdr_automatico", compact("config"));
     }
