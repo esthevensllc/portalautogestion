@@ -64,13 +64,13 @@ class ExportRepPrepago
             fclose($fp);
 
             $this->reportLog($tempFilename, $dtStart, new DateTime(), [
-                "filename" => "Base_Devolucion_Prepago_TK{$ticketOsiptel}.tsv"
+                "filename" => "Base_Devolucion_Prepago_TK{$ticketOsiptel}_{$departamento}.tsv"
             ]);
 
             unlink($tempFilename);
     
             return new Response([], [
-                "filename" => "Base_Devolucion_Prepago_TK{$ticketOsiptel}.tsv",
+                "filename" => "Base_Devolucion_Prepago_TK{$ticketOsiptel}_{$departamento}.tsv",
                 "type" => "csv",
                 "content" => $content,
             ]);
