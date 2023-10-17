@@ -56,6 +56,9 @@ class EloquentGeoMarketingRepository implements GeoMarketingRepository
             "sql" => "DROP TABLE IF EXISTS cdrdatos.usuarios_estadio_{$this->userIdentifier}"
         ];
         $queries[] = [
+            "sql" => "DROP TABLE IF EXISTS cdrdatos.lineas_5g_{$this->userIdentifier}"
+        ];
+        $queries[] = [
             "sql" => "CREATE TABLE cdrdatos.usuarios_estadio_{$this->userIdentifier}(
                 `msisdn` Nullable(UInt64) DEFAULT NULL CODEC(T64, LZ4),
                 `record_time` DateTime DEFAULT '0000-00-00 00:00:00'
@@ -65,6 +68,9 @@ class EloquentGeoMarketingRepository implements GeoMarketingRepository
             ORDER BY msisdn
             SETTINGS index_granularity = 8192,
             allow_nullable_key = 1"
+        ];
+        $queries[] = [
+            "sql" => "CREATE TABLE cdrdatos.lineas_5g_{$this->userIdentifier} as cdrdatos.usuarios_estadio_{$this->userIdentifier}"
         ];
         foreach($dateRange as $row){
             $strLoopDateIni = $row["ini"];
@@ -99,6 +105,38 @@ class EloquentGeoMarketingRepository implements GeoMarketingRepository
                 and y.flag_place = '{$baseFlag}'
                 group by 1"
             ];
+
+            if((int) $baseFlag === 1){
+                $queries[] = [
+                    "sql" => "TRUNCATE TABLE cdrdatos.lineas_5g_{$this->userIdentifier}"
+                ];
+                $queries[] = [
+                    "sql" => "INSERT INTO cdrdatos.lineas_5g_{$this->userIdentifier}
+                    select x.fono_5g,max(x.fecha_max) as fech_max from  
+                    (
+                        select concat('51',toString(msisdn)) as fono_5g,max(fromUnixTimestamp(begin_time)) as fecha_max
+                        from remote('172.19.242.110',ufdr_streaming.ufdr_streaming{$strDay},'nifi','nifi')  
+                        where begin_time >= toUnixTimestamp('{$strLoopDateIni}') and begin_time < toUnixTimestamp('{$strLoopDateFin}')
+                        and toString(ran_ne_user_ip) in ('10.194.158.170','10.194.158.174')
+                        and (toString(msisdn) like '9%' and length(toString(msisdn))=9)
+                        group by 1
+                        union all
+                        select concat('51',toString(msisdn)) as fono_5g,max(fromUnixTimestamp(begin_time)) as fecha_max
+                        from remote('172.19.242.110',ufdr_http_browsing.ufdr_http_browsing{$strDay},'nifi','nifi')  
+                        where begin_time >= toUnixTimestamp('{$strLoopDateIni}') and begin_time < toUnixTimestamp('{$strLoopDateFin}')
+                        and toString(ran_ne_user_ip) in ('10.194.158.170','10.194.158.174')
+                        and (toString(msisdn) like '9%' and length(toString(msisdn))=9)
+                        group by 1
+                    ) x
+                    group by 1"
+                ];
+                $queries[] = [
+                    "sql" => "INSERT INTO cdrdatos.usuarios_estadio_{$this->userIdentifier}
+                    select * from cdrdatos.lineas_5g_{$this->userIdentifier}
+                    where msisdn not in (select msisdn from cdrdatos.usuarios_estadio_{$this->userIdentifier} group by 1)"
+                ];
+
+            }
         }
         $this->exec_sql($queries);
 
@@ -117,6 +155,9 @@ class EloquentGeoMarketingRepository implements GeoMarketingRepository
         $queries = [];
         $queries[] = [
             "sql" => "DROP TABLE cdrdatos.usuarios_estadio_{$this->userIdentifier}"
+        ];
+        $queries[] = [
+            "sql" => "DROP TABLE cdrdatos.lineas_5g_{$this->userIdentifier}"
         ];
         // $this->exec_sql($queries);
         return $data;
