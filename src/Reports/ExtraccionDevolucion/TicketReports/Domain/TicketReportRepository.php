@@ -10,4 +10,5 @@ interface TicketReportRepository
     public function findInputFor($ticket, $departamento);
     public function getTickets();
     public function getDepartamentos();
+    public function findByTicketAndDepartamento($ticket, $departamento);
 }

@@ -4,6 +4,7 @@ namespace AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services;
 
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Domain\ExtraccionRepository as ExtraccionRepository1;
 use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Domain\ExtraccionRepository as ExtraccionRepository2;
+use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Services\GetDepartamentosByNumReporte;
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Domain\TipoInput;
 use AMovil\Reports\ExtraccionDevolucion\TablaInteres\Domain\TablaInteresRepository;
 use AMovil\Reports\ReportLog\Services\SaveReportLog;
@@ -21,6 +22,7 @@ class ProcessExtraccion
     private $saveReportLog;
     private $tablaInteresRepo;
     private $sendFilePrepago;
+    private $departamentosPendientesGetter;
 
     const MESES_INTERES = 24;
     const MINUTOS_USUARIOS = 3;
@@ -30,13 +32,15 @@ class ProcessExtraccion
         ExtraccionRepository2 $repo2,
         SaveReportLog $saveReportLog,
         TablaInteresRepository $tablaInteresRepo,
-        SendFilePrepagoProcesadoEvent $sendFilePrepago
+        SendFilePrepagoProcesadoEvent $sendFilePrepago,
+        GetDepartamentosByNumReporte $departamentosPendientesGetter
     ) {
         $this->repo = $repo;
         $this->repo2 = $repo2;
         $this->saveReportLog = $saveReportLog;
         $this->tablaInteresRepo = $tablaInteresRepo;
         $this->sendFilePrepago = $sendFilePrepago;
+        $this->departamentosPendientesGetter = $departamentosPendientesGetter;
     }
 
     public function __invoke(?int $step, $tipoInput, $celdas, $provincias, $excel, $fechaIni, $fechaFin, $ticketOsiptel, $fechaInteres, $corteFechaIni, $corteFechaFin, $minutos_usuarios)
@@ -92,7 +96,7 @@ class ProcessExtraccion
             $exists = $this->repo->ticketAndDepartamentoExistsInConsolidado($ticketOsiptel, $depatamento);
             
             if($exists){
-                throw new Exception("El ticket ya se proceso");
+                throw new Exception("El ticket ya se proceso para el departamento {$depatamento}");
             }
 
             if(!$dtFechaIni){
@@ -115,7 +119,11 @@ class ProcessExtraccion
                 $this->repo->getReporteMontoDevolver($dtFechaInteres, $dtCorteFechaIni);
             }
 
-            $this->repo2->procesado($inforFalla->numero_de_reporte);
+            $departamentosPendientes = $this->departamentosPendientesGetter->__invoke($inforFalla->numero_de_reporte)->data();
+            if(count($departamentosPendientes) === 0){
+                $this->repo2->procesado($inforFalla->numero_de_reporte);
+            }
+
             // $reportes = $this->repo2->getReportesProcesados();
             $correo = new NotificacionProcesado($ticketOsiptel, $depatamento);
             $correo->setSubject("PROCESADO - TK {$ticketOsiptel} - {$inforFalla->name_file}");
