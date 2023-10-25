@@ -17,7 +17,11 @@
             <th>Tipo Documento</th>
             <th>Documento</th>
             <th>Peso</th>
-            <th>EIR</th>
+            {{-- <th>EIR</th> --}}
+            <th>Cantidad Registros</th>
+            <th>Imeis Unicos</th>
+            <th>Ejecuciones Exitosas</th>
+            <th>Ejecuciones Fallidas</th>
         </tr>
     </thead>
     <tbody>
@@ -70,7 +74,10 @@ $(function() {
                 let html = `<span>${kb}K</span>`;
                 return html;
             }},
-            {data: 'eir_filename'}
+            {data: 'cant_registros'},
+            {data: 'cant_unicos'},
+            {data: 'exec_ok'},
+            {data: 'exec_fail'}
         ],
         "fnDrawCallback": function() {
             // $(".btn-delete").on("click", deleteFilenameHandler);

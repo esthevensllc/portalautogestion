@@ -50,7 +50,7 @@ class EloquentBloqueoControlRegLogRepository implements BloqueoControlRegLogRepo
     public function getByCriteria($filters = [])
     {
         $builder = DB::table("usraes.bloqueo_control_regulatorio_log");
-        $builder->select("id", "fecha", "tipo_operacion_id", "tipo_documento_id", "filename", "size_bytes", "eir_filename");
+        $builder->select("id", "fecha", "tipo_operacion_id", "tipo_documento_id", "filename", "size_bytes", "eir_filename", "cant_registros", "cant_unicos", "exec_ok", "exec_fail", "processed");
         foreach($filters as $row){
             $builder->where($row[0], $row[1]);
         }
