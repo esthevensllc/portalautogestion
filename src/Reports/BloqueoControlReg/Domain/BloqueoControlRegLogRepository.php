@@ -4,7 +4,7 @@ namespace AMovil\Reports\BloqueoControlReg\Domain;
 
 interface BloqueoControlRegLogRepository
 {
-    public function saveLog($id, $tipoOperacionId, $tipoDocumentoId, $filename, $sizeBytes, $filePath, $eirFilename);
+    public function saveLog($id, $tipoOperacionId, $tipoDocumentoId, $filename, $sizeBytes, $filePath, $eirFilename, $cantRegistros, $cantUnicos);
     public function getByCriteria($filters = []);
     public function findFileContentById($id);
     public function getTiposOperacion();

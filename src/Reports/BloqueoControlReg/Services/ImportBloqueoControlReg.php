@@ -39,7 +39,6 @@ class ImportBloqueoControlReg
         $tempFilePath = $documento->getPathname();
         $originalFilename = $documento->getClientOriginalName();
         $extension = $documento->getClientOriginalExtension();
-        // $newId = $this->getNewId();
         $newId = str_replace([".xlsx", ".pdf"], ["", ""], $originalFilename);
 
         if(!(TipoOperacion::idIsBloqueo($tipoOperacionId) || TipoOperacion::idIsDesbloqueo($tipoOperacionId))){
@@ -54,11 +53,15 @@ class ImportBloqueoControlReg
         $tempEIRFilePath = null;
         $strNow = (new DateTime())->format("YmdHis");
         $tempEIRFilename = "ILBATCH.dat.{$strNow}1.PROV_BLOQIMEI_GSMA";
+        $cantRegistros = 0;
+        $cantUnicos = 0;
         if (TipoDocumento::idIsSIBMED($tipoDocumentoId)) {
             if($extension !== "xlsx"){
                 throw new Exception("El formato '{$extension}' del documento no es valido");
             }
             $fileValues = $this->getDataFromFile($tempFilePath);
+            $cantRegistros = count($fileValues);
+            $cantUnicos = $this->countImeisUnicos($fileValues);
             $this->validateFileData($fileValues);
             $this->repo->saveReporteSIBMED($newId, $fileValues);
             $tempEIRFilePath = $this->generateEIRFile($tipoOperacionId, $fileValues);
@@ -67,6 +70,8 @@ class ImportBloqueoControlReg
                 throw new Exception("El formato '{$extension}' del documento no es valido");
             }
             $fileValues = [["imei" => trim($imei)]];
+            $cantRegistros = 1;
+            $cantUnicos = 1;
             $this->validateFileData($fileValues);
             $this->repo->saveReporteDAPU($newId, $tempFilePath, $imei);
             $tempEIRFilePath = $this->generateEIRFile($tipoOperacionId, $fileValues);
@@ -75,15 +80,21 @@ class ImportBloqueoControlReg
         }
         // $sizeBytes = $this->storage->size("{$this->baseStoragePath}/{$tempEIRFilename}");
         $sizeBytes = filesize($tempFilePath);
-        $this->logRepo->saveLog($newId, $tipoOperacionId, $tipoDocumentoId, $originalFilename, $sizeBytes, $tempFilePath, $tempEIRFilename);
+        $this->logRepo->saveLog(
+            $newId,
+            $tipoOperacionId,
+            $tipoDocumentoId,
+            $originalFilename,
+            $sizeBytes,
+            $tempFilePath,
+            $tempEIRFilename,
+            $cantRegistros,
+            $cantUnicos
+        );
 
         $this->localStorage->put("{$this->localBaseStoragePath}/{$tempEIRFilename}", file_get_contents($tempEIRFilePath));
         $this->eirStorage->put("{$this->baseStoragePath}/{$tempEIRFilename}", file_get_contents($tempEIRFilePath));
         unlink($tempEIRFilePath);
-    }
-
-    private function getNewId(): string {
-        return (new DateTime())->format("YmdHis");
     }
     
     private function getDataFromFile($filepath)
@@ -112,6 +123,15 @@ class ImportBloqueoControlReg
             $values[] = $row;
         }
         return $values;
+    }
+
+    private function countImeisUnicos($fileValues)
+    {
+        $uniqueValues = [];
+        foreach($fileValues as $row){
+            $uniqueValues[$row["imei"]] = $row;
+        }
+        return count($uniqueValues);
     }
 
     private function validateFileData($data){
