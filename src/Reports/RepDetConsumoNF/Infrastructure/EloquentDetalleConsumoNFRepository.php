@@ -266,7 +266,7 @@ class EloquentDetalleConsumoNFRepository implements DetalleConsumoNFRepository
 
         $this->exec_sql($queries);
 
-        $query = "SELECT A.numero_cuenta_larga,A.ciclo,'' NRO_FACTURA,B.NRO_TEL_ORIGEN,B.DIA,B.HORA_INICIO,B.HORA_FIN,
+        $query = "SELECT A.numero_cuenta_larga,A.ciclo,'' NRO_FACTURA,B.NRO_TEL_ORIGEN,TO_CHAR(B.DIA, 'DD/MM/YYYY') DIA,B.HORA_INICIO,B.HORA_FIN,
         '' PAIS,B.NRO_TEL_DESTINO,
         B.CONSUMO,B.TIPO_SERVICIO,B.MODO_DESTINO||' - '||B.CLASE_DESTINO DESTINO,B.OPERADOR_DESTINO OPERADOR,B.TIPO_LLAMADA
         FROM (
