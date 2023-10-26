@@ -156,5 +156,13 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\BloqueoControlReg\Domain\BloqueoControlRegLogRepository::class,
             \AMovil\Reports\BloqueoControlReg\Infrastructure\EloquentBloqueoControlRegLogRepository::class
         );
+        $this->app->bind(
+            \AMovil\Reports\ExtraccionDevFija\TicketReports\Domain\FijaTicketReportRepository::class,
+            \AMovil\Reports\ExtraccionDevFija\TicketReports\Infrastructure\EloquentFijaTicketReportRepository::class
+        );
+        $this->app->bind(
+            \AMovil\Reports\ExtraccionDevFija\InformesFalla\Domain\InformeFallasRepository::class,
+            \AMovil\Reports\ExtraccionDevFija\InformesFalla\Infrastructure\EloquentInformeFallasRepository::class
+        );
     }
 }

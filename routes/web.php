@@ -293,6 +293,36 @@ Route::group([
         Route::get('/', [\AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Controllers\ExtraccionDevFijaController::class, 'view']);
         Route::post('/process', [\AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Controllers\ExtraccionDevFijaController::class, 'process']);
     });
+    Route::group(['prefix' => 'extraccion-dev-fija/reportes', 'trac_name' => 'extraccion-dev-fija.reportes'], function(){
+        Route::get('/', [\AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Controllers\ExtraccionDevFijaController::class, 'reportView']);
+        Route::post('find-input', [\AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Controllers\ExtraccionDevFijaController::class, 'findInput']);
+        Route::post('export', [\AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Controllers\ExtraccionDevFijaController::class, 'export']);
+    });
+    Route::group(['prefix' => 'extraccion-dev-fija/tickets', 'trac_name' => 'extraccion-dev-fija.tickets'], function(){
+        Route::get('/', [\AMovil\Reports\ExtraccionDevFija\TicketReports\Controllers\FijaTicketReportController::class, 'view']);
+        Route::get('search', [\AMovil\Reports\ExtraccionDevFija\TicketReports\Controllers\FijaTicketReportController::class, 'search']);
+    });
+    Route::group(['prefix' => 'extraccion-dev-fija/tickets/eliminar', 'trac_name' => 'extraccion-dev-fija.eliminar'], function(){
+        Route::get('/', [\AMovil\Reports\ExtraccionDevFija\TicketReports\Controllers\FijaTicketReportController::class, 'deleteView']);
+        Route::post('', [\AMovil\Reports\ExtraccionDevFija\TicketReports\Controllers\FijaTicketReportController::class, 'deleteTicket']);
+    });
+    Route::group(['prefix' => 'extraccion-dev-fija/informes-falla/cargar', 'trac_name' => 'extraccion-dev-fija.informes-falla.create'], function(){
+        Route::get('/', [\AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers\InformeFallasController::class, 'createView']);
+        Route::post('/', [\AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers\InformeFallasController::class, 'create']);
+        // Route::get('search', [\AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers\InformeFallasController::class, 'search']);
+    });
+    Route::group(['prefix' => 'extraccion-dev-fija/informes-falla', 'trac_name' => 'extraccion-dev-fija.informes-falla'], function(){
+        Route::get('/', [\AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers\InformeFallasController::class, 'view']);
+        Route::get('search', [\AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers\InformeFallasController::class, 'search']);
+        Route::post('update-status', [\AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers\InformeFallasController::class, 'updateStatus']);
+        Route::post('{numReporte}/{servicioAfectadoId}/delete', [\AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers\InformeFallasController::class, 'delete']);
+        Route::get('{numReporte}/download', [\AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers\InformeFallasController::class, 'download']);
+    });
+    Route::group(['prefix' => 'extraccion-dev-fija/informes-falla/procesar', 'trac_name' => 'extraccion-dev-fija.informes-falla.process'], function(){
+        Route::get('/', [\AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers\InformeFallasController::class, 'processView']);
+        Route::post('/', [\AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers\InformeFallasController::class, 'processFromInput']);
+    });
+
     Route::group(['prefix' => 'lineas-mtc-osiptel', 'trac_name' => 'lineas-mtc-osiptel'], function(){
         Route::get('/', [\AMovil\Reports\General\LineasMTCOsiptel\Controllers\LineasMTCOsiptelController::class, 'view']);
         Route::post('/export', [\AMovil\Reports\General\LineasMTCOsiptel\Controllers\LineasMTCOsiptelController::class, 'export']);
