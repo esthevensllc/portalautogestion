@@ -156,5 +156,9 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\BloqueoControlReg\Domain\BloqueoControlRegLogRepository::class,
             \AMovil\Reports\BloqueoControlReg\Infrastructure\EloquentBloqueoControlRegLogRepository::class
         );
+        $this->app->bind(
+            \AMovil\Reports\RepDetConsumoNF\Domain\DetalleConsumoNFRepository::class,
+            \AMovil\Reports\RepDetConsumoNF\Infrastructure\EloquentDetalleConsumoNFRepository::class
+        );
     }
 }
