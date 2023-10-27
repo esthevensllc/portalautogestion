@@ -126,9 +126,17 @@ class ExtraccionDevFijaController
         }else if ($tipoReporte === "2"){
             $response = $this->exportRepPostpago->__invoke($ticket)->data();
         }
-        return response($response["content"], 200, [
-            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment;filename="'.$response["filename"].'"'
-        ]);
+        $headersByTipe = [
+            "zip" => [
+                'Content-Type' => 'application/zip; charset=UTF-8',
+                'Content-Transfer-Encoding' => 'Binary',
+                'Content-Disposition' => 'attachment;filename="'.$response['filename'].'"'
+            ],
+            "xlsx" => [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'Content-Disposition' => 'attachment;filename="'.$response["filename"].'"'
+            ]
+            ];
+        return response($response["content"], 200, $headersByTipe[$response["type"]]);
     }
 }

@@ -11,7 +11,8 @@ interface ExtraccionDevFijaRepository
     public function findInputsByNumReporteAndTicket($numReporte, $ticket);
     public function getInputs();
     public function getReporteUsuariosAfectados($ticket);
-    public function getReportePostpago($ticket);
+    public function getReportePostpago($ticket, $fuente);
+    public function getFuentesReportePostpago($ticket);
     public function createInput(
         string $numReporte,
         string $username,

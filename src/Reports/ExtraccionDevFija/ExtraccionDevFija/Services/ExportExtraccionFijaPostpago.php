@@ -7,6 +7,8 @@ use AMovil\Shared\Application\Response;
 use AMovil\Shared\Exports\Domain\ExportService;
 use AMovil\Shared\Exports\Domain\WriterType;
 use PhpOffice\PhpSpreadsheet\Style\Border;
+use Ramsey\Uuid\Uuid;
+use ZipArchive;
 
 class ExportExtraccionFijaPostpago
 {
@@ -21,7 +23,50 @@ class ExportExtraccionFijaPostpago
 
     public function __invoke($ticket)
     {
-        $data = $this->repo->getReportePostpago($ticket);
+        $fuentes = $this->repo->getFuentesReportePostpago($ticket);
+        $response = null;
+        if(count($fuentes) > 1){
+            $zip = new ZipArchive();
+            $zipTempfilename = $this->getTempfilename();
+            $tempfiles = [$zipTempfilename];
+            $zip->open($zipTempfilename, ZipArchive::CREATE);
+            foreach($fuentes as $row){
+                $data = $this->repo->getReportePostpago($ticket, $row->fuente);
+                $tempfile = $this->getExportTempfile($data);
+                $zip->addFile($tempfile, "FIJA_POSTPAGO_{$row->fuente}.xlsx");
+                $tempfiles[] = $tempfile;
+            }
+            $zip->close();
+            $content = file_get_contents($zipTempfilename);
+            foreach($tempfiles as $file){
+                unlink($file);
+            }
+            $response = Response::respData([
+                "filename" => "FIJA_POSTPAGO.zip",
+                "type" => "zip",
+                "content" => $content
+            ]);
+        } else {
+            $fuente = null;
+            $data = [];
+            if(count($fuentes) === 1) {
+                $fuente = $fuentes[0]->fuente;
+                $data = $this->repo->getReportePostpago($ticket, $fuente);
+            }
+            $tempfile = $this->getExportTempfile($data);
+            $content = file_get_contents($tempfile);
+            unlink($tempfile);
+            $response = Response::respData([
+                "filename" => "FIJA_POSTPAGO.xlsx",
+                "type" => "xlsx",
+                "content" => $content
+            ]);
+        }
+        return $response;
+    }
+
+    private function getExportTempfile($data)
+    {
         $headers = [
             "ticket" => ["label" => "TICKET"],
             "msisdn" => ["label" => "MSISDN"],
@@ -61,11 +106,13 @@ class ExportExtraccionFijaPostpago
                 ]
             ]
         ];
+        $this->exportService->reset();
         $this->exportService->loadData($headers, $data, $options);
-        $content = $this->exportService->getWriter(WriterType::XLSX)->getOutput();
-        return Response::respData([
-            "filename" => "FIJA_POSTPAGO.xlsx",
-            "content" => $content
-        ]);
+        return $this->exportService->getWriter(WriterType::XLSX)->saveToTempfile();
+    }
+
+    private function getTempfilename(){
+        $filename = sys_get_temp_dir() ."/phpexport-". Uuid::uuid4()->toString().".tmp";
+        return $filename;
     }
 }

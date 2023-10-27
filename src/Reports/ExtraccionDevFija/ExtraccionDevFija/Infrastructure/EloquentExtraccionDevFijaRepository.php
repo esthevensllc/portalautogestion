@@ -1189,7 +1189,7 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
         ->get();
     }
 
-    public function getReportePostpago($ticket)
+    public function getReportePostpago($ticket, $fuente)
     {
         return DB::connection($this->connection)->table("USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST")
         ->selectRaw("TICKET,
@@ -1212,7 +1212,17 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
         to_char(FECHAALTA, 'YYYY-MM-DD') FECHA_ACTIVACION,
         'Dev. por interrupcion del ' || to_char(FEC_INI_INCIDENCIA, 'DD/MM/YYYY') || '. Tasa aplicada  0.01%' GLOSARIO")
         ->where("ticket", $ticket)
+        ->where("fuente", $fuente)
         // ->where("dpto", $departamento)
+        ->get();
+    }
+
+    public function getFuentesReportePostpago($ticket)
+    {
+        return DB::connection($this->connection)->table("USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST")
+        ->select("fuente")
+        ->where("ticket", $ticket)
+        ->groupBy("fuente")
         ->get();
     }
 
