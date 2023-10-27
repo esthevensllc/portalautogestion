@@ -1,8 +1,8 @@
 <?php
 
-namespace AMovil\Reports\DetallePlanes\Services;
+namespace AMovil\Reports\DetallePlanes\Planes\Services;
 
-use AMovil\Reports\DetallePlanes\Domain\DetallePlanRepository;
+use AMovil\Reports\DetallePlanes\Planes\Domain\DetallePlanRepository;
 
 class DetallePlanesFinder
 {

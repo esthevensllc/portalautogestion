@@ -1,9 +1,9 @@
 <?php
 
-namespace AMovil\Reports\DetallePlanes\Services;
+namespace AMovil\Reports\DetallePlanes\Planes\Services;
 
-use AMovil\Reports\DetallePlanes\Domain\DetallePlanRepository;
-use AMovil\Reports\DetallePlanes\Domain\TipoInputDetallePlan;
+use AMovil\Reports\DetallePlanes\Planes\Domain\DetallePlanRepository;
+use AMovil\Reports\DetallePlanes\Planes\Domain\TipoInputDetallePlan;
 use AMovil\Shared\Application\Response;
 use AMovil\Shared\Exports\Domain\ExportService;
 use AMovil\Shared\Exports\Domain\WriterType;

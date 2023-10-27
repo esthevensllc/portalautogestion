@@ -161,8 +161,8 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\RepDetConsumoNF\Infrastructure\EloquentDetalleConsumoNFRepository::class
         );
         $this->app->bind(
-            \AMovil\Reports\DetallePlanes\Domain\DetallePlanRepository::class,
-            \AMovil\Reports\DetallePlanes\Infrastructure\EloquentDetallePlanRepository::class
+            \AMovil\Reports\DetallePlanes\Planes\Domain\DetallePlanRepository::class,
+            \AMovil\Reports\DetallePlanes\Planes\Infrastructure\EloquentDetallePlanRepository::class
         );
     }
 }

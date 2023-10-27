@@ -1,6 +1,6 @@
 <?php
 
-namespace AMovil\Reports\DetallePlanes\Domain;
+namespace AMovil\Reports\DetallePlanes\Planes\Domain;
 
 interface DetallePlanRepository
 {

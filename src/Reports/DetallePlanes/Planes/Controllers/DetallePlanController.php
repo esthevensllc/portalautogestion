@@ -1,10 +1,10 @@
 <?php
 
-namespace AMovil\Reports\DetallePlanes\Controllers;
+namespace AMovil\Reports\DetallePlanes\Planes\Controllers;
 
-use AMovil\Reports\DetallePlanes\Domain\TipoInputDetallePlan;
-use AMovil\Reports\DetallePlanes\Services\DetallePlanesFinder;
-use AMovil\Reports\DetallePlanes\Services\ExportDetallePlanes;
+use AMovil\Reports\DetallePlanes\Planes\Domain\TipoInputDetallePlan;
+use AMovil\Reports\DetallePlanes\Planes\Services\DetallePlanesFinder;
+use AMovil\Reports\DetallePlanes\Planes\Services\ExportDetallePlanes;
 use Illuminate\Http\Request;
 
 class DetallePlanController

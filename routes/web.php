@@ -389,8 +389,8 @@ Route::group([
         Route::get('{id}/download', [\AMovil\Reports\BloqueoControlReg\Controllers\BloqueoControlRegController::class, 'downloadDocument']);
     });
     Route::group(['prefix' => 'detalle-planes', 'trac_name' => 'detalle-planes'], function(){
-        Route::get('/', [\AMovil\Reports\DetallePlanes\Controllers\DetallePlanController::class, 'view']);
-        Route::post('export', [\AMovil\Reports\DetallePlanes\Controllers\DetallePlanController::class, 'export']);
+        Route::get('/', [\AMovil\Reports\DetallePlanes\Planes\Controllers\DetallePlanController::class, 'view']);
+        Route::post('export', [\AMovil\Reports\DetallePlanes\Planes\Controllers\DetallePlanController::class, 'export']);
     });
 
 });

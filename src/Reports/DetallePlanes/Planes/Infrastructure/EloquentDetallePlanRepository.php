@@ -1,8 +1,8 @@
 <?php
 
-namespace AMovil\Reports\DetallePlanes\Infrastructure;
+namespace AMovil\Reports\DetallePlanes\Planes\Infrastructure;
 
-use AMovil\Reports\DetallePlanes\Domain\DetallePlanRepository;
+use AMovil\Reports\DetallePlanes\Planes\Domain\DetallePlanRepository;
 use Illuminate\Support\Facades\DB;
 
 class EloquentDetallePlanRepository implements DetallePlanRepository
