@@ -113,6 +113,14 @@ class EloquentInformeFallasRepository implements InformeFallasRepository
         ->where("servicio_afectado_id", $servicioAfectadoId)
         ->update(["procesado" => 1]);
     }
+
+    public function updateStatusToSinProcesar(string $numReporte, int $servicioAfectadoId)
+    {
+        DB::table('usraes.noc_informe_de_fallas_fija')
+        ->where("numero_reporte", $numReporte)
+        ->where("servicio_afectado_id", $servicioAfectadoId)
+        ->update(["procesado" => 0]);
+    }
     
     public function delete(string $numReporte, int $servicioAfectadoId)
     {

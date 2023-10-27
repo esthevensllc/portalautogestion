@@ -2,7 +2,6 @@
 
 namespace AMovil\Reports\ExtraccionDevFija\TicketReports\Services;
 
-use AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Domain\ExtraccionDevFijaRepository;
 use AMovil\Reports\ExtraccionDevFija\InformesFalla\Domain\InformeFallasRepository;
 use AMovil\Reports\ExtraccionDevFija\TicketReports\Domain\FijaTicketReportRepository;
 use Exception;
@@ -11,16 +10,13 @@ class DeleteFijaTicket
 {
     private $repo;
     private $informeFallasRepo;
-    private $extraccionFijaRepo;
 
     public function __construct(
         FijaTicketReportRepository $repo,
-        InformeFallasRepository $informeFallasRepo,
-        ExtraccionDevFijaRepository $extraccionFijaRepo
+        InformeFallasRepository $informeFallasRepo
     ) {
         $this->repo = $repo;
         $this->informeFallasRepo = $informeFallasRepo;
-        $this->extraccionFijaRepo = $extraccionFijaRepo;
     }
 
     public function __invoke($ticket)
@@ -33,12 +29,6 @@ class DeleteFijaTicket
         $servicioAfectadoId = $response["data"][0]["servicio_afectado_id"];
 
         $this->repo->deleteBy($ticket);
-        $this->informeFallasRepo->delete($numReporte, $servicioAfectadoId);
-        $this->extraccionFijaRepo->deleteServicioInput($numReporte, $servicioAfectadoId);
-
-        $informesFalla = $this->informeFallasRepo->getByCriteria(["numero_reporte.eq.{$numReporte}"])["data"];
-        if(count($informesFalla) === 0){
-            $this->extraccionFijaRepo->deletePlanoInput($numReporte);
-        }
+        $this->informeFallasRepo->updateStatusToSinProcesar($numReporte, $servicioAfectadoId);
     }
 }

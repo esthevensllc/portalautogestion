@@ -13,6 +13,7 @@ interface InformeFallasRepository
     public function updateStatusToEnEjecucion(string $numReporte, int $servicioAfectadoId);
     public function updateStatusToEnEsperaEjecucion(string $numReporte, int $servicioAfectadoId);
     public function updateStatusToProcesado(string $numReporte, int $servicioAfectadoId);
+    public function updateStatusToSinProcesar(string $numReporte, int $servicioAfectadoId);
     public function delete(string $numReporte, int $servicioAfectadoId);
     public function getServiciosAfectados();
     public function findServicioAfectado(int $servicioAfectadoId);

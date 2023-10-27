@@ -359,6 +359,7 @@ var id,name;
                     <button
                         class="btn btn-sm btn-danger btn-delete"
                         data-id="${row['numero_reporte']}"
+                        data-procesado="${row['procesado']}"
                         data-servicioafectadoid="${row['servicio_afectado_id']}"
                         data-value="eliminar"><li class="la la-trash"></li> Eliminar</button>`;
                 return html;
@@ -383,8 +384,13 @@ var id,name;
             $(".btn-delete").on("click", function(e){
                 let numReporte = $(this).attr("data-id");
                 let servicioafectadoid = $(this).attr("data-servicioafectadoid");
+                let procesado = $(this).attr("data-procesado");
                 let _token = $("input[name=_token]").val();
-                if(confirm(`¿Estas seguro que quieres eliminar el informe de fallas ${numReporte}?`)){
+                let message = `¿Estas seguro que quieres eliminar el informe de fallas ${numReporte}?`;
+                if(procesado === "1"){
+                    message = `¿Estas seguro que quieres eliminar el ticket y el informe de fallas ${numReporte} ya procesado?`;
+                }
+                if(confirm(message)){
                     utils.fetch(config.deleteApi.replace("[numReporte]", numReporte).replace("[servicioAfectadoId]", servicioafectadoid), {
                         method: "POST",
                         headers: {"Content-Type": "application/json", "Accept": "application/json"},
