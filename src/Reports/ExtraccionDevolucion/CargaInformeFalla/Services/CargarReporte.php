@@ -24,6 +24,7 @@ class CargarReporte
 
     public function __invoke($numero, $excel, $detalleExtraccion)
     {
+        $this->validate($detalleExtraccion);
         $filename = $excel->getClientOriginalName();
         $reporte = $this->repo->updateReporte($numero, $excel->getClientOriginalName());
         if($reporte){
@@ -62,6 +63,15 @@ class CargarReporte
             }
         }
         return $reporte;
+    }
+
+    private function validate($detalles){
+        foreach($detalles as $row){
+            $result = preg_match('/^[0-9,]+$/', $row["celdas"]);
+            if($result === 0){
+                throw new Exception("Las celdas solo pueden contener numeros o comas");
+            }
+        }
     }
 
     private function saveInputs($numero, $celdas, $provincias, $corteFechaIni, $corteFechaFin)

@@ -531,9 +531,9 @@ $(function() {
     .dispatchEvent(new Event("change"));
 
     let tbl_extraccion = new SimpleCrudTableComponent("#tbl_extraccion", {
-        cell2g: {type: "mediumString"},
-        cell3g: {type: "mediumString"},
-        cell4g: {type: "mediumString"},
+        cell2g: {type: "mediumString", readonly: true},
+        cell3g: {type: "mediumString", readonly: true},
+        cell4g: {type: "mediumString", readonly: true},
         distritos: {type: "mediumString", readonly: true},
         corteFechaIni: {type: "date"},
         corteHoraIni: {type: "time"},
@@ -621,6 +621,28 @@ $(function() {
             }
             if(minutes_diff <= 0){
                 alert("La diferencia de minutos debe ser mayor a cero");
+                return;
+            }
+            if(cell_2g === "" && cell_3g === "" && cell_4g === ""){
+                alert("Debe ingresar almenos un Cells ID en 2G,3G o 4G");
+                return;
+            }
+            let cellExpression = /^[0-9,]+$/;
+            if(cell_2g !== "" && !cell_2g.match(cellExpression)){
+                alert("Las Cells ID 2G solo pueden contener numeros separados por comas");
+                return;
+            }
+            if(cell_3g !== "" && !cell_3g.match(cellExpression)){
+                alert("Las Cells ID 3G solo pueden contener numeros separados por comas");
+                return;
+            }
+            if(cell_4g !== "" && !cell_4g.match(cellExpression)){
+                alert("Las Cells ID 4G solo pueden contener numeros separados por comas");
+                return;
+            }
+            let numDistritos = document.querySelectorAll("#tbl_ubicacion tbody tr").length;
+            if(numDistritos < 1){
+                alert("Se debe agregar como minimo un distrito");
                 return;
             }
             tbl_extraccion.add({
