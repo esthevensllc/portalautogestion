@@ -126,4 +126,11 @@ class EloquentInformeFallasRepository implements InformeFallasRepository
     {
         return DB::table("usraes.INPUT_DEVO_FIJA_SERVICIOS_AFECTADOS")->get();
     }
+
+    public function findServicioAfectado(int $servicioAfectadoId)
+    {
+        return DB::table("usraes.INPUT_DEVO_FIJA_SERVICIOS_AFECTADOS")
+        ->where("id", $servicioAfectadoId)
+        ->first();
+    }
 }

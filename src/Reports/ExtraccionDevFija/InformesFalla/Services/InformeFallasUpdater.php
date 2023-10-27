@@ -9,13 +9,16 @@ class InformeFallasUpdater
 {
     private $repo;
     private $extraccionFijaRepo;
+    private $notifyOnApproved;
 
     public function __construct(
         InformeFallasRepository $repo,
-        ExtraccionDevFijaRepository $extraccionFijaRepo
+        ExtraccionDevFijaRepository $extraccionFijaRepo,
+        NotifyUsersOnInformeFallasApproved $notifyOnApproved
     ) {
         $this->repo = $repo;
         $this->extraccionFijaRepo = $extraccionFijaRepo;
+        $this->notifyOnApproved = $notifyOnApproved;
     }
 
     public function updateStatusToRevisado(string $numReporte, $servicioAfectadoId) {
@@ -26,6 +29,7 @@ class InformeFallasUpdater
         
         $this->repo->updateStatusToAprobado($numReporte, $servicioAfectadoId, $ticket);
         $this->extraccionFijaRepo->updateTicketServicioInputByNumReporte($numReporte, $servicioAfectadoId, $ticket);
+        $this->notifyOnApproved->__invoke($numReporte, $servicioAfectadoId);
     }
 
     public function updateStatusToDesaprobado(string $numReporte, $servicioAfectadoId) {

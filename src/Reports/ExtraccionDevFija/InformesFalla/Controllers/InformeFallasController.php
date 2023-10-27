@@ -8,6 +8,7 @@ use AMovil\Reports\ExtraccionDevFija\InformesFalla\Services\CreateInformeFallas;
 use AMovil\Reports\ExtraccionDevFija\InformesFalla\Services\DeleteInformeFallas;
 use AMovil\Reports\ExtraccionDevFija\InformesFalla\Services\InformeFallasFinder;
 use AMovil\Reports\ExtraccionDevFija\InformesFalla\Services\InformeFallasUpdater;
+use AMovil\Reports\ExtraccionDevFija\InformesFalla\Services\NotifyUsersOnInformeFallasProcessed;
 use DateTime;
 use Exception;
 use Illuminate\Http\Request;
@@ -21,6 +22,7 @@ class InformeFallasController
     private $deleter;
     private $findReportInputs;
     private $process;
+    private $notifyOnProcessed;
 
     public function __construct(
         CreateInformeFallas $creator,
@@ -28,7 +30,8 @@ class InformeFallasController
         InformeFallasUpdater $updater,
         DeleteInformeFallas $deleter,
         FindReportInputs $findReportInputs,
-        ProcessExtraccionDevFija $process
+        ProcessExtraccionDevFija $process,
+        NotifyUsersOnInformeFallasProcessed $notifyOnProcessed
     ) {
         $this->creator = $creator;
         $this->finder = $finder;
@@ -36,6 +39,7 @@ class InformeFallasController
         $this->deleter = $deleter;
         $this->findReportInputs = $findReportInputs;
         $this->process = $process;
+        $this->notifyOnProcessed = $notifyOnProcessed;
     }
 
     public function view()
@@ -125,7 +129,12 @@ class InformeFallasController
             ->groupBy("departamento", "provincia", "distrito")
             ->orderBy("distrito")
             ->get(),
-            "servicio_afectado" => $this->finder->getServiciosAfectados()
+            'tableTitle' => 'INFORMES DE FALLA',
+            "servicio_afectado" => $this->finder->getServiciosAfectados(),
+            'searchApi' => url('extraccion-dev-fija/informes-falla/cargar/search'),
+            'updateStatusApi' => url('extraccion-dev-fija/informes-falla/cargar/update-status'),
+            'deleteApi' => url('extraccion-dev-fija/informes-falla/cargar/[numReporte]/[servicioAfectadoId]/delete'),
+            'downloadApi' => url('extraccion-dev-fija/informes-falla/cargar/[numReporte]/download'),
         ];
         return view("extraccion_dev_fija.carga_informe_fallas", compact("config"));
     }
@@ -213,20 +222,6 @@ class InformeFallasController
         $dtFechaIni = DateTime::createFromFormat("Y-m-d H:i:s", $input->fecha_ini);
         $dtFechaFin = DateTime::createFromFormat("Y-m-d H:i:s", $input->fecha_fin);
 
-        // dd([
-        //     $departamentos,
-        //     $provincias,
-        //     $distritos,
-        //     $planos,
-        //     $input->ticket,
-        //     $serviciosById[$input->servicio_afectado_id]->label,
-        //     $dtFechaIni->format("Y-m-d"),
-        //     $dtFechaIni->format("H:i:s"),
-        //     $dtFechaFin->format("Y-m-d"),
-        //     $dtFechaFin->format("H:i:s"),
-        //     $input->meses
-        // ]);
-
         $this->process->__invoke(
             $departamentos,
             $provincias,
@@ -242,6 +237,8 @@ class InformeFallasController
         )->data();
 
         $this->updater->updateStatusToProcesado($input->numero_reporte, $input->servicio_afectado_id);
+
+        $this->notifyOnProcessed->__invoke($input->numero_reporte, $input->servicio_afectado_id);
         
         return response()->json($input);
     }

@@ -16,18 +16,21 @@ class CreateInformeFallas
     private $extraccionFijaRepo;
     private $storage;
     private $authService;
+    private $notifyUsers;
     private $baseStoragePath = "/space/reportes/informes_falla_fija";
 
     public function __construct(
         InformeFallasRepository $repo,
         ExtraccionDevFijaRepository $extraccionFijaRepo,
         AuthService $authService,
-        StorageService $storageService
+        StorageService $storageService,
+        NotifyUsersOnInformeFallasLoaded $notifyUsers
     ) {
         $this->repo = $repo;
         $this->extraccionFijaRepo = $extraccionFijaRepo;
         $this->authService = $authService;
         $this->storage = $storageService->getStorageSystemByName(StorageSystemName::LOCAL2);
+        $this->notifyUsers = $notifyUsers;
     }
 
     public function __invoke(string $numReporte, $file, array $planos, array $serviciosAfectados)
@@ -102,6 +105,10 @@ class CreateInformeFallas
         }*/
 
         $this->storage->put("{$this->baseStoragePath}/{$filename}", file_get_contents($tempFilePath));
+        
+        foreach($serviciosAfectados as $row){
+            $this->notifyUsers->__invoke($numReporte, $row["servicioAfectadoId"]);
+        }
     }
 
     public function validateDetallesExtraccion(array $detallesExtraccion)

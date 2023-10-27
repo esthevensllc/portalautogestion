@@ -309,7 +309,9 @@ Route::group([
     Route::group(['prefix' => 'extraccion-dev-fija/informes-falla/cargar', 'trac_name' => 'extraccion-dev-fija.informes-falla.create'], function(){
         Route::get('/', [\AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers\InformeFallasController::class, 'createView']);
         Route::post('/', [\AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers\InformeFallasController::class, 'create']);
-        // Route::get('search', [\AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers\InformeFallasController::class, 'search']);
+        Route::get('search', [\AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers\InformeFallasController::class, 'search']);
+        Route::post('{numReporte}/{servicioAfectadoId}/delete', [\AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers\InformeFallasController::class, 'delete']);
+        Route::get('{numReporte}/download', [\AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers\InformeFallasController::class, 'download']);
     });
     Route::group(['prefix' => 'extraccion-dev-fija/informes-falla', 'trac_name' => 'extraccion-dev-fija.informes-falla'], function(){
         Route::get('/', [\AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers\InformeFallasController::class, 'view']);

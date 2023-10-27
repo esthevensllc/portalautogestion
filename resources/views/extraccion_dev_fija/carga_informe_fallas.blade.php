@@ -117,6 +117,29 @@
     
 </div>
 {{-- </div> --}}
+
+<h4>{{ $config["tableTitle"] }}</h4>
+<table
+class="bg-white table table-striped table-hover nowrap rounded shadow-xs border-xs mt-2 w-100 tbl-documentlog" cellspacing="0">
+    <thead class="bg-danger">
+        <tr>
+            <th>Numero de Reporte</th>
+            <th>Servicio Afectado</th>
+            <th>Ticket</th>
+            <th>Reporte</th>
+            <th>Fecha</th>
+            <th>Username</th>
+            <th>Revisado</th>
+            <th>Aprobado</th>
+            <th>Procesado</th>
+            <th>En Ejecución</th>
+            <th>Acreditado</th>
+            <th>#</th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
 @include('includes.spinner_loader')
 @endsection
 
@@ -128,7 +151,7 @@
 <script src="{{asset('js/extraccion_fija.js')}}?v={{ date("YmdHis") }}"></script>
 <script>
 let store = {};
-var id,name,_datatable;
+var id,name;
 
 //$(function() {
     const config = @json($config);
@@ -305,6 +328,94 @@ var id,name,_datatable;
             loader_component.style.display = 'none';
             alert(error.message);
         });
+    });
+
+    let _datatable = $(".tbl-documentlog").DataTable({
+        language: {url: "{{ url('packages/datatables-language/spanish.json') }}"},
+        ajax: {
+            url: config.searchApi,
+            type: "GET",
+        },
+        columns: [
+            {data: 'numero_reporte'},
+            {render: function(data, type, row){
+                return (servicioAfectadoById[row.servicio_afectado_id] ?? {}).label;
+            }},
+            {data: 'ticket'},
+            {data: 'name_file'},
+            {data: 'fecha_carga'},
+            {data: 'username'},
+            {data: 'revisado'},
+            {data: 'aprobado'},
+            {data: 'procesado'},
+            {data: 'en_ejecucion'},
+            {data: 'acreditado'},
+            {render: function(data, type, row){
+                let html = `<button
+                        class="btn btn-sm btn-info btn-download"
+                        data-id="${row['numero_reporte']}"
+                        data-name="${row['name_file']}"
+                        data-value="descargar"><li class="la la-eye"></li> Descargar</button>
+                    <button
+                        class="btn btn-sm btn-danger btn-delete"
+                        data-id="${row['numero_reporte']}"
+                        data-servicioafectadoid="${row['servicio_afectado_id']}"
+                        data-value="eliminar"><li class="la la-trash"></li> Eliminar</button>`;
+                return html;
+            }},
+        ],
+        "fnDrawCallback": function() {
+            _datatable.cells().nodes().each(function(cell, i) {
+                if($(cell).text() === '0') {
+                    $(cell).html('<li class="la la-circle"></li>');
+                }else if($(cell).text() === '1') {
+                    $(cell).html('<li class="la la-check-circle text-success"></li>');
+                }else if($(cell).text() === '2') {
+                    $(cell).html('<li class="la la-times-circle text-danger"></li>');
+                }
+            });
+            $(".btn-download").on("click", function(e){
+                let numReporte = $(this).attr("data-id");
+                let servicioafectadoid = $(this).attr("data-servicioafectadoid");
+                window.open(config.downloadApi.replace("[numReporte]", numReporte)
+                .replace("[servicioAfectadoId]", servicioafectadoid), '_blank');
+            });
+            $(".btn-delete").on("click", function(e){
+                let numReporte = $(this).attr("data-id");
+                let servicioafectadoid = $(this).attr("data-servicioafectadoid");
+                let _token = $("input[name=_token]").val();
+                if(confirm(`¿Estas seguro que quieres eliminar el informe de fallas ${numReporte}?`)){
+                    utils.fetch(config.deleteApi.replace("[numReporte]", numReporte).replace("[servicioAfectadoId]", servicioafectadoid), {
+                        method: "POST",
+                        headers: {"Content-Type": "application/json", "Accept": "application/json"},
+                        body: JSON.stringify({_token: _token})
+                    })
+                    .then(async (resp) => {
+                        let isOK = resp.ok;
+                        let json = await resp.json();
+                        if(isOK){
+                            _datatable.ajax.reload();
+                            new Noty({
+                                type: 'success',
+                                layout: 'topRight',
+                                text: "Se elimino correctamente"
+                            }).show();
+                        }else{
+                            new Noty({
+                                type: 'error',
+                                layout: 'topRight',
+                                text: "Error: "+json.message
+                            }).show();
+                        }
+                    });
+                }
+            });
+        },
+        lengthChange: false,
+        searching: true,
+        order: [[0, 'desc']],
+        scrollX: true
+        //serverSide: true
     });
         
 // });

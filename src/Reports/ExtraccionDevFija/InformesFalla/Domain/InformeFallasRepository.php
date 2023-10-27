@@ -15,4 +15,5 @@ interface InformeFallasRepository
     public function updateStatusToProcesado(string $numReporte, int $servicioAfectadoId);
     public function delete(string $numReporte, int $servicioAfectadoId);
     public function getServiciosAfectados();
+    public function findServicioAfectado(int $servicioAfectadoId);
 }
