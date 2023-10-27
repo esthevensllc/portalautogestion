@@ -20,5 +20,13 @@ class LaravelSharedServiceProvider extends ServiceProvider
             \AMovil\Shared\Remedy\Domain\RemedyService::class,
             \AMovil\Shared\Remedy\Infrastructure\SoapRemedyService::class
         );
+        $this->app->bind(
+            \AMovil\Shared\NotificationUser\Domain\NotificationUserRepository::class,
+            \AMovil\Shared\NotificationUser\Infrastructure\EloquentNotificationUserRepository::class
+        );
+        $this->app->bind(
+            \AMovil\Shared\EmailNotification\Domain\EmailNotificationService::class,
+            \AMovil\Shared\EmailNotification\Infrastructure\LaravelEmailNotificationService::class
+        );
     }
 }
