@@ -43,7 +43,7 @@ class ExtraccionDevFijaController
     public function view()
     {
         $config = [
-            "title" => "EXTRACCIÓN Y DEVOLUCIÓN FIJA",
+            "title" => "EXTRACCIÓN Y DEVOLUCIÓN",
             "url" => asset("extraccion-dev-fija/process"),
             "departamentos" => DB::table("usraes.cdr_celdas_red")
             ->select("departamento")

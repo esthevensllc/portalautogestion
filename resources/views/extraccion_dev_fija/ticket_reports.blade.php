@@ -12,9 +12,9 @@
 >
     <thead class="bg-danger">
         <tr>
-            <th>Fecha</th>
             <th>Ticket</th>
             <th>Departamento</th>
+            <th>Fecha</th>
             <th>Servicio Afectado</th>
             <th>Abonados Afectados</th>
             <th>Acreditados</th>
@@ -41,9 +41,9 @@ $(function() {
             type: "GET",
         },
         columns: [
-            {data: 'fecha'},
             {data: 'ticket'},
             {data: 'departamento'},
+            {data: 'fecha'},
             {data: 'servicio_afectado'},
             {data: 'abonados_afectados'},
             {data: 'acreditados'},
@@ -54,7 +54,7 @@ $(function() {
         },
         lengthChange: false,
         searching: true,
-        order: [[0, 'desc']],
+        order: [[2, 'desc']],
         scrollX: true
         //serverSide: true
     });

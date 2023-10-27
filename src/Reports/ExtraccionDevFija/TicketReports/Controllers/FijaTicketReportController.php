@@ -20,7 +20,7 @@ class FijaTicketReportController
     public function view()
     {
         $config = [
-            "title" => "FIJA REGISTROS DE TICKET",
+            "title" => "REGISTROS DE TICKET",
             "url" => url("extraccion-dev-fija/tickets/search"),
         ];
         return view("extraccion_dev_fija.ticket_reports", compact("config"));

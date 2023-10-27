@@ -182,7 +182,7 @@ class InformeFallasController
     {
         $informesFalla = $this->finder->getPendientesProcesar()["data"];
         $config = [
-            'title' => 'Procesar Extracción Fija',
+            'title' => 'Procesar Extracción',
             'processApi' => url('extraccion-dev-fija/informes-falla/procesar'),
             'informesFalla' => $informesFalla
         ];
