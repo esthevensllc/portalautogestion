@@ -392,5 +392,9 @@ Route::group([
         Route::get('/', [\AMovil\Reports\DetallePlanes\Planes\Controllers\DetallePlanController::class, 'view']);
         Route::post('export', [\AMovil\Reports\DetallePlanes\Planes\Controllers\DetallePlanController::class, 'export']);
     });
+    Route::group(['prefix' => 'detalle-planes/facturacion-detallada', 'trac_name' => 'detalle-planes.facturacion-detallada'], function(){
+        Route::get('/', [\AMovil\Reports\DetallePlanes\FacturacionDetallada\Controllers\FacturacionDetalladaController::class, 'view']);
+        Route::post('export', [\AMovil\Reports\DetallePlanes\FacturacionDetallada\Controllers\FacturacionDetalladaController::class, 'export']);
+    });
 
 });

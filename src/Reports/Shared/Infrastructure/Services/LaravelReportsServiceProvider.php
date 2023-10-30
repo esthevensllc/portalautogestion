@@ -164,5 +164,9 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\DetallePlanes\Planes\Domain\DetallePlanRepository::class,
             \AMovil\Reports\DetallePlanes\Planes\Infrastructure\EloquentDetallePlanRepository::class
         );
+        $this->app->bind(
+            \AMovil\Reports\DetallePlanes\FacturacionDetallada\Domain\FacturacionDetalladaRepository::class,
+            \AMovil\Reports\DetallePlanes\FacturacionDetallada\Infrastructure\EloquentFacturacionDetalladaRepository::class
+        );
     }
 }
