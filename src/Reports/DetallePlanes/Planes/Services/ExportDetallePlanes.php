@@ -4,6 +4,7 @@ namespace AMovil\Reports\DetallePlanes\Planes\Services;
 
 use AMovil\Reports\DetallePlanes\Planes\Domain\DetallePlanRepository;
 use AMovil\Reports\DetallePlanes\Planes\Domain\TipoInputDetallePlan;
+use AMovil\Reports\ReportLog\Services\SaveReportLog;
 use AMovil\Shared\Application\Response;
 use AMovil\Shared\Exports\Domain\ExportService;
 use AMovil\Shared\Exports\Domain\WriterType;
@@ -16,25 +17,36 @@ class ExportDetallePlanes
 {
     private $repo;
     private $exportService;
+    private $saveReportLog;
     
-    public function __construct(DetallePlanRepository $repo, ExportService $exportService)
+    public function __construct(DetallePlanRepository $repo, ExportService $exportService, SaveReportLog $saveReportLog)
     {
         $this->repo = $repo;
         $this->exportService = $exportService;
+        $this->saveReportLog = $saveReportLog;
     }
 
     public function __invoke($tipoInputId, $file, $strValue)
     {
-        $data = $this->getDataBy($tipoInputId, $file, $strValue);
-        $tempfile = $this->export($data);
-        $now = new DateTime();
-        $content = file_get_contents($tempfile);
-        unlink($tempfile);
-        return Response::respData([
-            "filename" => "DETALLE_DE_PLANES_".$now->format("YmdHis").".xlsx",
-            "type" => "xlsx",
-            "content" => $content
-        ]);
+        $dtStart = new DateTime();
+        try {
+            $data = $this->getDataBy($tipoInputId, $file, $strValue);
+            $tempfile = $this->export($data);
+            $now = new DateTime();
+            $content = file_get_contents($tempfile);
+            $dtEnd = new DateTime();
+            $this->reportLog($tempfile, $dtStart, $dtEnd);
+            unlink($tempfile);
+            return Response::respData([
+                "filename" => "DETALLE_DE_PLANES_".$now->format("YmdHis").".xlsx",
+                "type" => "xlsx",
+                "content" => $content
+            ]);
+        } catch (\Throwable $th) {
+            $dtEnd = new DateTime();
+            $this->reportLog(null, $dtStart, $dtEnd);
+            throw $th;
+        }
     }
 
     private function getDataBy(int $tipoInputId, $file, $strValue){
@@ -103,5 +115,19 @@ class ExportDetallePlanes
             ]
         ]);
         return $this->exportService->getWriter(WriterType::XLSX)->saveToTempfile();
+    }
+
+    
+    private function reportLog($tempfile, DateTime $ini, DateTime $fin, array $extra_data = [])
+    {
+        $filename = "DETALLE_PLANES_".$ini->format('YmdHis').".xlsx";
+        $data = array_merge([
+            'name' => 'DETALLE_PLANES',
+            'ini' => $ini->format('Y-m-d H:i:s'),
+            'fin' => $fin->format('Y-m-d H:i:s'),
+            'trac_name' => 'detalle-planes',
+            "filename" => $tempfile !== null ? $filename : null
+        ], $extra_data);
+        $this->saveReportLog->__invoke($data, $tempfile, 'DETALLE_PLANES');
     }
 }
