@@ -163,12 +163,14 @@ $(function() {
                     $(cell).html('<li class="la la-times-circle text-danger"></li>');
                 }
             });
+            $(".btn-download").off("click");
             $(".btn-download").on("click", function(e){
                 let numReporte = $(this).attr("data-id");
                 let servicioafectadoid = $(this).attr("data-servicioafectadoid");
                 window.open(config.downloadApi.replace("[numReporte]", numReporte)
                 .replace("[servicioAfectadoId]", servicioafectadoid), '_blank');
             });
+            $(".btn-delete").off("click");
             $(".btn-delete").on("click", function(e){
                 let numReporte = $(this).attr("data-id");
                 let servicioafectadoid = $(this).attr("data-servicioafectadoid");

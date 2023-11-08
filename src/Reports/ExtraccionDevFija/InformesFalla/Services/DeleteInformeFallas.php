@@ -32,7 +32,7 @@ class DeleteInformeFallas
         if(count($informesFalla["data"]) === 0){
             throw new Exception("No se encontro el informe de fallas");
         }
-        $ticket = $informesFalla["data"][0]["ticket"];
+        $ticket = $informesFalla["data"][0]->ticket;
         $this->ticketRepo->deleteBy($ticket);
         $this->repo->delete($numReporte, $servicioAfectadoId);
         $this->extraccionFijaRepo->deleteServicioInput($numReporte, $servicioAfectadoId);

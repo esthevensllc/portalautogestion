@@ -276,6 +276,47 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
         ON CL.TIPDIDE = TI.TIPDIDE"];
 
         $queries[] = ["sql" => "BEGIN
+        EXECUTE IMMEDIATE 'DROP TABLE USRAES.UNIQUE_CODINSSRV_TMP_{$this->userIdentifier}';
+        EXCEPTION
+        WHEN OTHERS THEN
+        IF SQLCODE != -942 THEN RAISE; END IF;
+        END;"];
+
+        $queries[] = ["sql" => "CREATE TABLE USRAES.UNIQUE_CODINSSRV_TMP_{$this->userIdentifier} NOLOGGING PARALLEL 8 as 
+        select /*+ PARALLEL(4)*/ CODINSSRV,SUBSTR(FEC_INI_INCIDENCIA,7,4)||'-'||SUBSTR(FEC_INI_INCIDENCIA,4,2)||'-'||SUBSTR(FEC_INI_INCIDENCIA,1,2) FEC_INI_INCIDENCIA,SUBSTR(FEC_FIN_INCIDENCIA,7,4)||'-'||SUBSTR(FEC_FIN_INCIDENCIA,4,2)||'-'||SUBSTR(FEC_FIN_INCIDENCIA,1,2) FEC_FIN_INCIDENCIA from USRAES.TMP_DEVOLUCION_MASIVO_{$this->userIdentifier} GROUP BY CODINSSRV,FEC_INI_INCIDENCIA,FEC_FIN_INCIDENCIA"];
+
+        $queries[] = ["sql" => "BEGIN
+        EXECUTE IMMEDIATE 'DROP TABLE USRAES.CORRECTO_SGA_BSCS_TMP_{$this->userIdentifier}';
+        EXCEPTION
+        WHEN OTHERS THEN
+        IF SQLCODE != -942 THEN RAISE; END IF;
+        END;"];
+
+        $queries[] = ["sql" => "CREATE TABLE USRAES.CORRECTO_SGA_BSCS_TMP_{$this->userIdentifier} NOLOGGING PARALLEL 8 as 
+        SELECT * FROM (
+        SELECT AA.*,row_number() OVER(PARTITION BY AA.CODINSSRV ORDER BY AA.FECUSU DESC) FLAG,CASE WHEN COD_ID_BSCS IS NOT NULL THEN 'BSCS' WHEN COD_ID_BSCS IS NULL THEN 'SGA' END FUENTE
+        FROM (
+        SELECT AA.*,BB.CODCLI CODCLI_V2,BB.CUSTOMER_ID CUSTOMER_ID_BSCS,BB.COD_ID COD_ID_BSCS FROM (
+        select aa.*,bb.CODSOLOT,bb.FECUSU from 
+        (select /*+ PARALLEL(4)*/ * from USRAES.UNIQUE_CODINSSRV_TMP_{$this->userIdentifier}) aa 
+        LEFT join DWS.SA_SOLOTPTO bb 
+        on aa.FEC_INI_INCIDENCIA>=to_char(bb.FECUSU,'YYYY-MM-DD') and 
+        aa.CODINSSRV=bb.CODINSSRV) AA 
+        LEFT JOIN DWS.SA_SOLOT BB 
+        ON AA.CODSOLOT=BB.CODSOLOT AND BB.ESTSOL IN (12,29) AND AA.FEC_INI_INCIDENCIA>=to_char(BB.FECUSU,'YYYY-MM-DD')
+        ) AA) WHERE FLAG=1"];
+
+        $queries[] = ["sql" => "BEGIN
+        MERGE INTO USRAES.TMP_DEVOLUCION_MASIVO_{$this->userIdentifier} A
+        USING USRAES.CORRECTO_SGA_BSCS_TMP_{$this->userIdentifier} B
+        ON (A.CODINSSRV=B.CODINSSRV)
+        WHEN MATCHED THEN
+        UPDATE SET A.CO_ID= B.COD_ID_BSCS,
+                    A.CUSTOMER_ID= B.CUSTOMER_ID_BSCS;
+        commit;
+        END;"];
+
+        $queries[] = ["sql" => "BEGIN
             EXECUTE IMMEDIATE 'DROP TABLE USRAES.TMP_INSTXPROD_MASIV_{$this->userIdentifier}';
         EXCEPTION
         WHEN OTHERS THEN
@@ -1020,6 +1061,11 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
             WHERE (ticket) IN (
                 SELECT TICKET FROM USRAES.INPUT_DEVO_FIJA_TMP_{$this->userIdentifier} GROUP BY TICKET, DEPARTAMENTO
             )
+            AND (CASE FUENTE
+                WHEN 'BSCS' THEN (CASE WHEN ESTADO_CONTRATO != 'D' THEN 1 ELSE 0 END)
+                WHEN 'SGA' THEN (CASE WHEN CICFAC_DEVOL IS NOT NULL AND FCHFIN_INST IS NULL THEN 1 ELSE 0 END)
+                ELSE 0 END
+            ) = 1
             GROUP BY ticket,familia;
             COMMIT;
         END;"];
@@ -1185,7 +1231,13 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
         ->selectRaw("rownum item,ticket,CODCLI CODIGO_CLIENTE,NRO_DOC NUMERO_DE_DOCUMENTO,
         NOMCLI NOMBRES_APELLIDOS,FAMILIA SERVICIO_ANALIZADO,NUMERO SERVICIO,DPTO")
         ->where("ticket", $ticket)
-        // ->where("dpto", $departamento)
+        ->where(function($query) {
+            $query->whereRaw("(CASE FUENTE
+            WHEN 'BSCS' THEN (CASE WHEN ESTADO_CONTRATO != 'D' THEN 1 ELSE 0 END)
+            WHEN 'SGA' THEN (CASE WHEN CICFAC_DEVOL IS NOT NULL AND FCHFIN_INST IS NULL THEN 1 ELSE 0 END)
+            ELSE 0 END
+            ) = 1");
+        })
         ->get();
     }
 
@@ -1203,17 +1255,23 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
         TASA,
         ROUND(ROUND(MONTO_PRINCIPAL * 1.18, 2) + INTERES, 2) MTO_TOTAL_DEV_IGV,
         CUSTCODE,
-        CUSTOMER_ID,
+        CASE FUENTE WHEN 'SGA' THEN CODCLI ELSE CUSTOMER_ID END CUSTOMER_ID,
         IDINTPROD_DEVOL IDINSTPROD,
         CO_ID CO_ID_DEVOLVER,
         CICFAC_DEVOL CICLOFACTURACION,
         FUENTE,
-        to_char(FECHAALTA, 'YYYY-MM-DD') FECHA_ALTA,
-        to_char(FECHAALTA, 'YYYY-MM-DD') FECHA_ACTIVACION,
+        to_char(CASE FUENTE WHEN 'SGA' THEN FCHINI_INST ELSE FECHAALTA END, 'YYYY-MM-DD') FECHA_ALTA,
+        to_char(CASE FUENTE WHEN 'SGA' THEN FCHINI_INST ELSE FECHAALTA END, 'YYYY-MM-DD') FECHA_ACTIVACION,
         'Dev. por interrupcion del ' || to_char(FEC_INI_INCIDENCIA, 'DD/MM/YYYY') || '. Tasa aplicada  0.01%' GLOSARIO")
         ->where("ticket", $ticket)
         ->where("fuente", $fuente)
-        // ->where("dpto", $departamento)
+        ->where(function($query) {
+            $query->whereRaw("(CASE FUENTE
+            WHEN 'BSCS' THEN (CASE WHEN ESTADO_CONTRATO != 'D' THEN 1 ELSE 0 END)
+            WHEN 'SGA' THEN (CASE WHEN CICFAC_DEVOL IS NOT NULL AND FCHFIN_INST IS NULL THEN 1 ELSE 0 END)
+            ELSE 0 END
+            ) = 1");
+        })
         ->get();
     }
 

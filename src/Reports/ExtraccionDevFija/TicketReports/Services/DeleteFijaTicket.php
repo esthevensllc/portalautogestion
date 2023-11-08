@@ -25,8 +25,8 @@ class DeleteFijaTicket
         if(count($response["data"]) === 0){
             throw new Exception("No se encontro un informe de fallas con un ticket '{$ticket}' asignado");
         }
-        $numReporte = $response["data"][0]["numero_reporte"];
-        $servicioAfectadoId = $response["data"][0]["servicio_afectado_id"];
+        $numReporte = $response["data"][0]->numero_reporte;
+        $servicioAfectadoId = $response["data"][0]->servicio_afectado_id;
 
         $this->repo->deleteBy($ticket);
         $this->informeFallasRepo->updateStatusToSinProcesar($numReporte, $servicioAfectadoId);

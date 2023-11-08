@@ -54,6 +54,7 @@ class ExportExtraccionFijaUsuariosAfectados
         $content = $this->exportService->getWriter(WriterType::XLSX)->getOutput();
         return Response::respData([
             "filename" => "Base_Afectados_TK{$ticket}.xlsx",
+            'type' => 'xlsx',
             "content" => $content
         ]);
     }
