@@ -396,5 +396,9 @@ Route::group([
         Route::get('/', [\AMovil\Reports\DetallePlanes\FacturacionDetallada\Controllers\FacturacionDetalladaController::class, 'view']);
         Route::post('export', [\AMovil\Reports\DetallePlanes\FacturacionDetallada\Controllers\FacturacionDetalladaController::class, 'export']);
     });
+    Route::group(['prefix' => 'detalle-planes/consolidado-minutos', 'trac_name' => 'detalle-planes.consolidado-minutos'], function(){
+        Route::get('/', [\AMovil\Reports\DetallePlanes\ConsolidadoMinutos\Controllers\ConsolidadoMinutosController::class, 'view']);
+        Route::post('export', [\AMovil\Reports\DetallePlanes\ConsolidadoMinutos\Controllers\ConsolidadoMinutosController::class, 'export']);
+    });
 
 });
