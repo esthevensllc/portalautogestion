@@ -25,6 +25,8 @@ class RepDetConsumoNFController
 
     public function export(Request $request)
     {
+        ini_set('max_execution_time', '7200');
+        set_time_limit(7200);
         $response = $this->exporter->__invoke(
             $request->input("num_cuenta"),
             $request->input("fecha_ini"),
