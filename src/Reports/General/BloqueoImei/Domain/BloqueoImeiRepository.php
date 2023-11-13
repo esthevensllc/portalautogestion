@@ -21,4 +21,7 @@ interface BloqueoImeiRepository
     public function getAutomaticReportByCriteria($filters);
     public function saveConfig(bool $generateReport);
     public function getConfig();
+
+    public function getControlEirImeiByCriteria($filters);
+    public function getReporteArray($id, $tipoBusquedaId, $imeis, DateTime $fechaIni, DateTime $fechaFin);
 }

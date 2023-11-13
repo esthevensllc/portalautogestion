@@ -4,12 +4,14 @@
 <link rel="stylesheet" type="text/css" href="{{ asset('packages/datatables.net-bs4/css/dataTables.bootstrap4.min.css') }}">
 <link rel="stylesheet" type="text/css" href="{{ asset('packages/datatables.net-fixedheader-bs4/css/fixedHeader.bootstrap4.min.css') }}">
 <link rel="stylesheet" type="text/css" href="{{ asset('packages/datatables.net-responsive-bs4/css/responsive.bootstrap4.min.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-timepicker/0.5.2/css/bootstrap-timepicker.min.css">
 <style>
     table.dataTable td, table.dataTable th{
         padding: 0.4rem;
     }
 </style>
-<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+
 @endsection
 
 @section('content')
@@ -23,7 +25,7 @@
                     <div class="col-lg-12">
                         <div class="form-group">
                             <label for="">Tipo Busqueda</label>
-                            <select class="form-control form-control-sm" name="tipobusqueda_id" required>
+                            <select class="form-control form-control-sm select-busqueda" name="tipobusqueda_id" required>
                                 <option value=''>Seleccione</option>
                                 @foreach ($config["tiposBusqueda"] as $row)
                                     <option value='{{ $row["id"] }}'>{{ $row["label"] }}</option>
@@ -33,14 +35,32 @@
                     </div>
                     <div class="col-lg-6 col-md-6">
                         <div class="form-group">
-                            <label for="">Ingrese Base</label>
-                            <input type="file" name="base_imei" placeholder="Ingrese Nintex" accept=".csv,.txt" required>
+                            <label for="">Ingrese Base:</label>
+                            <input type="file"  class="form-control" name="base_imei" placeholder="Ingrese Nintex" accept=".csv,.txt">
                         </div>
                     </div>
-                    <div class="col-lg-8">
+                    <div class="col-lg-6 col-md-6">
                         <div class="form-group">
-                            <label for="">Fecha Inicio - Fin</label>
-                            <input type="text" class="form-control form-control-sm" name="date_range" required>
+                            <label class="label-imei" style="display : none;" for="">Ingrese los Imeis:</label>
+                            <input type="text" class="form-control input-imei" name="text_imei" style="display : none;" placeholder="">
+                            <p class="label-imei" style="display : none;">Ej. 01160100384813,01160100384814</p>
+                            <label class="label-msisdn" style="display : none;" for="">Ingrese los MSISDN:</label>
+                            <input type="text" class="form-control input-msisdn" name="text_msisdn" style="display : none;" placeholder="">
+                            <p class="label-msisdn" style="display : none;">Ej. 51950165853,51971339230</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="form-group">
+                            <label for="">Fecha Inicio</label>
+                            <input type="text" class="form-control form-control-sm datepicker bootstrap-timepicker" name="f_ini" required>
+                            <input type="text" class="form-control form-control-sm corte_calcular_diff clean_white_space" name="corte_fecha1_time" placeholder="00:00:00" required>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="form-group">
+                            <label for="">Fecha Fin</label>
+                            <input type="text" class="form-control form-control-sm datepicker bootstrap-timepicker" name="f_fin" required>
+                            <input type="text" class="form-control form-control-sm corte_calcular_diff clean_white_space" name="corte_fecha2_time" placeholder="00:00:00" required>
                         </div>
                     </div>
                     <div class="col-12" style="display: flex; align-items: end;">
@@ -50,26 +70,33 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="">
-                    <table class="table table-striped table-sm mb-0">
-                        <thead class="bg-danger">
-                            <tr>
-                                <th>RAT Type</th>
-                                <th>Values(Decimal)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($config["ratTypes"] as $row)
-                                <tr>
-                                    <td>{{ $row["type"] }}</td>
-                                    <td>{{ $row["value"] }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+            <div class="mb-3 col-6"> 
+                <div class="row">     
+                    <div class="col-md-8" id="leyenda" style="display: none;">
+                        <div>
+                            <table class="table table-striped table-sm mb-0">
+                                <thead class="bg-danger">
+                                    <tr>
+                                        <th>RAT Type</th>
+                                        <th>Values(Decimal)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($config["ratTypes"] as $row)
+                                        <tr>
+                                            <td>{{ $row["type"] }}</td>
+                                            <td>{{ $row["value"] }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>                    
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-danger" id="toogleButton">Leyenda</button>
+                    </div>
                 </div>
-            </div>
+            <div>
         </form>
     </div>
 </div>
@@ -105,7 +132,10 @@
 
 {{-- <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script> --}}
 <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-timepicker/0.5.2/js/bootstrap-timepicker.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/locales/bootstrap-datepicker.es.min.js"></script>
 
 @include('includes.utils_js')
 <script>
@@ -114,6 +144,12 @@ $(function() {
 
     document.querySelector("#form_export")
     .addEventListener("submit", function(e){
+        if($(".input-imei").is(":hidden")){
+            $(".input-imei").prop("disabled", true);
+        }
+        if($(".input-msisdn").is(":hidden")){
+            $(".input-msisdn").prop("disabled", true);
+        }
         utils.downloadHandler({
             url: config.url,
             requestOptions: {headers: {"Accept": "application/json"}},
@@ -121,6 +157,28 @@ $(function() {
                 _datatable.ajax.reload();
             }
         }, e);
+    });
+
+    $("#toogleButton").on('click', function(event){
+        event.preventDefault();
+        $("#leyenda").toggle();
+    });
+
+    $(".select-busqueda").change(function(){
+        if($(this).val() == "1"){
+            $(".label-imei").show();
+            $(".input-imei").show().prop("disabled", false);
+        }else{
+            $(".label-imei").hide();
+            $(".input-imei").hide().prop("disabled", true);
+        }
+        if($(this).val() == "2"){
+            $(".label-msisdn").show();
+            $(".input-msisdn").show().prop("disabled", false);
+        }else{
+            $(".label-msisdn").hide();
+            $(".input-msisdn").hide().prop("disabled", true);
+        }
     });
 
     function deleteFilenameHandler(e)
@@ -157,16 +215,13 @@ $(function() {
         }
     }
 
+    $('.datepicker').datepicker({
+        format: "dd/mm/yyyy",
+        language: "es"
+    });
 
-    $('input[name=date_range]').daterangepicker({
-        "timePicker": true,
-        "timePicker24Hour": true,
-        "timePickerSeconds": true,
-        "locale": {
-            "format": "DD/MM/YYYY HH:mm:ss"
-        },
-    }, function(start, end, label) {
-        console.log('New date range selected: ' + start.format('YYYY-MM-DD HH:mm:ss') + ' to ' + end.format('YYYY-MM-DD HH:mm:ss') + ' (predefined range: ' + label + ')');
+    $(".clean_white_space").on("change", function(e){
+        e.target.value = e.target.value.replaceAll(" ", "");
     });
 
     let _datatable = $(".tbl-informefallas").DataTable({

@@ -25,33 +25,44 @@ class ExportBloqueoImei
         $this->authService = $authService;
     }
 
-    public function __invoke($tipoBusquedaId, $file, $fechaIni, $fechaFin): Response
+    public function __invoke($tipoBusquedaId, $file, $imeis, $fechaIni, $fechaFin): Response
     {
         $dtFechaIni = DateTime::createFromFormat("d/m/Y H:i:s", $fechaIni);
         $dtFechaFin = DateTime::createFromFormat("d/m/Y H:i:s", $fechaFin);
-        $filename = $file->getClientOriginalName();
-
-        if(!$this->validateFilename($filename)){
-            throw new Exception("El nombre del archivo no es valido");
-        }
 
         if($dtFechaIni->format("Ymd") !== $dtFechaFin->format("Ymd")){
             throw new Exception("No se puede consultar un rango de fechas con dias diferentes");
         }
 
-        $reportLog = $this->repo->getReporteLogByCriteria([
-            ["filename", $filename],
-            ["delete_flag", 0]
-        ]);
-        if(count($reportLog) > 0){
-            throw new Exception("No se puede procesar el mismo archivo nuevamente");
+        if($file != ""){
+            $filename = $file->getClientOriginalName();
+
+            if(!$this->validateFilename($filename)){
+                throw new Exception("El nombre del archivo no es valido");
+            }
+
+            $reportLog = $this->repo->getReporteLogByCriteria([
+                ["filename", $filename],
+                ["delete_flag", 0]
+            ]);
+
+            if(count($reportLog) > 0){
+                throw new Exception("No se puede procesar el mismo archivo nuevamente");
+            }
+
+            $inputFile = $this->getDataFromFile($file);
+
+            $id = (new DateTime())->format("YmdHis");
+            $data = $this->repo->getReporte($id, $tipoBusquedaId, $inputFile["filename"], $inputFile["values"], $dtFechaIni, $dtFechaFin);
+            // dd($data);
+        }else{
+            $filename = "";
+            $imeis = explode(',', $imeis);
+            $inputFile = [];
+            $inputFile["values"] = $imeis;
+            $id = (new DateTime())->format("YmdHis");
+            $data = $this->repo->getReporteArray($id, $tipoBusquedaId, $imeis, $dtFechaIni, $dtFechaFin);
         }
-
-        $inputFile = $this->getDataFromFile($file);
-
-        $id = (new DateTime())->format("YmdHis");
-        $data = $this->repo->getReporte($id, $tipoBusquedaId, $inputFile["filename"], $inputFile["values"], $dtFechaIni, $dtFechaFin);
-        // dd($data);
 
         $headers = [
             "served_imeisv2" => ['label' => 'served_imeisv2'],
@@ -100,8 +111,14 @@ class ExportBloqueoImei
 
         $this->repo->saveReporteLog($id, $tipoBusquedaId, $this->authService->getUserIdentifier(), $filename, count($inputFile["values"]));
 
+        if($tipoBusquedaId == '1'){
+            $tipo = 'IMEI';
+        }else{
+            $tipo = 'MSISDN'; 
+        }
+
         return new Response([], [
-            "filename" => "CONSULTA_IMEI_{$id}.xlsx",
+            "filename" => "CONSULTA_{$tipo}_{$id}.xlsx",
             "type" => "xlsx",
             "content" => $content
         ]);
