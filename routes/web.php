@@ -373,6 +373,14 @@ Route::group([
         Route::get('/', [\AMovil\Reports\General\BloqueoImei\Controllers\ImeiCDRConfigController::class, 'view']);
         Route::post('/', [\AMovil\Reports\General\BloqueoImei\Controllers\ImeiCDRConfigController::class, 'saveConfig']);
     });
+    Route::group(['prefix' => 'control-eir-imei', 'trac_name' => 'control-eir-imei'], function(){
+        Route::get('/', [\AMovil\Reports\General\BloqueoImei\Controllers\ControlEirImeiController::class, 'view']);
+        Route::post('search', [\AMovil\Reports\General\BloqueoImei\Controllers\ControlEirImeiController::class, 'search']);
+    });
+    Route::group(['prefix' => 'control-eir-imei2', 'trac_name' => 'control-eir-imei2'], function(){
+        Route::get('/', [\AMovil\Reports\General\BloqueoImei\Controllers\ControlEirImeiController::class, 'view']);
+        Route::post('search', [\AMovil\Reports\General\BloqueoImei\Controllers\ControlEirImeiController::class, 'search']);
+    });
     Route::group(['prefix' => 'comprobante-pago', 'trac_name' => 'comprobante-pago'], function(){
         Route::get('/', [\AMovil\Reports\General\ComprobantePago\Controllers\ComprobantePagoController::class, 'view']);
         Route::post('export', [\AMovil\Reports\General\ComprobantePago\Controllers\ComprobantePagoController::class, 'export']);
