@@ -78,6 +78,9 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
         END;"];
         $queries[] = ["sql" => "CREATE TABLE USRAES.input_devo_fija_plano_{$this->userIdentifier}(
             ticket  VARCHAR2(100),
+            DEPARTAMENTO VARCHAR2(100),
+            provincia VARCHAR2(100),
+            distrito VARCHAR2(100),
             plano  VARCHAR2(100)
         )"];
 
@@ -111,6 +114,9 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
             foreach ($distritos[$i][3] as $plano) {
                 DB::table("USRAES.input_devo_fija_plano_{$this->userIdentifier}")
                 ->insert([
+                    "departamento" => $distritos[$i][0],
+                    "provincia" => $distritos[$i][1],
+                    "distrito" => $distritos[$i][2],
                     "ticket" => $ticket,
                     "plano" => $plano,
                 ]);
@@ -268,6 +274,47 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
         ON CL.CODSECMARK = S.CODSECMARK
         LEFT JOIN dws.sa_vtatipdid TI
         ON CL.TIPDIDE = TI.TIPDIDE"];
+
+        $queries[] = ["sql" => "BEGIN
+        EXECUTE IMMEDIATE 'DROP TABLE USRAES.UNIQUE_CODINSSRV_TMP_{$this->userIdentifier}';
+        EXCEPTION
+        WHEN OTHERS THEN
+        IF SQLCODE != -942 THEN RAISE; END IF;
+        END;"];
+
+        $queries[] = ["sql" => "CREATE TABLE USRAES.UNIQUE_CODINSSRV_TMP_{$this->userIdentifier} NOLOGGING PARALLEL 8 as 
+        select /*+ PARALLEL(4)*/ CODINSSRV,SUBSTR(FEC_INI_INCIDENCIA,7,4)||'-'||SUBSTR(FEC_INI_INCIDENCIA,4,2)||'-'||SUBSTR(FEC_INI_INCIDENCIA,1,2) FEC_INI_INCIDENCIA,SUBSTR(FEC_FIN_INCIDENCIA,7,4)||'-'||SUBSTR(FEC_FIN_INCIDENCIA,4,2)||'-'||SUBSTR(FEC_FIN_INCIDENCIA,1,2) FEC_FIN_INCIDENCIA from USRAES.TMP_DEVOLUCION_MASIVO_{$this->userIdentifier} GROUP BY CODINSSRV,FEC_INI_INCIDENCIA,FEC_FIN_INCIDENCIA"];
+
+        $queries[] = ["sql" => "BEGIN
+        EXECUTE IMMEDIATE 'DROP TABLE USRAES.CORRECTO_SGA_BSCS_TMP_{$this->userIdentifier}';
+        EXCEPTION
+        WHEN OTHERS THEN
+        IF SQLCODE != -942 THEN RAISE; END IF;
+        END;"];
+
+        $queries[] = ["sql" => "CREATE TABLE USRAES.CORRECTO_SGA_BSCS_TMP_{$this->userIdentifier} NOLOGGING PARALLEL 8 as 
+        SELECT * FROM (
+        SELECT AA.*,row_number() OVER(PARTITION BY AA.CODINSSRV ORDER BY AA.FECUSU DESC) FLAG,CASE WHEN COD_ID_BSCS IS NOT NULL THEN 'BSCS' WHEN COD_ID_BSCS IS NULL THEN 'SGA' END FUENTE
+        FROM (
+        SELECT AA.*,BB.CODCLI CODCLI_V2,BB.CUSTOMER_ID CUSTOMER_ID_BSCS,BB.COD_ID COD_ID_BSCS FROM (
+        select aa.*,bb.CODSOLOT,bb.FECUSU from 
+        (select /*+ PARALLEL(4)*/ * from USRAES.UNIQUE_CODINSSRV_TMP_{$this->userIdentifier}) aa 
+        LEFT join DWS.SA_SOLOTPTO bb 
+        on aa.FEC_INI_INCIDENCIA>=to_char(bb.FECUSU,'YYYY-MM-DD') and 
+        aa.CODINSSRV=bb.CODINSSRV) AA 
+        LEFT JOIN DWS.SA_SOLOT BB 
+        ON AA.CODSOLOT=BB.CODSOLOT AND BB.ESTSOL IN (12,29) AND AA.FEC_INI_INCIDENCIA>=to_char(BB.FECUSU,'YYYY-MM-DD')
+        ) AA) WHERE FLAG=1"];
+
+        $queries[] = ["sql" => "BEGIN
+        MERGE INTO USRAES.TMP_DEVOLUCION_MASIVO_{$this->userIdentifier} A
+        USING USRAES.CORRECTO_SGA_BSCS_TMP_{$this->userIdentifier} B
+        ON (A.CODINSSRV=B.CODINSSRV)
+        WHEN MATCHED THEN
+        UPDATE SET A.CO_ID= B.COD_ID_BSCS,
+                    A.CUSTOMER_ID= B.CUSTOMER_ID_BSCS;
+        commit;
+        END;"];
 
         $queries[] = ["sql" => "BEGIN
             EXECUTE IMMEDIATE 'DROP TABLE USRAES.TMP_INSTXPROD_MASIV_{$this->userIdentifier}';
@@ -903,16 +950,52 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
             END LOOP;
         END;"];
 
-        $queries[] = ["sql" => "BEGIN
+        $queries[] = ["sql" => "DECLARE
+            STR VARCHAR2(4000);
+            S_PART VARCHAR2(8);
+            v_ticket VARCHAR2(100) := :p_ticket;
+        BEGIN
+            MERGE INTO DWH_DEVOLUCION_MASIV_DETALLE  A
+            USING (select AGREEMENT_CONTRACT_NUMBER,CUSTOMER_ACCOUNT_BILLING_CYCLE_SC from DWA.DW_M_SUBSCRIPTION where AGREEMENT_CONTRACT_NUMBER
+            in (select CO_ID from USRAES.DWH_DEVOLUCION_MASIV_DETALLE where ticket= v_ticket group by CO_ID)
+            group by AGREEMENT_CONTRACT_NUMBER,CUSTOMER_ACCOUNT_BILLING_CYCLE_SC) T
+            ON (A.CO_ID=T.AGREEMENT_CONTRACT_NUMBER)
+            WHEN MATCHED THEN
+            UPDATE SET A.CICFAC_DEVOL= T.CUSTOMER_ACCOUNT_BILLING_CYCLE_SC
+            WHERE A.TICKET= v_ticket AND A.FUENTE='BSCS';
+            COMMIT;
+
+            UPDATE USRAES.DWH_DEVOLUCION_MASIV_DETALLE w
+            SET w.obs='DEVOLVER_FACTURA_BSCS'
+            WHERE w.ticket= v_ticket
+            AND w.estado_contrato in ('A','S')
+            AND w.fuente='BSCS';
+            COMMIT;
+
+            UPDATE USRAES.DWH_DEVOLUCION_MASIV_DETALLE w
+            SET w.obs='VERIFICAR_DEUDA_BSCS'
+            WHERE w.ticket = v_ticket
+            AND w.estado_contrato='D'
+            AND w.fuente='BSCS';
+            COMMIT;
+
+            --DELETE FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST
+            DELETE FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE
+            WHERE TICKET = v_ticket AND NRO_DOC IN 
+            (SELECT RUC FROM USRAES.CUENTA_DE_GOBIERNO_TMP GROUP BY RUC);
+            COMMIT;
+        END;", "params" => ["p_ticket" => $ticket]];
+
+        /*$queries[] = ["sql" => "BEGIN
             DELETE FROM USRAES.INPUT_DEVO_FIJA
-            WHERE (TICKET,DEPARTAMENTO) IN (
-                SELECT TICKET,DEPARTAMENTO FROM USRAES.INPUT_DEVO_FIJA_TMP_{$this->userIdentifier}
+            WHERE (TICKET) IN (
+                SELECT TICKET FROM USRAES.INPUT_DEVO_FIJA_TMP_{$this->userIdentifier} GROUP BY TICKET
             );
             COMMIT;
 
             DELETE FROM USRAES.input_devo_fija_plano
-            WHERE TICKET IN (
-                SELECT TICKET FROM USRAES.input_devo_fija_plano_{$this->userIdentifier}
+            WHERE (TICKET) IN (
+                SELECT TICKET FROM USRAES.input_devo_fija_plano_{$this->userIdentifier} GROUP BY TICKET
             );
             COMMIT;
 
@@ -926,9 +1009,65 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
             FROM USRAES.INPUT_DEVO_FIJA_TMP_{$this->userIdentifier};
             COMMIT;
 
-            insert into USRAES.input_devo_fija_plano(ticket, plano)
-            SELECT ticket, plano FROM USRAES.input_devo_fija_plano_{$this->userIdentifier};
+            insert into USRAES.input_devo_fija_plano(ticket, departamento, provincia, distrito, plano)
+            SELECT ticket, departamento, provincia, distrito, plano FROM USRAES.input_devo_fija_plano_{$this->userIdentifier};
             commit;
+        END;"];*/
+        
+        $queries[] = ["sql" => "BEGIN
+            DELETE FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST
+            WHERE (TICKET) IN (
+                SELECT TICKET FROM USRAES.INPUT_DEVO_FIJA_TMP_{$this->userIdentifier} GROUP BY TICKET
+            );
+            COMMIT;
+
+            INSERT INTO USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST(
+                TICKET, CODCLI, NOMCLI, NRO_DOC, TIPDOC, NUMERO, CID, FAMILIA, IDPLANO,
+                FEC_INI_INCIDENCIA, FEC_FIN_INCIDENCIA, MINUTOS_AFECTACION,
+                DPTO, PROVINCIA, DISTRITO, MONEDA, CR_NETO, FCHINI_INST, FCHFIN_INST,
+                CICFAC_DEVOL, CUSTCODE, CO_ID, FECHAALTA, ESTADO_CONTRATO, CUSTOMER_ID,
+                FUENTE, CODSRV, DSCSRV, OBS, ESTADO_IDINTPROD_DEVOL, SERVICIO_DEVOL,
+                IDINTPROD_DEVOL, TASA_AL, FCH_CALC_TASA, TASA, MONEDA_DEVOL, MONTO_DEVOL_CIGV,
+                INTERES, MONTO_PRINC_CIGV, ULT_FECHA, CR_NETOCIGV, MONTO_PRINCIPAL
+            )
+            SELECT
+            TICKET, CODCLI, NOMCLI, NRO_DOC, TIPDOC, NUMERO, CID, FAMILIA, IDPLANO,
+            FEC_INI_INCIDENCIA, FEC_FIN_INCIDENCIA, MINUTOS_AFECTACION,
+            DPTO, PROVINCIA, DISTRITO, MONEDA, CR_NETO, FCHINI_INST, FCHFIN_INST,
+            CICFAC_DEVOL, CUSTCODE, CO_ID, FECHAALTA, ESTADO_CONTRATO, CUSTOMER_ID,
+            FUENTE, CODSRV, DSCSRV, OBS, ESTADO_IDINTPROD_DEVOL, SERVICIO_DEVOL,
+            IDINTPROD_DEVOL, TASA_AL, FCH_CALC_TASA, TASA, MONEDA_DEVOL, MONTO_DEVOL_CIGV,
+            INTERES, MONTO_PRINC_CIGV, ULT_FECHA, CR_NETOCIGV, MONTO_PRINCIPAL
+            FROM (
+                SELECT
+                a.*,
+                row_number() over(partition by ticket,CODCLI order by cr_neto desc) flag
+                FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE a
+            ) WHERE flag=1;
+            COMMIT;
+
+            DELETE FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE_TOTAL
+            WHERE (ticket) IN (
+                SELECT TICKET FROM USRAES.INPUT_DEVO_FIJA_TMP_{$this->userIdentifier} GROUP BY TICKET, DEPARTAMENTO
+            );
+            COMMIT;
+
+            INSERT INTO USRAES.DWH_DEVOLUCION_MASIV_DETALLE_TOTAL(
+                TICKET, DEPARTAMENTO, FECHA, SERVICIO_AFECTADO, ABONADOS_AFECTADOS, ACREDITADOS, NO_ACREDITADOS
+            )
+            SELECT ticket,max(DPTO) Departamento,sysdate fecha,familia Servicio_Afectado,
+            count(1) abonados_afectados, 0 ACREDITADOS, COUNT(1) NO_ACREDITADOS
+            from USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST
+            WHERE (ticket) IN (
+                SELECT TICKET FROM USRAES.INPUT_DEVO_FIJA_TMP_{$this->userIdentifier} GROUP BY TICKET, DEPARTAMENTO
+            )
+            AND (CASE FUENTE
+                WHEN 'BSCS' THEN (CASE WHEN ESTADO_CONTRATO != 'D' THEN 1 ELSE 0 END)
+                WHEN 'SGA' THEN (CASE WHEN CICFAC_DEVOL IS NOT NULL AND FCHFIN_INST IS NULL THEN 1 ELSE 0 END)
+                ELSE 0 END
+            ) = 1
+            GROUP BY ticket,familia;
+            COMMIT;
         END;"];
 
         /*$queries[] = ["sql" => "DECLARE
@@ -1038,6 +1177,224 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
             from usraes.ext_dev_fija_ticket_{$this->userIdentifier};
             commit;
         end;");*/
+    }
+
+    public function countReportByTicketDepartamento($ticket){
+        $sql = "SELECT COUNT(1) counter FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST
+        WHERE TICKET= :p_ticket";
+        $params = ["p_ticket" => $ticket];
+        $data = DB::connection($this->connection)->select(DB::raw($sql), $params);
+        return $data[0]->counter;
+    }
+
+    public function findInputsByNumReporteAndTicket($numReporte, $ticket)
+    {
+        $data = DB::connection($this->connection)->table("USRAES.INPUT_DEVO_FIJA")
+        ->where("numero_reporte", $numReporte)
+        ->where("ticket", $ticket)
+        ->first();
+
+        
+        if($data !== null){
+            $departamentos = DB::connection($this->connection)
+            ->table("usraes.input_devo_fija_plano")
+            ->select("departamento", "provincia", "distrito")
+            ->where("numero_reporte", $numReporte)
+            ->groupBy("departamento", "provincia", "distrito")
+            ->get();
+    
+            foreach($departamentos as $row){
+                $row->planos = DB::connection($this->connection)
+                ->table("usraes.input_devo_fija_plano")
+                ->select("plano")
+                ->where("numero_reporte", $numReporte)
+                // ->where("ticket", $ticket)
+                ->where("departamento", $row->departamento)
+                ->where("provincia", $row->provincia)
+                ->where("distrito", $row->distrito)
+                ->get();
+            }
+            $data->planos = $departamentos;
+        }
+        return $data;
+    }
+
+    public function getInputs()
+    {
+        $data = DB::connection($this->connection)->table("USRAES.INPUT_DEVO_FIJA")->get();
+        return $data;
+    }
+
+    public function getReporteUsuariosAfectados($ticket)
+    {
+        return DB::connection($this->connection)->table("USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST")
+        ->selectRaw("rownum item,ticket,CODCLI CODIGO_CLIENTE,NRO_DOC NUMERO_DE_DOCUMENTO,
+        NOMCLI NOMBRES_APELLIDOS,FAMILIA SERVICIO_ANALIZADO,NUMERO SERVICIO,DPTO")
+        ->where("ticket", $ticket)
+        ->where(function($query) {
+            $query->whereRaw("(CASE FUENTE
+            WHEN 'BSCS' THEN (CASE WHEN ESTADO_CONTRATO != 'D' THEN 1 ELSE 0 END)
+            WHEN 'SGA' THEN (CASE WHEN CICFAC_DEVOL IS NOT NULL AND FCHFIN_INST IS NULL THEN 1 ELSE 0 END)
+            ELSE 0 END
+            ) = 1");
+        })
+        ->get();
+    }
+
+    public function getReportePostpago($ticket, $fuente)
+    {
+        return DB::connection($this->connection)->table("USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST")
+        ->selectRaw("TICKET,
+        NUMERO MSISDN,
+        NUMERO MSISDN_DEVOLVER,
+        CR_NETO CARGO_LINEA,
+        round(CR_NETO * 1.18, 2) CARGO_LINEA_IGV,
+        MONTO_PRINCIPAL MTO_DEV,
+        ROUND(MONTO_PRINCIPAL * 1.18, 2) MTO_DEV_IGV,
+        INTERES,
+        TASA,
+        ROUND(ROUND(MONTO_PRINCIPAL * 1.18, 2) + INTERES, 2) MTO_TOTAL_DEV_IGV,
+        CUSTCODE,
+        CASE FUENTE WHEN 'SGA' THEN CODCLI ELSE CUSTOMER_ID END CUSTOMER_ID,
+        IDINTPROD_DEVOL IDINSTPROD,
+        CO_ID CO_ID_DEVOLVER,
+        CICFAC_DEVOL CICLOFACTURACION,
+        FUENTE,
+        to_char(CASE FUENTE WHEN 'SGA' THEN FCHINI_INST ELSE FECHAALTA END, 'YYYY-MM-DD') FECHA_ALTA,
+        to_char(CASE FUENTE WHEN 'SGA' THEN FCHINI_INST ELSE FECHAALTA END, 'YYYY-MM-DD') FECHA_ACTIVACION,
+        'Dev. por interrupcion del ' || to_char(FEC_INI_INCIDENCIA, 'DD/MM/YYYY') || '. Tasa aplicada  0.01%' GLOSARIO")
+        ->where("ticket", $ticket)
+        ->where("fuente", $fuente)
+        ->where(function($query) {
+            $query->whereRaw("(CASE FUENTE
+            WHEN 'BSCS' THEN (CASE WHEN ESTADO_CONTRATO != 'D' THEN 1 ELSE 0 END)
+            WHEN 'SGA' THEN (CASE WHEN CICFAC_DEVOL IS NOT NULL AND FCHFIN_INST IS NULL THEN 1 ELSE 0 END)
+            ELSE 0 END
+            ) = 1");
+        })
+        ->get();
+    }
+
+    public function getFuentesReportePostpago($ticket)
+    {
+        return DB::connection($this->connection)->table("USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST")
+        ->select("fuente")
+        ->where("ticket", $ticket)
+        ->groupBy("fuente")
+        ->get();
+    }
+
+    public function createInput(
+        string $numReporte,
+        string $username,
+        string $servicioAfectado,
+        DateTime $fechaIni,
+        DateTime $fechaFin,
+        int $mesesInteres,
+        string $departamento,
+        string $provincia,
+        string $distrito,
+        array $planos
+    ) {
+        DB::table("USRAES.INPUT_DEVO_FIJA")
+        ->insert([
+            "numero_reporte" => $numReporte,
+            "username" => $username,
+            "departamento" => $departamento,
+            "provincia" => $provincia,
+            "distrito" => $distrito,
+            "servicio_afectado" => $servicioAfectado,
+            "fecha_ini" => $fechaIni,
+            "fecha_fin" => $fechaFin,
+            "meses" => $mesesInteres,
+        ]);
+        
+        foreach ($planos as $plano) {
+            DB::table("USRAES.INPUT_DEVO_FIJA_PLANO")
+            ->insert([
+                "numero_reporte" => $numReporte,
+                "departamento" => $departamento,
+                "provincia" => $provincia,
+                "distrito" => $distrito,
+                // "ticket" => $ticket,
+                "plano" => $plano,
+            ]);
+        }
+    }
+
+    public function createPlanoInput(
+        string $numReporte,
+        string $departamento,
+        string $provincia,
+        string $distrito,
+        array $planos
+    ) {
+        foreach($planos as $plano){
+            DB::table("USRAES.INPUT_DEVO_FIJA_PLANO")
+            ->insert([
+                "numero_reporte" => $numReporte,
+                "departamento" => $departamento,
+                "provincia" => $provincia,
+                "distrito" => $distrito,
+                // "ticket" => $ticket,
+                "plano" => $plano,
+            ]);
+        }
+    }
+
+    public function createServicioAfectadoInput(
+        string $numReporte,
+        string $username,
+        int $servicioAfectadoId,
+        DateTime $fechaIni,
+        DateTime $fechaFin,
+        int $mesesInteres
+    ) {
+        DB::table("USRAES.INPUT_DEVO_FIJA")
+        ->insert([
+            "numero_reporte" => $numReporte,
+            "username" => $username,
+            // "departamento" => $departamento,
+            // "provincia" => $provincia,
+            // "distrito" => $distrito,
+            "servicio_afectado_id" => $servicioAfectadoId,
+            "fecha_ini" => $fechaIni,
+            "fecha_fin" => $fechaFin,
+            "meses" => $mesesInteres,
+        ]);
+    }
+
+    public function updateTicketServicioInputByNumReporte(string $numReporte, int $servicioAfectadoId, ?string $ticket)
+    {
+        DB::table("USRAES.INPUT_DEVO_FIJA")
+        ->where("numero_reporte", $numReporte)
+        ->where("servicio_afectado_id", $servicioAfectadoId)
+        ->update(["ticket" => $ticket]);
+        
+        // DB::table("USRAES.INPUT_DEVO_FIJA_PLANO")
+        // ->where("numero_reporte", $numReporte)
+        // ->where("servicio_afectado_id", $servicioAfectadoId)
+        // ->update(["ticket" => $ticket]);
+    }
+
+    public function deleteServicioInput(string $numReporte, int $servicioAfectadoId)
+    {
+        DB::table("USRAES.INPUT_DEVO_FIJA")
+        ->where("numero_reporte", $numReporte)
+        ->where("servicio_afectado_id", $servicioAfectadoId)
+        ->delete();
+
+        // DB::table("USRAES.INPUT_DEVO_FIJA_PLANO")
+        // ->where("numero_reporte", $numReporte)
+        // ->where("servicio_afectado_id", $servicioAfectadoId)
+        // ->delete();
+    }
+
+    public function deletePlanoInput(string $numReporte)
+    {
+        DB::table("USRAES.INPUT_DEVO_FIJA_PLANO")
+        ->where("numero_reporte", $numReporte)
+        ->delete();
     }
 
     private function exec_sql(array $queries)

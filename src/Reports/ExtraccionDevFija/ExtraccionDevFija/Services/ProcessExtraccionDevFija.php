@@ -7,6 +7,7 @@ use AMovil\Shared\Application\Response;
 use AMovil\Shared\Exports\Domain\ExportService;
 use AMovil\Shared\Exports\Domain\WriterType;
 use DateTime;
+use Exception;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 
 class ProcessExtraccionDevFija
@@ -24,7 +25,7 @@ class ProcessExtraccionDevFija
     {
         $arrayDistritos = [];
         foreach($departamentos as $index => $departemento){
-            $arrayPlanos = explode(",", $planos[$index]);
+            $arrayPlanos = explode(",", str_replace(" ", "", $planos[$index]));
             $arrayDistritos[] = [$departemento, $provincias[$index], $distritos[$index], $arrayPlanos];
         }
 
@@ -42,6 +43,20 @@ class ProcessExtraccionDevFija
 
         $dtFechaIni = DateTime::createFromFormat("Y-m-d H:i:s", "{$fechaIni} {$horaIni}");
         $dtFechaFin = DateTime::createFromFormat("Y-m-d H:i:s", "{$fechaFin} {$horaFin}");
+
+        if(count($arrayDistritos) === 0){
+            throw new Exception("Se debe agregar como minimo un departamento, provincia y distrito");
+        }
+        /*$departemento = $arrayDistritos[0][0];
+        foreach($arrayDistritos as $row){
+            if($departemento !== $row[0]){
+                throw new Exception("No se puede procesar dos departamentos diferentes");
+            }
+        }*/
+        $reportCount = $this->repo->countReportByTicketDepartamento($ticket);
+        if($reportCount > 0){
+            throw new Exception("Ya se tiene procesado el TK_{$ticket}");
+        }
 
         $data = $this->repo->process(
             $arrayDistritos,

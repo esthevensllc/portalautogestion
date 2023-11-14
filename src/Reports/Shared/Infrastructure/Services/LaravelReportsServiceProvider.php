@@ -172,5 +172,13 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\DetallePlanes\ConsolidadoMinutos\Domain\ConsolidadoMinutosRepository::class,
             \AMovil\Reports\DetallePlanes\ConsolidadoMinutos\Infrastructure\EloquentConsolidadoMinutosRepository::class
         );
+        $this->app->bind(
+            \AMovil\Reports\ExtraccionDevFija\TicketReports\Domain\FijaTicketReportRepository::class,
+            \AMovil\Reports\ExtraccionDevFija\TicketReports\Infrastructure\EloquentFijaTicketReportRepository::class
+        );
+        $this->app->bind(
+            \AMovil\Reports\ExtraccionDevFija\InformesFalla\Domain\InformeFallasRepository::class,
+            \AMovil\Reports\ExtraccionDevFija\InformesFalla\Infrastructure\EloquentInformeFallasRepository::class
+        );
     }
 }
