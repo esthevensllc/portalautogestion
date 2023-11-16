@@ -55,11 +55,29 @@ class BloqueoImeiController
     public function export(Request $request)
     {
         $tipoBusquedaId = $request->input("tipobusqueda_id");
-        $file = $request->file("base_imei");
-        $date_range = $request->input("date_range", "");
-        $dates = explode(" - ", $date_range);
+        //$date_range = $request->input("date_range", "");
+        //$dates = explode(" - ", $date_range);
+        if($tipoBusquedaId == '1'){
+            $param1 = $request->input("text_imei");
+            if($param1 != ""){
+                $file = $request->file("base_imei");
+            }else{
+                $file = "";
+            }
+        }else{
+            $param1 = $request->input("text_msisdn");
+            if($param1 != ""){
+                $file = $request->file("base_imei");
+            }else{
+                $file = "";
+            }
+        }
 
-        $response = $this->export->__invoke($tipoBusquedaId, $file, $dates[0], $dates[1])->data();
+        $fecha_ini = $request->input("f_ini").' '.$request->input("corte_fecha1_time");
+        $fecha_fin = $request->input("f_fin").' '.$request->input("corte_fecha2_time");
+
+        //$response = $this->export->__invoke($tipoBusquedaId, $file, $dates[0], $dates[1])->data();
+        $response = $this->export->__invoke($tipoBusquedaId, $file, $param1, $fecha_ini, $fecha_fin)->data();
 
         return response($response['content'], 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
