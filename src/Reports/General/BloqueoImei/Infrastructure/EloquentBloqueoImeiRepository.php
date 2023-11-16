@@ -262,6 +262,24 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
         return $builder->get();
     }
 
+    public function saveSearchEirImeiLog($username, $imei, $statusid, $status, $actionid, $reasoncode, $imsi, $time_stamp2, $reg_time)
+    {
+        $now = new DateTime();
+        DB::connection("oracle")
+        ->table("control_busqueda_imei_eir_dinamic")
+        ->insert([
+            "usuario" => $username,
+            "imei" => $imei,
+            "statusid" => $statusid,
+            "status" => $status,
+            "actionid" => $actionid,
+            "reasoncode" => $reasoncode,
+            "imsi" => $imsi,
+            "time_stamp2" => $time_stamp2,
+            "reg_time" => $reg_time
+        ]);
+    }
+
     public function getReporteArray($id, $tipoBusquedaId, $imeis, DateTime $fechaIni, DateTime $fechaFin){
         $strFechaIni = $fechaIni->format("Y-m-d H:i:s");
         $strFechaFin = $fechaFin->format("Y-m-d H:i:s");
