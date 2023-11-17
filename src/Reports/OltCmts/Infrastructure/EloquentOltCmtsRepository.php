@@ -31,7 +31,7 @@ class EloquentOltCmtsRepository implements OltCmtsRepository
     {
         $stFecha = $fecha->format("Y-m-d");
         $query = "SELECT nombre_olt id, nombre_olt label FROM portal_autogestion.list_olt_1day
-        where fecha = toDate('{$stFecha}')
+        where fecha = toDate('{$stFecha}') and nombre_olt is not null
         order by nombre_olt";
         $data = DB::connection("ch-dn05")->select(DB::raw($query));
         return json_decode(json_encode($data), false);
@@ -41,7 +41,7 @@ class EloquentOltCmtsRepository implements OltCmtsRepository
     {
         $stFecha = $fecha->format("Y-m-d");
         $query = "SELECT ubicacion_de_red id, ubicacion_de_red label FROM portal_autogestion.list_olt_cmts_hfc_1day
-        where fecha = toDate('{$stFecha}')
+        where fecha = toDate('{$stFecha}') and ubicacion_de_red is not null
         order by ubicacion_de_red";
         $data = DB::connection("ch-dn05")->select(DB::raw($query));
         return json_decode(json_encode($data), false);

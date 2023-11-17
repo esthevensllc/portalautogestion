@@ -21,6 +21,7 @@ class ExportOltCmtsReport
     private $exportService;
     private $saveReportLog;
     private $localStorage;
+    private $authService;
     private $userIdentifier;
 
     public function __construct(
@@ -34,12 +35,13 @@ class ExportOltCmtsReport
         $this->exportService = $exportService;
         $this->saveReportLog = $saveReportLog;
         $this->localStorage = $storageService->getStorageSystemByName(StorageSystemName::LOCAL2);
-        $this->userIdentifier = $authService->getUserIdentifier();
+        $this->authService = $authService;
     }
 
     public function __invoke($typeId, $fecha, $values)
     {
         $dtStart = new DateTime();
+        $this->userIdentifier = $this->authService->getUserIdentifier();
         try {
             $dtFecha = DateTime::createFromFormat("Y-m-d", $fecha);
             $data = $this->repo->getOltReport($dtFecha, $values);
