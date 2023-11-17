@@ -286,6 +286,12 @@ Route::group([
         Route::post('/revisado', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'revisado']);
         Route::post('/update-status', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'updateReportStatus']);
     });
+    Route::group(['prefix' => 'extraccion-devolucion/informes-ccpp', 'trac_name' => 'extraccion-devolucion.informes-ccpp'], function(){
+        Route::get('/', [\AMovil\Reports\ExtraccionDevolucion\InformesCCPP\Controllers\InformeCCPPController::class, 'view']);
+        Route::post('import', [\AMovil\Reports\ExtraccionDevolucion\InformesCCPP\Controllers\InformeCCPPController::class, 'import']);
+        Route::get('search', [\AMovil\Reports\ExtraccionDevolucion\InformesCCPP\Controllers\InformeCCPPController::class, 'search']);
+        Route::get('{id}/download', [\AMovil\Reports\ExtraccionDevolucion\InformesCCPP\Controllers\InformeCCPPController::class, 'download']);
+    });
 
     Route::group(['prefix' => 'michaell-cia-nn', 'trac_name' => 'michaell-cia-nn'], function(){
         Route::get('/', [\AMovil\Reports\General\RepMichaellCIANN\Controllers\RepMichaellCIANNController::class, 'view']);

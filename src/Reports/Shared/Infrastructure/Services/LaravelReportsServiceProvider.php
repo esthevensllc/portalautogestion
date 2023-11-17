@@ -184,5 +184,9 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\OltCmts\Domain\OltCmtsRepository::class,
             \AMovil\Reports\OltCmts\Infrastructure\EloquentOltCmtsRepository::class
         );
+        $this->app->bind(
+            \AMovil\Reports\ExtraccionDevolucion\InformesCCPP\Domain\InformeCCPPRepository::class,
+            \AMovil\Reports\ExtraccionDevolucion\InformesCCPP\Infrastructure\EloquentInformeCCPPRepository::class
+        );
     }
 }
