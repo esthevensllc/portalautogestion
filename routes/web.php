@@ -441,4 +441,10 @@ Route::group([
         Route::post('export', [\AMovil\Reports\DetallePlanes\ConsolidadoMinutos\Controllers\ConsolidadoMinutosController::class, 'export']);
     });
 
+    Route::group(['prefix' => 'olt-cmts', 'trac_name' => 'olt-cmts'], function(){
+        Route::get('/', [\AMovil\Reports\OltCmts\Controllers\OltCmtsController::class, 'view']);
+        Route::get('find-values', [\AMovil\Reports\OltCmts\Controllers\OltCmtsController::class, 'findValues']);
+        Route::post('export', [\AMovil\Reports\OltCmts\Controllers\OltCmtsController::class, 'export']);
+    });
+
 });

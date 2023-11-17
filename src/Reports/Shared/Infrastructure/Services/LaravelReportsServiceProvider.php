@@ -180,5 +180,9 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\ExtraccionDevFija\InformesFalla\Domain\InformeFallasRepository::class,
             \AMovil\Reports\ExtraccionDevFija\InformesFalla\Infrastructure\EloquentInformeFallasRepository::class
         );
+        $this->app->bind(
+            \AMovil\Reports\OltCmts\Domain\OltCmtsRepository::class,
+            \AMovil\Reports\OltCmts\Infrastructure\EloquentOltCmtsRepository::class
+        );
     }
 }
