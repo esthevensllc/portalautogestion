@@ -128,6 +128,19 @@ return [
             ]
         ],
 
+        'ch-dn05' => [
+            'driver' => 'bavix::clickhouse',
+            'host' => env('DB7_HOST', 'localhost'),
+            'port' => env('DB7_PORT', '8123'),
+            'database' => env('DB7_DATABASE', 'default'),
+            'username' => env('DB7_USERNAME', 'default'),
+            'password' => env('DB7_PASSWORD', ''),
+            'options' => [
+                'timeout' => 30,
+                'protocol' => 'http'
+            ]
+        ],
+
         'sqlite' => [
             'driver' => 'sqlite',
             'url' => env('DATABASE_URL'),
