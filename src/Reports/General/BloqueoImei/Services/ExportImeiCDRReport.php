@@ -38,4 +38,22 @@ class ExportImeiCDRReport
             "content" => $content
         ]);
     }
+
+    public function __invokeOnline($id): Response
+    {
+        $reports = $this->repo->getAutomaticOnlineReportByCriteria([["id", $id]]);
+        if(count($reports) === 0){
+            throw new Exception("El reporte no existe");
+        }
+        $report = $reports[0];
+        $subDirectory = DateTime::createFromFormat("Y-m-d H:i:s", $report["fecha"])->format("Ym");
+        $filename = $report["filename"];
+        $content = $this->storage->get("{$this->baseStoragePath}/{$subDirectory}/{$filename}");
+
+        return new Response([], [
+            "filename" => $filename,
+            "type" => "xlsx",
+            "content" => $content
+        ]);
+    }
 }

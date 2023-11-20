@@ -103,6 +103,34 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
         return $data;
     }
 
+    public function getReporteFromBaseImeiOnline(DateTime $fechaIni, DateTime $fechaFin)
+    {
+        $strFechaIni = $fechaIni->format("Y-m-d H:i:s");
+        $strFechaFin = $fechaFin->format("Y-m-d H:i:s");
+        $strFecha = $fechaIni->format("Ymd");
+
+        $sql = "SELECT
+        x.served_imeisv2,x.served_msisdn,x.serving_node_address1,x.serving_node_plmn_identifier,
+        y.name,x.record_opening_time,x.rattype,x.cause_for_rec_closing,
+        x.losd_datavolume_fbc_uplink,x.losd_datavolume_fbc_downlink
+        from
+        (
+            select toInt64(substr(toString(served_imeisv),1,14)) served_imeisv2,INET_NTOA(serving_node_address) as serving_node_address1 ,serving_node_plmn_identifier, served_msisdn,record_opening_time,rattype,access_point_name_ni,cause_for_rec_closing,losd_datavolume_fbc_uplink, losd_datavolume_fbc_downlink
+            from cdrdatos.cdr{$strFecha}
+            where (toDateTime('{$strFechaIni}') <= record_opening_time and record_opening_time <= toDateTime('{$strFechaFin}'))
+            AND substr(toString(served_imeisv),1,14)
+            in (select substring(toString(imei),1,14) as imei1 from eir.subscriber_eir_1day group by 1)
+            group by served_imeisv2, served_msisdn,serving_node_address1,serving_node_plmn_identifier,
+            record_opening_time,rattype,access_point_name_ni,cause_for_rec_closing,losd_datavolume_fbc_uplink,
+            losd_datavolume_fbc_downlink
+        )  x
+        join cdrdatos.access_points y on toString(x.access_point_name_ni)=toString(y.id)  
+        group by 1,2,3,4,5,6,7,8,9,10";
+
+        $data = DB::connection("ch-dn02")->select($sql);
+        return $data;
+    }
+
     public function getReporteLogByCriteria($filters)
     {
         $builder = DB::connection("ch-dn02")->table("bloqueo_imei.base_imei_log");
@@ -213,9 +241,36 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
         ]);
     }
 
+    public function saveAutomaticReportOnline($id, $filename, $nRegistros, $sizeBytes, DateTime $fecha)
+    {
+        DB::connection("ch-dn02")
+        ->statement(DB::raw("alter table bloqueo_imei.report_imei_automatico_online delete where id = '{$id}'"));
+
+        $now = new DateTime();
+        DB::connection("ch-dn02")
+        ->table("bloqueo_imei.report_imei_automatico_online")
+        ->insert([
+            "id" => $id,
+            "filename" => $filename,
+            "n_registros" => $nRegistros,
+            "size_bytes" => $sizeBytes,
+            "fecha" => $fecha->format("Y-m-d H:i:s"),
+            "created_at" => $now->format("Y-m-d H:i:s")
+        ]);
+    }
+
     public function getAutomaticReportByCriteria($filters)
     {
         $builder = DB::connection("ch-dn02")->table("bloqueo_imei.report_imei_automatico");
+        foreach($filters as $row){
+            $builder->where($row[0], $row[1]);
+        }
+        return $builder->get();
+    }
+
+    public function getAutomaticOnlineReportByCriteria($filters)
+    {
+        $builder = DB::connection("ch-dn02")->table("bloqueo_imei.report_imei_automatico_online");
         foreach($filters as $row){
             $builder->where($row[0], $row[1]);
         }

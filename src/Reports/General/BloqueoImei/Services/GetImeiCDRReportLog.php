@@ -18,4 +18,9 @@ class GetImeiCDRReportLog
     {
         return Response::respData($this->repo->getAutomaticReportByCriteria($filters));
     }
+
+    public function __invokeOnline($filters)
+    {
+        return Response::respData($this->repo->getAutomaticOnlineReportByCriteria($filters));
+    }
 }

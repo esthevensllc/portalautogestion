@@ -18,6 +18,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 Route::post('imei-cdr-automatico/generate', [\AMovil\Reports\General\BloqueoImei\Controllers\ImeiCRDAutomaticoController::class, 'generate']);
+Route::post('imei-cdr-automatico/generateOnline', [\AMovil\Reports\General\BloqueoImei\Controllers\ImeiCRDAutomaticoController::class, 'generateOnline']);
 Route::get('reporte-log', function (Request $request) {
     return DB::table("usraes.reporte_log")->orderBy("ini", "desc")->get();
     //return DB::connection("oracle_dbtodb")->table("TEMP_TAG_1460")->where('invoicenumber', '=','0264278286072022')->get();

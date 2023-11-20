@@ -419,6 +419,11 @@ Route::group([
         Route::get('/', [\AMovil\Reports\General\BloqueoImei\Controllers\ControlEirImeiController::class, 'view']);
         Route::post('search', [\AMovil\Reports\General\BloqueoImei\Controllers\ControlEirImeiController::class, 'search']);
     });
+    Route::group(['prefix' => 'imeis-cdr-report-online', 'trac_name' => 'imeis-cdr-report-online'], function(){
+        Route::get('/', [\AMovil\Reports\General\BloqueoImei\Controllers\ImeiCRDAutomaticoController::class, 'reportsOnlineView']);
+        Route::get('search', [\AMovil\Reports\General\BloqueoImei\Controllers\ImeiCRDAutomaticoController::class, 'reportOnlineSearch']);
+        Route::get('{id}/download', [\AMovil\Reports\General\BloqueoImei\Controllers\ImeiCRDAutomaticoController::class, 'downloadOnlineReport']);
+    });
     Route::group(['prefix' => 'comprobante-pago', 'trac_name' => 'comprobante-pago'], function(){
         Route::get('/', [\AMovil\Reports\General\ComprobantePago\Controllers\ComprobantePagoController::class, 'view']);
         Route::post('export', [\AMovil\Reports\General\ComprobantePago\Controllers\ComprobantePagoController::class, 'export']);
@@ -433,6 +438,7 @@ Route::group([
         Route::get('/', [\AMovil\Reports\BloqueoControlReg\Controllers\BloqueoControlRegLogController::class, 'view']);
         Route::get('search', [\AMovil\Reports\BloqueoControlReg\Controllers\BloqueoControlRegLogController::class, 'getData']);
         Route::get('{id}/download', [\AMovil\Reports\BloqueoControlReg\Controllers\BloqueoControlRegController::class, 'downloadDocument']);
+        Route::get('{id}/download-eir', [\AMovil\Reports\BloqueoControlReg\Controllers\BloqueoControlRegController::class, 'downloadEir']);
     });
     Route::group(['prefix' => 'detalle-planes', 'trac_name' => 'detalle-planes'], function(){
         Route::get('/', [\AMovil\Reports\DetallePlanes\Planes\Controllers\DetallePlanController::class, 'view']);
@@ -446,7 +452,7 @@ Route::group([
         Route::get('/', [\AMovil\Reports\DetallePlanes\ConsolidadoMinutos\Controllers\ConsolidadoMinutosController::class, 'view']);
         Route::post('export', [\AMovil\Reports\DetallePlanes\ConsolidadoMinutos\Controllers\ConsolidadoMinutosController::class, 'export']);
     });
-
+    
     Route::group(['prefix' => 'olt-cmts', 'trac_name' => 'olt-cmts'], function(){
         Route::get('/', [\AMovil\Reports\OltCmts\Controllers\OltCmtsController::class, 'view']);
         Route::get('find-values', [\AMovil\Reports\OltCmts\Controllers\OltCmtsController::class, 'findValues']);

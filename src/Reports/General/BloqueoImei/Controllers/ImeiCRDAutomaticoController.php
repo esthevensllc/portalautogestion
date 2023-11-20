@@ -78,6 +78,15 @@ class ImeiCRDAutomaticoController
         return response()->json($response);
     }
 
+    public function generateOnline(Request $request)
+    {
+        $fecha_ini = $request->input("fecha_ini");
+        $fecha_fin = $request->input("fecha_fin");
+
+        $response = $this->generateImeiReport->__invokeOnline($fecha_ini, $fecha_fin)->data();
+        return response()->json($response);
+    }
+
     public function deleteReportlog($id)
     {
         $this->deleteReportLog->__invoke($id);
@@ -105,6 +114,15 @@ class ImeiCRDAutomaticoController
         return view("imei_cdr.reports", compact("config"));
     }
 
+    public function reportsOnlineView()
+    {
+        $config = [
+            'title' => 'IMEIs CDR Reports Online',
+            'downloadUrl' => url('imeis-cdr-report-online/[id]/download'),
+        ];
+        return view("imei_cdr.reports_online", compact("config"));
+    }
+
     public function reportSearch()
     {
         $response = $this->getReport->__invoke([])->data();
@@ -113,9 +131,26 @@ class ImeiCRDAutomaticoController
         ]);
     }
 
+    public function reportOnlineSearch()
+    {
+        $response = $this->getReport->__invokeOnline([])->data();
+        return response()->json([
+            "data" => $response
+        ]);
+    }
+
     public function downloadReport($id)
     {
         $response = $this->exportImeiReport->__invoke($id)->data();
+        return response($response['content'], 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment;filename="'.$response['filename'].'"'
+        ]);
+    }
+
+    public function downloadOnlineReport($id)
+    {
+        $response = $this->exportImeiReport->__invokeOnline($id)->data();
         return response($response['content'], 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition' => 'attachment;filename="'.$response['filename'].'"'

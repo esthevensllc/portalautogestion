@@ -12,6 +12,7 @@ interface BloqueoImeiRepository
     public function deleteReporteLog($id);
     
     public function getReporteFromBaseImei(DateTime $fechaIni, DateTime $fechaFin);
+    public function getReporteFromBaseImeiOnline(DateTime $fechaIni, DateTime $fechaFin);
     public function getAutomaticReportLogByCriteria($filters);
     public function deleteAutomaticReportLog($id);
     public function importBaseImeiAutomatico($id, $filename, $imeis);
@@ -19,6 +20,7 @@ interface BloqueoImeiRepository
     public function saveAutomaticReportLog($id, $username, $filename, $nRegistros);
     public function saveAutomaticReport($id, $filename, $nRegistros, $sizeBytes, DateTime $fecha);
     public function getAutomaticReportByCriteria($filters);
+    public function getAutomaticOnlineReportByCriteria($filters);
     public function saveConfig(bool $generateReport);
     public function getConfig();
 
