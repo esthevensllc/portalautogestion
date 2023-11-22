@@ -54,11 +54,14 @@ class EloquentBloqueoControlRegLogRepository implements BloqueoControlRegLogRepo
 
     public function getByCriteria($filters = [])
     {
-        $builder = DB::table("usraes.bloqueo_control_regulatorio_log");
-        $builder->select("id", "fecha", "tipo_operacion_id", "tipo_documento_id", "filename", "size_bytes", "eir_filename", "cant_registros", "cant_unicos", "exec_ok", "exec_fail", "processed");
+        $builder = DB::table("usraes.bloqueo_control_regulatorio_log")
+            ->select("id", "fecha", "tipo_operacion_id", "tipo_documento_id", "filename", "size_bytes", "eir_filename", "cant_registros", "cant_unicos", "exec_ok", "exec_fail", "processed", "usraes.bloqueo_control_reg_eir_resp.EIR_ID")
+            ->join("usraes.bloqueo_control_reg_eir_resp", "usraes.bloqueo_control_regulatorio_log.id","=","usraes.bloqueo_control_reg_eir_resp.document_id");
+        
         foreach($filters as $row){
             $builder->where($row[0], $row[1]);
         }
+
         return $builder->get();
     }
 
@@ -85,5 +88,37 @@ class EloquentBloqueoControlRegLogRepository implements BloqueoControlRegLogRepo
             ["id" => 2, "label" => "DAPU"],
         ];
         return json_decode(json_encode($result), false);
+    }
+
+    public function getTipificaciones()
+    {
+        $result = [
+            ["id" => 1, "label" => "APAGON DE IMEI INVALIDO"],
+            ["id" => 2, "label" => "BLOQUEO DE EQUIPOS POR FRAUDE"],
+            ["id" => 3, "label" => "SUSPENSION - USO DE IMEI INVALIDO"],
+            ["id" => 4, "label" => "BLOQUEO DE EQUIPO - USO PROHIBIDO"],
+            ["id" => 5, "label" => "BLOQUEO IMEI EXTRANJERO CON TRAFICO"],
+            ["id" => 6, "label" => "BLOQUEO DE IMEI POR ROBO EN DISTRIBUIDOR"],
+            ["id" => 7, "label" => "CONSULTA DE IMEI EN GSMA"]
+        ];
+        return json_decode(json_encode($result), false);
+    }
+
+    public function getTickler()
+    {
+        $result = [
+            ["id" => 1, "label" => "BLOQUEO OSP"]
+        ];
+        return json_decode(json_encode($result), false);
+    }
+
+    public function insertTableControl($tipo_operacion,$tipificacion,$tickler,$intantaneo,$notas){
+        DB::table("USRAES.TABLE_CONTROL_TIPIFICAION_TIMPROD_COSDB")->insert([
+            "tipo_operacion" => $tipo_operacion,
+            "tipificacion" => $tipificacion,
+            "tickler" => $tickler,
+            "intantaneo" => $intantaneo,
+            "notas" => $notas
+        ]);
     }
 }

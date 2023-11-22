@@ -46,4 +46,14 @@ class EloquentBloqueoControlRegRepository implements BloqueoControlRegRepository
         ->where("documento_id", $id)
         ->first();
     }
+
+    public function getReporte($id)
+    {   
+        $result = DB::table("usraes.bloqueo_control_reg_eir_resp")
+            //->selectRaw("V1, V2, V3, V4, V5, STATUS, V7, V8, V9")
+            ->where("EIR_ID", $id)
+            ->get();
+        
+        return $result;    
+    }
 }

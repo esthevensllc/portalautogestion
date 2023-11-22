@@ -7,10 +7,10 @@
         <form id="upload_form">
             @csrf
             <div class="mb-3 row">
-                <div class="col-lg-3 col-md-4">
+                <div class="col-lg-2 col-md-4">
                     <div class="form-group">
                         <label for="tipo_operacion_id">Tipo Operación</label>
-                        <select class="form-control form-control-sm" name="tipo_operacion_id" id="tipo_operacion_id">
+                        <select class="form-control form-control-sm verificar" name="tipo_operacion_id" id="tipo_operacion_id" required>
                             <option value="">Seleccione</option>
                             @foreach ($config["tiposOperacion"] as $row)
                                 <option value="{{ $row->id }}">{{ $row->label }}</option>
@@ -18,6 +18,42 @@
                         </select>
                     </div>
                 </div>
+                <div class="col-lg-2 col-md-4">
+                    <div class="form-group">
+                        <label for="tipificacion_id">Tipificación</label>
+                        <select class="form-control form-control-sm verificar" name="tipificacion_id" id="tipificacion_id" required>
+                            <option value="">Seleccione</option>
+                            @foreach ($config["tipificaciones"] as $row)
+                                <option value="{{ $row->id }}">{{ $row->label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-4">
+                    <div class="form-group">
+                        <label for="tickler_id">Tickler</label>
+                        <select class="form-control form-control-sm verificar" name="tickler_id" id="tickler_id" required>
+                            <option value="">Seleccione</option>
+                            @foreach ($config["tickler"] as $row)
+                                <option value="{{ $row->id }}">{{ $row->label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-4">
+                    <div class="form-group">
+                        <label for="instantaneo">Istantaneo</label>
+                        <textarea class="form-control verificar" name="instantaneo"  rows="2" required></textarea>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-4">
+                    <div class="form-group">
+                        <label for="notas">Notas</label>
+                        <textarea class="form-control verificar" name="notas" rows="2" required></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-3 row">
                 <div class="col-12 form-section" style="display: none;">
                     <div class="row">
                         <div class="col-lg-3 col-md-4 form-section" style="display: none;">
@@ -109,12 +145,12 @@ $(function() {
         }
     }
 
-    $("#tipo_operacion_id").on("change", function(e){
-        if(e.target.value !== ''){
-            $(".form-section").show();
-        }else{
-            $(".form-section").hide();
-        }
+    $(".verificar").on("change input", function(){
+        var todoLleno = $('.verificar').toArray().every(function(el){
+            return $(el).val() !== '';
+        });
+
+        $('.form-section').toggle(todoLleno);
     });
 
     $("#tipo_documento_id").on("change", function(e){

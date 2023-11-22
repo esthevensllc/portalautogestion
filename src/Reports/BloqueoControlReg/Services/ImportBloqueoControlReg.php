@@ -22,19 +22,25 @@ class ImportBloqueoControlReg
     private $eirStorage;
     private $localBaseStoragePath = "/space/reportes/bloqueo_control_regulatorio";
     private $baseStoragePath = "/comptel/BATCH/DWH/pre_input";
+    private $notifyUsers;
+    private $notifyUsersTipifi;
 
     public function __construct(
         BloqueoControlRegLogRepository $logRepo,
         BloqueoControlRegRepository $repo,
-        StorageService $storageService
+        StorageService $storageService,
+        NotifyUsersOnInformeBloqDesbloqLoaded $notifyUsers,
+        NotifyUsersOnInformeBloqDesbloqTipifi $notifyUsersTipifi
     ) {
         $this->logRepo = $logRepo;
         $this->repo = $repo;
         $this->localStorage = $storageService->getStorageSystemByName(StorageSystemName::LOCAL2);
         $this->eirStorage = $storageService->getStorageSystemByName(StorageSystemName::EIR);
+        $this->notifyUsers = $notifyUsers;
+        $this->notifyUsersTipifi = $notifyUsersTipifi;
     }
 
-    public function __invoke($tipoOperacionId, $tipoDocumentoId, $documento, $imei)
+    public function __invoke($tipoOperacionId, $tipoDocumentoId, $documento, $imei, $tipificacionId, $ticklerId, $instantaneo, $notas)
     {
         $tempFilePath = $documento->getPathname();
         $originalFilename = $documento->getClientOriginalName();
@@ -52,7 +58,7 @@ class ImportBloqueoControlReg
 
         $tempEIRFilePath = null;
         $strNow = (new DateTime())->format("YmdHis");
-        $tempEIRFilename = "ILBATCH.dat.{$strNow}1.PROV_BLOQIMEI_GSMA";
+        $tempEIRFilename = "ILBATCH.dat.{$strNow}1.PROV_REGULATORIO_IMEI";
         $cantRegistros = 0;
         $cantUnicos = 0;
         if (TipoDocumento::idIsSIBMED($tipoDocumentoId)) {
@@ -95,6 +101,12 @@ class ImportBloqueoControlReg
         $this->localStorage->put("{$this->localBaseStoragePath}/{$tempEIRFilename}", file_get_contents($tempEIRFilePath));
         $this->eirStorage->put("{$this->baseStoragePath}/{$tempEIRFilename}", file_get_contents($tempEIRFilePath));
         unlink($tempEIRFilePath);
+
+        $report = $this->logRepo->findFileContentById($newId);
+
+        $this->notifyUsers->__invoke($report);
+
+        $this->notifyUsersTipifi->__invoke($tipoOperacionId, $tipoDocumentoId, $originalFilename, $imei, $tipificacionId, $ticklerId, $instantaneo, $notas);
     }
     
     private function getDataFromFile($filepath)

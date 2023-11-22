@@ -9,4 +9,7 @@ interface BloqueoControlRegLogRepository
     public function findFileContentById($id);
     public function getTiposOperacion();
     public function getTiposDocumento();
+    public function getTipificaciones();
+    public function getTickler();
+    public function insertTableControl($tipo_operacion,$tipificacion,$tickler,$intantaneo,$notas);
 }

@@ -18,6 +18,7 @@ class BloqueoControlRegLogController
             "title" => "Bloqueo / Desbloqueo Control Regulatorio Log",
             "url" => url("bloqueo-control-regulatorio/logs/search"),
             "downloadUrl" => url("bloqueo-control-regulatorio/logs/[id]/download"),
+            "downloadEir" => url("bloqueo-control-regulatorio/logs/[id]/download-eir"),
             "tiposOperacion" => $this->getLogs->getTiposOperacion(),
             "tiposDocumento" => $this->getLogs->getTiposDocumento(),
         ];

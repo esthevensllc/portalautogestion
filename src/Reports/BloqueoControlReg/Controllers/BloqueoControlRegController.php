@@ -29,6 +29,8 @@ class BloqueoControlRegController
             "url" => url("bloqueo-control-regulatorio/import"),
             "tiposOperacion" => $this->getLog->getTiposOperacion(),
             "tiposDocumento" => $this->getLog->getTiposDocumento(),
+            "tipificaciones" => $this->getLog->getTipificaciones(),
+            "tickler" => $this->getLog->getTickler(),
         ];
         return view("bloqueo_control_reg.cargar", compact("config"));
     }
@@ -40,6 +42,10 @@ class BloqueoControlRegController
             $request->input("tipo_documento_id"),
             $request->file("documento"),
             $request->input("imei"),
+            $request->input("tipificacion_id"),
+            $request->input("tickler_id"),
+            $request->input("instantaneo"),
+            $request->input("notas"),
         );
         return response()->json(["file" => []]);
     }
@@ -57,5 +63,18 @@ class BloqueoControlRegController
             ]
         ];
         return response($response["content"], 200, $headersByType[$response["type"]]);
+    }
+
+    public function downloadEir($id)
+    {
+        ini_set('max_execution_time', '7200');
+        set_time_limit(7200);
+        
+        $response = $this->downloadReport->logImei($id)->data();
+
+        return response($response["content"], 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment;filename="'.$response["filename"].'"'
+        ]);
     }
 }

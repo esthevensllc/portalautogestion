@@ -29,4 +29,14 @@ class GetBloqueoControlRegLog
     {
         return $this->logRepo->getTiposDocumento();
     }
+
+    public function getTipificaciones()
+    {
+        return $this->logRepo->getTipificaciones();
+    }
+
+    public function getTickler()
+    {
+        return $this->logRepo->getTickler();
+    }
 }

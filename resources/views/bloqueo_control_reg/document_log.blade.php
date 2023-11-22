@@ -22,6 +22,7 @@
             <th>Imeis Unicos</th>
             <th>Ejecuciones Exitosas</th>
             <th>Ejecuciones Fallidas</th>
+            <th>Log Imei</th>
         </tr>
     </thead>
     <tbody>
@@ -77,7 +78,12 @@ $(function() {
             {data: 'cant_registros'},
             {data: 'cant_unicos'},
             {data: 'exec_ok'},
-            {data: 'exec_fail'}
+            {data: 'exec_fail'},
+            {render: function(data, type, row){
+                let url = config.downloadEir.replace('[id]', row['eir_id']);
+                let html = `<a href="${url}" target="_blank">Descargar</a>`;
+                return html;
+            }},
         ],
         "fnDrawCallback": function() {
             // $(".btn-delete").on("click", deleteFilenameHandler);
