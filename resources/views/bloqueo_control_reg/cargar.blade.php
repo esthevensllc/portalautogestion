@@ -42,7 +42,7 @@
                 </div>
                 <div class="col-lg-3 col-md-4">
                     <div class="form-group">
-                        <label for="instantaneo">Istantaneo</label>
+                        <label for="instantaneo">Instantáneo</label>
                         <textarea class="form-control verificar" name="instantaneo"  rows="2" required></textarea>
                     </div>
                 </div>
