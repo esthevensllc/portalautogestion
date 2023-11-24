@@ -67,7 +67,7 @@ class EloquentComprobantePagoRepository implements ComprobantePagoRepository
         ) SELECT
             /*+ PARALLEL (8)*/
             'BSCS' PLATAFORMA,
-            'SB02-' || SUBSTR(O.OHREFNUM, 5, 10) NRO_COMPROBANTE,
+            SUBSTR(O.OHREFNUM, 1, 4) || '-' || SUBSTR(O.OHREFNUM, 5, 30) NRO_COMPROBANTE,
             O.OHREFDATE FECHA_EMISION,
             C.CCNAME RAZON_SOCIAL,
             TO_CHAR(O.CUSTOMER_ID) CUSTOMER_ID,
@@ -82,7 +82,7 @@ class EloquentComprobantePagoRepository implements ComprobantePagoRepository
                 SELECT 1
                 FROM TMP_COMPROBANTES_INPUT_{$this->userIdentifier} X
                 WHERE X.PLATAFORMA = 'BSCS'
-                    AND X.NRO_COMPROBANTE = 'SB02-' || SUBSTR(O.OHREFNUM, 5, 10)
+                    AND X.NRO_COMPROBANTE = SUBSTR(O.OHREFNUM, 1, 4) || '-' || SUBSTR(O.OHREFNUM, 5, 30)
                     AND X.FECEMI = O.OHREFDATE
             )
         UNION ALL
@@ -90,7 +90,10 @@ class EloquentComprobantePagoRepository implements ComprobantePagoRepository
         SELECT
             /*+ PARALLEL (8)*/
             'BSCS' PLATAFORMA,
-            'SB01-' || SUBSTR(O.OHREFNUM, 1, 10) NRO_COMPROBANTE,
+            CASE
+                WHEN O.OHENTDATE < TO_DATE('01/10/2020', 'DD/MM/YYYY') THEN 'T001'
+                ELSE 'SB01'
+            END || '-' || SUBSTR(O.OHREFNUM, 1, 10) NRO_COMPROBANTE,
             O.OHREFDATE FECHA_EMISION,
             C.CCNAME RAZON_SOCIAL,
             TO_CHAR(O.CUSTOMER_ID) CUSTOMER_ID,
@@ -100,12 +103,17 @@ class EloquentComprobantePagoRepository implements ComprobantePagoRepository
         FROM DMRED.ORDERHDR_ALL O
             JOIN DMRED.CCONTACT_ALL C ON C.CUSTOMER_ID = O.CUSTOMER_ID
             AND C.CCBILL = 'X'
-        WHERE O.OHSTATUS IN ('IN', 'CM', 'XX', 'YY', 'FC') -- FACTURAS Y N/C, N/D 
+        WHERE O.OHSTATUS IN ('IN', 'CM') -- FACTURAS Y N/C, N/D 
             AND EXISTS (
                 SELECT 1
                 FROM TMP_COMPROBANTES_INPUT_{$this->userIdentifier} X
                 WHERE X.PLATAFORMA = 'BSCS' --AND SUBSTR(X.NRO_COMPROBANTE,5,10) = SUBSTR(O.OHREFNUM,1,10) 
-                    AND X.NRO_COMPROBANTE = 'SB01-' || SUBSTR(O.OHREFNUM, 1, 10)
+                    AND X.NRO_COMPROBANTE = (
+                        CASE
+                            WHEN O.OHENTDATE < TO_DATE('01/10/2020', 'DD/MM/YYYY') THEN 'T001'
+                            ELSE 'SB01'
+                        END || '-' || SUBSTR(O.OHREFNUM, 1, 10)
+                    )
                     AND X.FECEMI = O.OHREFDATE
             )
         UNION ALL

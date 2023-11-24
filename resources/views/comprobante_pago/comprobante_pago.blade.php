@@ -25,6 +25,11 @@
                         <input type="file" name="comprobantes_file" accept=".xlsx" required>
                     </div>
                 </div>
+                <div class="col-12">
+                    <div class="form-group">
+                        <a href="{{ $config['templateUrl'] }}" target="_blank">Descargar Plantilla</a>
+                    </div>
+                </div>
                 <div class="col-12" style="display: flex; align-items: end;">
                     <div class="form-group">
                         <button type="submit" class="btn btn-primary btn-sm btn_export">Descargar</button>

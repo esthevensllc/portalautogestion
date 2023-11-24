@@ -427,6 +427,7 @@ Route::group([
     Route::group(['prefix' => 'comprobante-pago', 'trac_name' => 'comprobante-pago'], function(){
         Route::get('/', [\AMovil\Reports\General\ComprobantePago\Controllers\ComprobantePagoController::class, 'view']);
         Route::post('export', [\AMovil\Reports\General\ComprobantePago\Controllers\ComprobantePagoController::class, 'export']);
+        Route::get('export-template', [\AMovil\Reports\General\ComprobantePago\Controllers\ComprobantePagoController::class, 'exportTemplate']);
     });
 
     Route::group(['prefix' => 'bloqueo-control-regulatorio', 'trac_name' => 'bloqueo-control-regulatorio'], function(){
