@@ -4,7 +4,9 @@ namespace AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services;
 
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Domain\ExtraccionRepository;
 use DateTime;
+use Exception;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
 class CargarReporte
 {
@@ -32,6 +34,7 @@ class CargarReporte
         if ($excel !== null) {
             $reader = IOFactory::createReader('Xlsx');
             $spreedsheet = $reader->load($excel->getPathname());
+            $this->validateExcel($spreedsheet);
             $sheet = $spreedsheet->getSheet(1);
             $highestRow = $sheet->getHighestRow();
             for ($i=2; $i <= $highestRow; $i++) {
@@ -51,10 +54,24 @@ class CargarReporte
                 $row["fecha_devolucion"] = $this->formatExcelDate($sheet->getCellByColumnAndRow(22, $i)->getValue());
                 $row["fecha_registro_devolucion"] = $this->formatExcelDate($sheet->getCellByColumnAndRow(23, $i)->getValue());
                 $row["observacion"] = $sheet->getCellByColumnAndRow(24, $i)->getValue();
+                $row["fecha_baja_facturacion"] = $this->formatExcelDate($sheet->getCellByColumnAndRow(25, $i)->getValue());
                 $values[] = $row;
             }
         }
         return $values;
+    }
+
+    private function validateExcel(Spreadsheet $spreedsheet)
+    {
+        $sheetCount = $spreedsheet->getSheetCount();
+        if($sheetCount !== 2){
+            throw new Exception("El número de hojas deven ser dos");
+        }
+        $sheet = $spreedsheet->getSheet(1);
+        $firstRowCount = $sheet->getHighestColumn(1);
+        if($firstRowCount !== "Y"){
+            throw new Exception("El número de columnas deven ser 25(columna 'Y' como máximo)");
+        }
     }
 
     private function formatExcelDate($strDate)

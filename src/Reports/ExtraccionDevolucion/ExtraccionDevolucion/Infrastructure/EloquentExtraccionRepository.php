@@ -1415,7 +1415,8 @@ class EloquentExtraccionRepository implements ExtraccionRepository
             factura_aplicada = NULL,
             fecha_devolucion = NULL,
             fecha_registro_devolucion = NULL,
-            observacion = NULL
+            observacion = NULL,
+            fecha_baja_facturacion = NULL
             WHERE TICKET= V_TICKET and DEPARTAMENTO = V_DEPARTAMENTO;
             COMMIT;
 
@@ -1441,6 +1442,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
                 "fecha_devolucion" => $row["fecha_devolucion"],
                 "fecha_registro_devolucion" => $row["fecha_registro_devolucion"],
                 "observacion" => $row["observacion"],
+                "fecha_baja_facturacion" => $row["fecha_baja_facturacion"],
             ]);
         }
         DB::connection("oracle_reptdm")
