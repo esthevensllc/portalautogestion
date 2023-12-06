@@ -424,6 +424,10 @@ Route::group([
         Route::get('search', [\AMovil\Reports\General\BloqueoImei\Controllers\ImeiCRDAutomaticoController::class, 'reportOnlineSearch']);
         Route::get('{id}/download', [\AMovil\Reports\General\BloqueoImei\Controllers\ImeiCRDAutomaticoController::class, 'downloadOnlineReport']);
     });
+    Route::group(['prefix' => 'tripleta', 'trac_name' => 'tripleta.find'], function(){
+        Route::get('/', [\AMovil\Reports\General\BloqueoImei\Controllers\TripletaController::class, 'view']);
+        Route::get('search', [\AMovil\Reports\General\BloqueoImei\Controllers\TripletaController::class, 'search']);
+    });
     Route::group(['prefix' => 'comprobante-pago', 'trac_name' => 'comprobante-pago'], function(){
         Route::get('/', [\AMovil\Reports\General\ComprobantePago\Controllers\ComprobantePagoController::class, 'view']);
         Route::post('export', [\AMovil\Reports\General\ComprobantePago\Controllers\ComprobantePagoController::class, 'export']);

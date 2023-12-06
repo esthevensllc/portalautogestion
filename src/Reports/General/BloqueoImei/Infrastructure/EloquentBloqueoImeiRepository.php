@@ -398,4 +398,17 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
         $data = DB::connection("ch-dn02")->select($sql);
         return $data;
     }
+
+    public function getTripletaByCriteria($filters)
+    {
+        $builder = DB::connection("oracle_eirdb")->table("EIRADD.Eat_Tripleta");
+        foreach($filters as $row){
+            if(is_array($row[1])){
+                $builder->whereIn($row[0], $row[1]);
+            }else{
+                $builder->where($row[0], $row[1]);
+            }
+        }
+        return $builder->get();
+    }
 }

@@ -141,6 +141,22 @@ return [
             ]
         ],
 
+        'oracle_eirdb' => [
+            'driver'        => 'oracle',
+            'tns'           => env('DB8_TNS', ''),
+            'host'          => env('DB8_HOST', ''),
+            'port'          => env('DB8_PORT', '1521'),
+            'database'      => env('DB8_DATABASE', ''),
+            'username'      => env('DB8_USERNAME', ''),
+            'password'      => env('DB8_PASSWORD', ''),
+            'service_name'  => env('DB8_SERVICE_NAME'),
+            'charset'       => env('DB8_CHARSET', 'AL32UTF8'),
+            'prefix'        => env('DB8_PREFIX', ''),
+            'prefix_schema' => env('DB8_SCHEMA_PREFIX', ''),
+            'server_version' => env('DB8_SERVER_VERSION','12c'),
+            'edition'       => env('DB8_EDITION', 'ora$base'),
+        ],
+
         'sqlite' => [
             'driver' => 'sqlite',
             'url' => env('DATABASE_URL'),

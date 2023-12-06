@@ -1,0 +1,41 @@
+<?php
+
+namespace AMovil\Reports\General\BloqueoImei\Controllers;
+
+use AMovil\Reports\General\BloqueoImei\Services\TripletaFinder;
+use Illuminate\Http\Request;
+
+class TripletaController
+{
+    private $tripletaFinder;
+
+    public function __construct(TripletaFinder $tripletaFinder)
+    {
+        $this->tripletaFinder = $tripletaFinder;
+    }
+
+    public function view()
+    {
+        $config = [
+            'title' => 'Búsqueda Tripleta',
+            'searchApi' => url('tripleta/search'),
+            "fields" => [
+                ["id" => "fecha_registro", "label" => "FECHA_REGISTRO"],
+                ["id" => "imsi", "label" => "IMSI", "isFilter" => true],
+                ["id" => "msisdn", "label" => "MSISDN", "isFilter" => true],
+                ["id" => "imei", "label" => "IMEI", "isFilter" => true],
+                ["id" => "last_update", "label" => "LAST_UPDATE"],
+            ],
+        ];
+        return view("imei_cdr.tripleta", compact("config"));
+    }
+
+    public function search(Request $request)
+    {
+        $filter = $request->get("filter");
+        $value = str_replace(" ", "", $request->get("value"));
+        $values = explode(",", $value);
+        $data = $this->tripletaFinder->getBy($filter, $values);
+        return response()->json(["data" => $data]);
+    }
+}
