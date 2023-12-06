@@ -92,7 +92,7 @@ $(function() {
     .addEventListener("change", function(e){
         let type = ".log";
         if(e.target.value === "1"){
-            type = ".xls";
+            type = ".xlsx";
         }
         console.log(type);
         document.querySelector("input[name=excel]").attributes["accept"].value = type;
