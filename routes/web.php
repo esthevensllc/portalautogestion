@@ -427,6 +427,7 @@ Route::group([
     Route::group(['prefix' => 'tripleta', 'trac_name' => 'tripleta.find'], function(){
         Route::get('/', [\AMovil\Reports\General\BloqueoImei\Controllers\TripletaController::class, 'view']);
         Route::get('search', [\AMovil\Reports\General\BloqueoImei\Controllers\TripletaController::class, 'search']);
+        Route::post('search-by-file', [\AMovil\Reports\General\BloqueoImei\Controllers\TripletaController::class, 'searchByFile']);
     });
     Route::group(['prefix' => 'comprobante-pago', 'trac_name' => 'comprobante-pago'], function(){
         Route::get('/', [\AMovil\Reports\General\ComprobantePago\Controllers\ComprobantePagoController::class, 'view']);

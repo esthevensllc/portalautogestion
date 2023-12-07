@@ -8,10 +8,10 @@
 <h4 style="">{{ $config["title"] }}</h4>
 <div class="card">
     <div class="card-body">
-        <form id="search_form">
-            @csrf
-            <div class="row">
-                <div class="col-md-6">
+        <div class="row">
+            <div class="col-md-6">
+                <form id="search_form">
+                    @csrf
                     <div class="input-group mb-3">
                         <input type="text" class="form-control" id="imeiText" placeholder="Ingresar valores (123,124)" aria-label="Búsqueda" aria-describedby="btnBuscar" name="value" required>
                         <div class="input-group-append">
@@ -25,9 +25,26 @@
                             <button class="btn btn-outline-danger" type="submit">Buscar</button>
                         </div>
                     </div>
-                </div>
+                </form>
             </div>
-        </form>
+            <div class="col-md-6">
+                <form id="search_form_file">
+                    <div class="input-group mb-3">
+                        <input type="file" name="value" style="flex: 1;" required>
+                        <div class="input-group-append">
+                            <select class="form-control" name="filter" required>
+                                @foreach ($config["fields"] as $field)
+                                    @if(isset($field["isFilter"]))
+                                        <option value="{{ $field['id'] }}">{{ $field["label"] }}</option>
+                                    @endif
+                                @endforeach
+                            </select>
+                            <button class="btn btn-outline-danger" type="submit">Buscar</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 <table
@@ -68,6 +85,37 @@ $(function() {
                 "Accept": "application/json",
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             }
+        })
+        .then(async(resp) => {
+            const isOk = resp.ok;
+            const json = await resp.json();
+
+            if(isOk){
+                let html = json.data.map(row => {
+                    let rowHtml = config.fields.map(f => `<td>${row[f.id]}</td>`).join("");
+                    return `<tr>${rowHtml}</tr>`;
+                }).join("");
+                $(".tbl-tripleta tbody").html(html);
+            }else{
+                alert(json.message);
+            }
+
+            loader_component.style.display = 'none';
+        });
+    });
+
+    $("#search_form_file").on("submit", function(e){
+        e.preventDefault();
+        const loader_component = document.querySelector('.loader_component');
+        const formData = new FormData(e.target);
+        loader_component.style.display = 'block';
+        utils.fetch(`${config.searchApiByFile}`, {
+            headers: {
+                "Accept": "application/json",
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            method: "POST",
+            body: formData
         })
         .then(async(resp) => {
             const isOk = resp.ok;

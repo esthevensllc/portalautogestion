@@ -3,6 +3,7 @@
 namespace AMovil\Reports\General\BloqueoImei\Controllers;
 
 use AMovil\Reports\General\BloqueoImei\Services\TripletaFinder;
+use AMovil\Shared\Application\FileInput;
 use Illuminate\Http\Request;
 
 class TripletaController
@@ -19,6 +20,7 @@ class TripletaController
         $config = [
             'title' => 'Búsqueda Tripleta',
             'searchApi' => url('tripleta/search'),
+            'searchApiByFile' => url('tripleta/search-by-file'),
             "fields" => [
                 ["id" => "fecha_registro", "label" => "FECHA_REGISTRO"],
                 ["id" => "imsi", "label" => "IMSI", "isFilter" => true],
@@ -37,5 +39,17 @@ class TripletaController
         $values = explode(",", $value);
         $data = $this->tripletaFinder->getBy($filter, $values);
         return response()->json(["data" => $data]);
+    }
+
+    public function searchByFile(Request $request)
+    {
+        $filter = $request->get("filter");
+        $fileValues = new FileInput(
+            $request->file("value")->getPathname(),
+            $request->file("value")->getClientOriginalName()
+        );
+        $response = $this->tripletaFinder->getByFile($filter, $fileValues);
+        $statusCode = $response->passes() ? 200 : 400;
+        return response()->json($response->toArray(), $statusCode);
     }
 }
