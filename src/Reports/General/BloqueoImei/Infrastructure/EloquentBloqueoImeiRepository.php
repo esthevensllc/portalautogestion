@@ -112,7 +112,7 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
         $sql = "SELECT
         x.served_imeisv2,x.served_msisdn,x.serving_node_address1,x.serving_node_plmn_identifier,
         y.name,x.record_opening_time,x.rattype,x.cause_for_rec_closing,
-        x.losd_datavolume_fbc_uplink,x.losd_datavolume_fbc_downlink
+        x.losd_datavolume_fbc_uplink,x.losd_datavolume_fbc_downlink,z.reg_time
         from
         (
             select toInt64(substr(toString(served_imeisv),1,14)) served_imeisv2,INET_NTOA(serving_node_address) as serving_node_address1 ,serving_node_plmn_identifier, served_msisdn,record_opening_time,rattype,access_point_name_ni,cause_for_rec_closing,losd_datavolume_fbc_uplink, losd_datavolume_fbc_downlink
@@ -125,7 +125,8 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
             losd_datavolume_fbc_downlink
         )  x
         join cdrdatos.access_points y on toString(x.access_point_name_ni)=toString(y.id)  
-        group by 1,2,3,4,5,6,7,8,9,10";
+        join eir.subscriber_eir_1day z on substring(toString(z.imei), 1, 14) = toString(x.served_imeisv2)
+        group by 1,2,3,4,5,6,7,8,9,10,11";
 
         $data = DB::connection("ch-dn02")->select($sql);
         return $data;

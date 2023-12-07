@@ -19,6 +19,7 @@ interface BloqueoImeiRepository
     public function deleteBaseImeiAutomatico($imeis);
     public function saveAutomaticReportLog($id, $username, $filename, $nRegistros);
     public function saveAutomaticReport($id, $filename, $nRegistros, $sizeBytes, DateTime $fecha);
+    public function saveAutomaticReportOnline($id, $filename, $nRegistros, $sizeBytes, DateTime $fecha);
     public function getAutomaticReportByCriteria($filters);
     public function getAutomaticOnlineReportByCriteria($filters);
     public function saveConfig(bool $generateReport);

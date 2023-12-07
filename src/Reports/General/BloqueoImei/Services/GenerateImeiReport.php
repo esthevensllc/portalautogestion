@@ -125,6 +125,7 @@ class GenerateImeiReport
             "cause_for_rec_closing" => ['label' => 'cause_for_rec_closing'],
             "losd_datavolume_fbc_uplink" => ['label' => 'losd_datavolume_fbc_uplink'],
             "losd_datavolume_fbc_downlink" => ['label' => 'losd_datavolume_fbc_downlink'],
+            "reg_time" => ['label' => 'fecha_bloqueo'],
         ];
 
         $this->exportService->loadData($headers, $data, [
