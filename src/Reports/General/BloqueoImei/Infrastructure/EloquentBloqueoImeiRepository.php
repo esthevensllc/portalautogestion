@@ -110,9 +110,17 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
         $strFecha = $fechaIni->format("Ymd");
 
         $sql = "SELECT
-        x.served_imeisv2,x.served_msisdn,x.serving_node_address1,x.serving_node_plmn_identifier,
-        y.name,x.record_opening_time,x.rattype,x.cause_for_rec_closing,
-        x.losd_datavolume_fbc_uplink,x.losd_datavolume_fbc_downlink,z.reg_time
+        x.served_imeisv2 as served_imeisv2,
+        x.served_msisdn as served_msisdn,
+        x.serving_node_address1 as serving_node_address1,
+        x.serving_node_plmn_identifier as serving_node_plmn_identifier,
+        y.name as name,
+        x.record_opening_time as record_opening_time,
+        x.rattype as rattype,
+        x.cause_for_rec_closing as cause_for_rec_closing,
+        x.losd_datavolume_fbc_uplink as losd_datavolume_fbc_uplink,
+        x.losd_datavolume_fbc_downlink as losd_datavolume_fbc_downlink,
+        z.reg_time as reg_time
         from
         (
             select toInt64(substr(toString(served_imeisv),1,14)) served_imeisv2,INET_NTOA(serving_node_address) as serving_node_address1 ,serving_node_plmn_identifier, served_msisdn,record_opening_time,rattype,access_point_name_ni,cause_for_rec_closing,losd_datavolume_fbc_uplink, losd_datavolume_fbc_downlink
