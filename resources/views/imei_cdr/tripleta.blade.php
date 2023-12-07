@@ -30,7 +30,7 @@
             <div class="col-md-6">
                 <form id="search_form_file">
                     <div class="input-group mb-3">
-                        <input type="file" name="value" style="flex: 1;" required>
+                        <input type="file" name="value" style="flex: 1;" accept=".xlsx,.xls,.csv,.txt" required>
                         <div class="input-group-append">
                             <select class="form-control" name="filter" required>
                                 @foreach ($config["fields"] as $field)

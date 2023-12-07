@@ -24,8 +24,8 @@ class TripletaFinder
     public function getByFile(string $field, FileInput $value): Response
     {
         $errors = [];
-        if($value->getExtension() !== "xlsx"){
-            $errors["message"] = "El formato del archivo deve ser un xlsx";
+        if(!in_array($value->getExtension(), ["xlsx", "csv", "xls", "txt"])){
+            $errors["message"] = "El formato del archivo deve ser un xlsx,xls,txt o csv";
         }
         if(count($errors) === 0){
             $values = $this->getDataFromFile($value);
@@ -39,7 +39,11 @@ class TripletaFinder
     {
         $values = [];
         if ($file !== null) {
-            $reader = IOFactory::createReader('Xlsx');
+            $readerType = ucwords($file->getExtension());
+            if($readerType === "Txt"){
+                $readerType = "Csv";
+            }
+            $reader = IOFactory::createReader($readerType);
             $spreedsheet = $reader->load($file->getFilePath());
             $sheet = $spreedsheet->getSheet(0);
             $highestRow = $sheet->getHighestRow();

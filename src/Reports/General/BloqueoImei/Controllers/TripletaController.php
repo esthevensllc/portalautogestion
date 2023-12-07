@@ -50,6 +50,9 @@ class TripletaController
         );
         $response = $this->tripletaFinder->getByFile($filter, $fileValues);
         $statusCode = $response->passes() ? 200 : 400;
-        return response()->json($response->toArray(), $statusCode);
+        if($statusCode === 200){
+            return response()->json($response->toArray(), $statusCode);
+        }
+        return response()->json($response->errors(), $statusCode);
     }
 }
