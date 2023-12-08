@@ -34,8 +34,10 @@ class GenerateImeiReport
         $dtFechaIni = DateTime::createFromFormat("d/m/Y H:i:s", $fechaIni);
         $dtFechaFin = DateTime::createFromFormat("d/m/Y H:i:s", $fechaFin);
 
-        if($dtFechaIni->format("Ymd") !== $dtFechaFin->format("Ymd")){
-            throw new Exception("No se puede consultar un rango de fechas con dias diferentes");
+        $diffMinutes = ($dtFechaFin->getTimestamp() - $dtFechaIni->getTimestamp())/60;
+
+        if(1440 < $diffMinutes){
+            throw new Exception("No se puede consultar mas de 24 horas");
         }
 
         $config = $this->repo->getConfig();
@@ -100,8 +102,10 @@ class GenerateImeiReport
         $dtFechaIni = DateTime::createFromFormat("d/m/Y H:i:s", $fechaIni);
         $dtFechaFin = DateTime::createFromFormat("d/m/Y H:i:s", $fechaFin);
 
-        if($dtFechaIni->format("Ymd") !== $dtFechaFin->format("Ymd")){
-            throw new Exception("No se puede consultar un rango de fechas con dias diferentes");
+        $diffMinutes = ($dtFechaFin->getTimestamp() - $dtFechaIni->getTimestamp())/60;
+
+        if(1440 < $diffMinutes){
+            throw new Exception("No se puede consultar mas de 24 horas");
         }
 
         $config = $this->repo->getConfig();
