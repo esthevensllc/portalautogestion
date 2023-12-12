@@ -26,7 +26,7 @@ interface BloqueoImeiRepository
     public function getConfig();
 
     public function getControlEirImeiByCriteria($filters);
-    public function saveSearchEirImeiLog($username, $imei, $statusid, $status, $actionid, $reasoncode, $imsi, $time_stamp2, $reg_time);
+    public function saveSearchEirImeiLog($username, $fecha, $imei, $status, $code, $ejecucion);
     public function getReporteArray($id, $tipoBusquedaId, $imeis, DateTime $fechaIni, DateTime $fechaFin);
     public function getTripletaByCriteria($filters);
 }

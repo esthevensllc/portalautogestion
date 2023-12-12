@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 
 class ControlEirImeiController
 {
+    private $getReportLog;
+    
     public function __construct(ControlEirImeiService $getReportLog)
     {
         $this->getReportLog = $getReportLog;

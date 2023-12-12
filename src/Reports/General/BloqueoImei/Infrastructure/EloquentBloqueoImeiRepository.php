@@ -315,7 +315,7 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
 
     public function getControlEirImeiByCriteria($filters)
     {
-        $builder = DB::connection("ch-dn02")->table("eir.subscriber_eir_1day");
+        $builder = DB::connection("ch-dn02")->table("eir.table_eir_control_log_v2");
         foreach($filters as $row){
             if($row[0] === 'imei'){
                 $builder->where($row[0], 'LIKE', $row[1] . '%');
@@ -323,24 +323,28 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
                 $builder->where($row[0], $row[1]);
             }
         }
-        return $builder->get();
+        return $builder->select("fecha", "imei", "status", "code", "ejecucion")
+        ->groupBy("fecha", "imei", "status", "code", "ejecucion")
+        ->get();
     }
 
-    public function saveSearchEirImeiLog($username, $imei, $statusid, $status, $actionid, $reasoncode, $imsi, $time_stamp2, $reg_time)
+    public function saveSearchEirImeiLog($username, $fecha, $imei, $status, $code, $ejecucion)
     {
         $now = new DateTime();
+        $strFecha = null;
+        if($fecha !== null){
+            $strFecha = DAteTime::createFromFormat("Y-m-d H:i:s.v", $fecha)->format("Y-m-d H:i:s");
+        }
         DB::connection("oracle")
-        ->table("control_busqueda_imei_eir_dinamic")
+        ->table("control_busqueda_imei_eir_log")
         ->insert([
+            "result_time" => $now,
             "usuario" => $username,
+            "fecha" => $strFecha,
             "imei" => $imei,
-            "statusid" => $statusid,
             "status" => $status,
-            "actionid" => $actionid,
-            "reasoncode" => $reasoncode,
-            "imsi" => $imsi,
-            "time_stamp2" => $time_stamp2,
-            "reg_time" => $reg_time
+            "code" => $code,
+            "ejecucion" => $ejecucion
         ]);
     }
 
@@ -410,7 +414,7 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
 
     public function getTripletaByCriteria($filters)
     {
-        $builder = DB::connection("oracle_eirdb")->table("EIRADD.Eat_Tripleta");
+        $builder = DB::connection("oracle_eirdb")->table("EIRADD.eat_historica");
         foreach($filters as $row){
             if(is_array($row[1])){
                 $builder->whereIn($row[0], $row[1]);

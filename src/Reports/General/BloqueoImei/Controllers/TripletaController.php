@@ -26,7 +26,7 @@ class TripletaController
                 ["id" => "imsi", "label" => "IMSI", "isFilter" => true],
                 ["id" => "msisdn", "label" => "MSISDN", "isFilter" => true],
                 ["id" => "imei", "label" => "IMEI", "isFilter" => true],
-                ["id" => "last_update", "label" => "LAST_UPDATE"],
+                // ["id" => "last_update", "label" => "LAST_UPDATE"],
             ],
         ];
         return view("imei_cdr.tripleta", compact("config"));

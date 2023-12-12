@@ -38,14 +38,11 @@
 >
     <thead class="bg-danger">
         <tr>
+            <th>Fecha</th>
             <th>Imei</th>
-            <th>Statusid</th>
             <th>Status</th>
-            <th>Actionid</th>
-            <th>Reasoncode</th>
-            <th>Imsi</th>
-            <th>Time_stamp2</th>
-            <th>Fecha Registro</th>
+            <th>Code</th>
+            <th>Ejecución</th>
         </tr>
     </thead>
     <tbody>
@@ -97,18 +94,15 @@ $(function() {
                     }
                 },
                 columns: [
+                    {data: 'fecha'},
                     {data: 'imei'},
-                    {data: 'statusid'},
                     {data: 'status'},
-                    {data: 'actionid'},
-                    {data: 'reasoncode'},
-                    {data: 'imsi'},
-                    {data: 'time_stamp2'},
-                    {data: 'reg_time'}
+                    {data: 'code'},
+                    {data: 'ejecucion'}
                 ],
                 lengthChange: false,
                 searching: false,
-                order: [[7, 'desc']],
+                order: [[0, 'desc']],
                 scrollX: true
                 //serverSide: true
             });

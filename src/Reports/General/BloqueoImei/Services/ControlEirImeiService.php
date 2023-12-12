@@ -27,9 +27,9 @@ class ControlEirImeiService
 
         if(count($response->data()) > 0){
             $data = $response->data()[0];
-            $log = $this->repo->saveSearchEirImeiLog($username, $data['imei'], $data['statusid'], $data['status'], $data['actionid'], $data['reasoncode'], $data['imsi'], $data['time_stamp2'], $data['reg_time']);
+            $log = $this->repo->saveSearchEirImeiLog($username, $data['fecha'], $data['imei'], $data['status'], $data['code'], $data['ejecucion']);
         }else{
-            $log = $this->repo->saveSearchEirImeiLog($username, $imei, "", "", "", "", "", "", "");
+            $log = $this->repo->saveSearchEirImeiLog($username, "", $imei, "", "", "");
         }
 
         return $response;
