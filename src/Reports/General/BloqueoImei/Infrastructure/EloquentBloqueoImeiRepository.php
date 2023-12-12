@@ -332,8 +332,8 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
     {
         $now = new DateTime();
         $strFecha = null;
-        if($fecha !== null){
-            $strFecha = DAteTime::createFromFormat("Y-m-d H:i:s.v", $fecha)->format("Y-m-d H:i:s");
+        if($fecha !== null && $fecha !== ""){
+            $strFecha = DateTime::createFromFormat("Y-m-d H:i:s.v", $fecha)->format("Y-m-d H:i:s");
         }
         DB::connection("oracle")
         ->table("control_busqueda_imei_eir_log")
