@@ -17,7 +17,7 @@ class ControlEirImeiController
     public function view()
     {
         $config = [
-            'title' => 'Control EIR IMEI Bloqueados',
+            'title' => 'Control EIR IMEI Logs',
             'url' => url('control-eir-imei')
         ];
         return view("bloqueo_imei.control_eir_imei", compact("config"));
