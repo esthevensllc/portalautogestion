@@ -16,9 +16,9 @@ class EloquentMODEVRepository implements MODEVRepository
             aa.MSISDN,
             'Comunicaciones Personales(PCS)' SERVICIO_AFECTADO,
             aa.MODO_CONTRATACION,
-        aa.CARGO_LINEA_IGV monto_plan,
+        ROUND(aa.CARGO_LINEA_IGV,2) monto_plan,
             bb.diferencia tiempo_averia,
-            aa.MONTO_DEVOLVER_IGV,
+            aa.MTO_DEV_FACTURACION MONTO_DEVOLVER_IGV,
             'SOLES' unidad,
             case when aa.MSISDN_DEVOLVER is not null then aa.FECHA_DEVOLUCION 
                 when aa.MSISDN_DEVOLVER is null then NULL END fecha_dev_fecha_comun,
@@ -48,7 +48,7 @@ class EloquentMODEVRepository implements MODEVRepository
             FROM usraes.base_prev_basedev_input where ticket=:p1 and departamento= :p2  
             ) bb 
         on aa.ticket=bb.ticket and aa.FECHA_CORTE=bb.corte_fecha_ini
-        where aa.ticket= :p3 and departamento= :p4"), [
+        where (aa.MODALIDAD_DEV LIKE '%POSTPAGO%' or aa.MODALIDAD_DEV LIKE '%PREPAGO%') and aa.ticket= :p3 and departamento= :p4"), [
             "p1" => $ticket, "p2" => $departamento,
             "p3" => $ticket, "p4" => $departamento
         ]);
