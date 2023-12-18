@@ -71,7 +71,7 @@ class EloquentOltCmtsRepository implements OltCmtsRepository
             $error_message = $http_response->body();
             throw new Exception(json_encode($error_message));
         }
-        return DB::connection("oracle")->select("select * from usraes.olt_mac_final");
+        return DB::connection("oracle")->select("select * from usraes.olt_mac_final_{$this->userIdentifier}");
     }
 
     public function getOltListSummary()
