@@ -47,7 +47,8 @@
         </div>
     </div>
 </div>
-<table
+<button class="btn btn-danger" onclick="exportarExcel()">Descargar</button>
+<table id="principal"
     class="bg-white table table-striped table-hover nowrap rounded shadow-xs border-xs mt-2 w-100 tbl-tripleta table-sm" cellspacing="0"
     {{-- data-responsive-table="{{ (int) $crud->getOperationSetting('responsiveTable') }}"
     data-has-details-row="{{ (int) $crud->getOperationSetting('detailsRow') }}"
@@ -69,6 +70,7 @@
 @section('after_scripts')
 @include('includes.datatables_js')
 @include('includes.utils_js')
+<script src="{{ asset('js/xlsx.full.min.js')}}"></script>
 <script>
 $(function() {
     const config = @json($config);
@@ -135,5 +137,29 @@ $(function() {
         });
     });
 });
+
+function exportarExcel() {  
+    // Obtener la fecha y hora actual
+    var fechaHoraActual = new Date();
+
+    // Obtener componentes de la fecha y hora
+    var año = fechaHoraActual.getFullYear();
+    var mes = ('0' + (fechaHoraActual.getMonth() + 1)).slice(-2);
+    var dia = ('0' + fechaHoraActual.getDate()).slice(-2);
+    var horas = ('0' + fechaHoraActual.getHours()).slice(-2);
+    var minutos = ('0' + fechaHoraActual.getMinutes()).slice(-2);
+    var segundos = ('0' + fechaHoraActual.getSeconds()).slice(-2);
+
+    // Crear la cadena en el formato deseado
+    var formatoDeseado = año + mes + dia + horas + minutos + segundos;
+
+    // Imprimir la hora actual en la consola (puedes omitir esta línea)
+    console.log('Hora Actual:', formatoDeseado);
+
+    /* Create worksheet from HTML DOM TABLE */
+    var wb = XLSX.utils.table_to_book(document.getElementById("principal"));
+    /* Export to file (start a download) */
+    XLSX.writeFile(wb, "Descarga_Tripleta"+formatoDeseado+".xlsx");
+}
 </script>
 @endsection

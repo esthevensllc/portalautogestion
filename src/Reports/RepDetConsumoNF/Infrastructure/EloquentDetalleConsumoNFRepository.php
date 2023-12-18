@@ -204,7 +204,7 @@ class EloquentDetalleConsumoNFRepository implements DetalleConsumoNFRepository
                     --       por ello no se debe incluir aqui
                     AND A.TIM_NUMBER IN (SELECT SUBSCRIPTION_ACCESS_NUMBER FROM USRAES.REPORTE_LINEAS_TEMP_{$this->userIdentifier} GROUP BY SUBSCRIPTION_ACCESS_NUMBER)
                 UNION ALL
-                SELECT T.ANI NRO_TEL_ORIGEN, TRUNC(T.FECHAINICIO) DIA,
+                SELECT 51||T.ANI NRO_TEL_ORIGEN, TRUNC(T.FECHAINICIO) DIA,
                 TO_CHAR(T.FECHAINICIO, 'HH24:MI:SS') HORA_INICIO, TO_CHAR(T.FECHAFIN, 'HH24:MI:SS') HORA_FIN,
                 T.DNI NRO_TEL_DESTINO,
                 TO_CHAR(TRUNC(T.DURACION/3600),'FM00')||':'||TO_CHAR(TRUNC(MOD(T.DURACION,3600)/60),'FM00')
