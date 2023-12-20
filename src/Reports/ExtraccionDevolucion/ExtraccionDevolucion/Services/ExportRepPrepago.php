@@ -63,7 +63,7 @@ class ExportRepPrepago
             fwrite($fp, $content);
             fclose($fp);
 
-            $departamento = str_replace(" ", "_", $departamento);
+            $departamento = str_replace(" ", "", $departamento);
 
             $this->reportLog($tempFilename, $dtStart, new DateTime(), [
                 "filename" => "Base_Devolucion_Prepago_TK{$ticketOsiptel}_{$departamento}.tsv"
