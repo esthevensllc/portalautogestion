@@ -40,7 +40,7 @@ class RecordsValidator
             }
             if(count($invalid_periods) > 0){
                 $str_periodos = implode(",", $invalid_periods);
-                $errors['message'] = "No hay registros para el cliente {$cliente} en los periodos {$str_periodos} en la tabla TEMP_TAG_11 de la DBTODB. Por favor comunicarse con el área de Factory Soporte Facturación - factsopfacturacion@claro.com.pe";
+                $errors['message'] = "No hay registros para el cliente {$cliente} en los periodos {$str_periodos} en la tabla TEMP_TAG_11 de la DBTODB. Por favor comunicarse con el área de Factory Soporte Facturación - factsopfacturacion@claro.com.pe - COLOCAR EN EL ASUSTO LA PALABRA CLAVE \"TEMP_TAG_11 \"";
             }else{
                 $invalid_periods = [];
                 foreach($periodos as $p){
@@ -50,7 +50,7 @@ class RecordsValidator
                 }
                 if(count($invalid_periods) > 0){
                     $str_periodos = implode(",", $invalid_periods);
-                    $errors['message'] = "La factura para el numero de cuenta {$cliente} en los periodos {$str_periodos} no cuenta con registros en las siguientes tablas TEMP_TAG_1480, TEMP_TAG_1460 y TEMP_TAG_1470. Por favor comunicarse con el área de Factory Soporte Facturación - factsopfacturacion@claro.com.pe";
+                    $errors['message'] = "La factura para el numero de cuenta {$cliente} en los periodos {$str_periodos} no cuenta con registros en las siguientes tablas TEMP_TAG_1480, TEMP_TAG_1460 y TEMP_TAG_1470. Por favor comunicarse con el área de Factory Soporte Facturación - factsopfacturacion@claro.com.pe - COLOCAR EN EL ASUSTO LA PALABRA CLAVE \"TEMP_TAG_1480,TEMP_TAG_1460,TEMP_TAG_1470\"";
                 }
             }
         }
