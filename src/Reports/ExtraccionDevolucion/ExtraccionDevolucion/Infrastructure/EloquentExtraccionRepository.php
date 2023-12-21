@@ -1364,7 +1364,12 @@ class EloquentExtraccionRepository implements ExtraccionRepository
         return DB::connection("oracle_reptdm")
         ->select(DB::raw("select TICKET,
         ID_CLIENTE,
-        NRO_DOCUMENTO,
+        CASE
+        WHEN LENGTH(NRO_DOCUMENTO) < 8 AND regexp_replace(NRO_DOCUMENTO, '[0-9]*') IS NOT NULL THEN LPAD(NRO_DOCUMENTO, 12, '0')
+        WHEN LENGTH(NRO_DOCUMENTO) < 8 THEN LPAD(NRO_DOCUMENTO, 8, '0')
+        WHEN 8 < LENGTH(NRO_DOCUMENTO) AND LENGTH(NRO_DOCUMENTO) < 11 THEN LPAD(NRO_DOCUMENTO, 12, '0')
+        ELSE NRO_DOCUMENTO
+        END NRO_DOCUMENTO,
         CUSTOMER_FULL_NAME NOMBRES_APELLIDOS,
         'Comunicaciones Personales(PCS)' SERVICIO_AFECTADO,
         MSISDN,
