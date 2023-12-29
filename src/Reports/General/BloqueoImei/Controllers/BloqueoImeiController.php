@@ -59,19 +59,20 @@ class BloqueoImeiController
         //$dates = explode(" - ", $date_range);
         if($tipoBusquedaId == '1'){
             $param1 = $request->input("text_imei");
-            if($param1 != ""){
+            if($param1 === null){
                 $file = $request->file("base_imei");
             }else{
-                $file = "";
+                $file = null;
             }
         }else{
             $param1 = $request->input("text_msisdn");
-            if($param1 != ""){
+            if($param1 === null){
                 $file = $request->file("base_imei");
             }else{
-                $file = "";
+                $file = null;
             }
         }
+        // dd($param1);
 
         $fecha_ini = $request->input("f_ini").' '.$request->input("corte_fecha1_time");
         $fecha_fin = $request->input("f_fin").' '.$request->input("corte_fecha2_time");

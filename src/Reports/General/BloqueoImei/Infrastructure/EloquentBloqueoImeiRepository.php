@@ -26,7 +26,7 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
                 ->insert([
                     "id_report" => $id,
                     "filename" => $filename,
-                    "imei" => $imei
+                    "imei" => substr($imei, 0, 14)
                 ]);
             }
         }else if(TipoBusqueda::idIsMsisdn($tipoBusquedaId)){

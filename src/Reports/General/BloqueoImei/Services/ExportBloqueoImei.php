@@ -34,7 +34,7 @@ class ExportBloqueoImei
             throw new Exception("No se puede consultar un rango de fechas con dias diferentes");
         }
 
-        if($file != ""){
+        if($file !== null){
             $filename = $file->getClientOriginalName();
 
             if(!$this->validateFilename($filename)){
