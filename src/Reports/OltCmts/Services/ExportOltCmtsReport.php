@@ -90,6 +90,7 @@ class ExportOltCmtsReport
             "agreement_start_date" => ['label' => 'AGREEMENT_START_DATE'],
             "agreement_end_date" => ['label' => 'AGREEMENT_END_DATE'],
             "installation_map" => ['label' => 'INSTALLATION_MAP'],
+            "numero" => ['label' => 'NUMERO'],
         ];
 
         $this->exportService->loadData($headers, $data, [
