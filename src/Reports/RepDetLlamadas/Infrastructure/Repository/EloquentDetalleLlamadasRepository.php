@@ -500,9 +500,9 @@ class EloquentDetalleLlamadasRepository implements DetalleLlamadasRepository
             NVL(NUMBER_B,DIALLED_DIGITS) NUMEROB,
             DECODE(SIGN(TRUNC(CALL_DURATION/60)-10),-1,'0'||TRUNC(CALL_DURATION/60),TRUNC(CALL_DURATION/60))||':'||
             DECODE(SIGN(MOD(CALL_DURATION,60)-10),-1,'0'||MOD(CALL_DURATION,60),MOD(CALL_DURATION,60)) CONSUMO,
-            DECODE(RECORD_TYPE,'12','Llamada Saliente'/*SALIENTE VOLTE*/,'04','LLamada Saliente','14','Llamada Entrante',
+            DECODE(RECORD_TYPE,'02','Llamada Entrante','12','Llamada Saliente'/*SALIENTE VOLTE*/,'04','LLamada Entrante','14','Llamada Entrante',
             '30','Llamada Entrante','31','Llamada Saliente','11','Llamada Entrante',/*ENTRANTE VOLTE,*/
-            '08','Mensaje Saliente','13','Llamada Saliente','01','Llamada Saliente',
+            '08','Mensaje Saliente','13','Llamada Saliente','01','Llamada Saliente','03','Llamada Saliente',
             '09','Mensaje Entrante') TIPO--,RECORD_TYPE
             FROM {$schema}.CDR_DWH
             WHERE TIM_NUMBER IN (select * from usraes.LINEAS_TMP1_{$this->userIdentifier})
@@ -607,15 +607,15 @@ class EloquentDetalleLlamadasRepository implements DetalleLlamadasRepository
         $records_type = [];
         switch ($tipo_reporte) {
             case TipoReporte::ENTRANTES:
-                $records_type = ['09','11','14', '30'];
+                $records_type = ['02','09','04','14', '30','11'];
                 //$records_type = ['02','09'];
                 break;
             case TipoReporte::SALIENTES:
-                $records_type = ['01','08','04','12','13'];
+                $records_type = ['01','08','12','13','03','31'];
                 //$records_type = ['01','08'];
                 break;
             case TipoReporte::ENTRANTES_SALIENTES:
-                $records_type = ['01','08','04','09', '12', '14', '30', '11', '13'];
+                $records_type = ['02','09','04','14','12','30','31','01','08','11','13','03'];
                 //$records_type = ['01','02','08','09'];
                 break;
             default:
