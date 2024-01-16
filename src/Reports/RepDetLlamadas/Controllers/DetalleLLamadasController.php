@@ -58,6 +58,9 @@ class DetalleLLamadasController
             $request->input('cod_cliente'),
             $request->input('numeros_primarios')
         );
+        if(is_array($export)){
+            return response()->json($export);
+        }
         return response($export, 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition' => 'attachment;filename="reporte.xlsx"'
@@ -80,6 +83,9 @@ class DetalleLLamadasController
             $request->input('cod_cliente'),
             $request->input('numeros_primarios')
         );
+        if(is_array($export)){
+            return response()->json($export);
+        }
         return response($export, 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition' => 'attachment;filename="reporte.xlsx"'
@@ -102,6 +108,9 @@ class DetalleLLamadasController
             $request->input('cod_cliente'),
             $request->input('numeros_primarios')
         );
+        if(is_array($export)){
+            return response()->json($export);
+        }
         return response($export, 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition' => 'attachment;filename="reporte.xlsx"'

@@ -132,6 +132,14 @@ $(function() {
             }
             return response;
         })
+        .then(async(response) => {
+            const _content_type = response.headers.get('Content-Type')??"";
+            if(_content_type.includes("application/json")){
+                const json = await response.json();
+                throw new Error(json.message);
+            }
+            return response;
+        })
         .then(response => response.blob())
         .then(response => {
             console.log(response);

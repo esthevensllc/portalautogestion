@@ -4,9 +4,11 @@ namespace AMovil\Reports\RepDetLlamadas\Infrastructure\Repository;
 
 use AMovil\Auth\AccessControl\Domain\AuthService;
 use AMovil\Reports\RepDetLlamadas\Domain\DetalleLlamadasRepository;
+use AMovil\Reports\RepDetLlamadas\Domain\ReporteDetalleLlamada;
 use AMovil\Reports\RepDetLlamadas\Domain\TipoReporte;
 use DateTime;
 use DB;
+use Ramsey\Uuid\Uuid;
 
 class EloquentDetalleLlamadasRepository implements DetalleLlamadasRepository
 {
@@ -15,6 +17,7 @@ class EloquentDetalleLlamadasRepository implements DetalleLlamadasRepository
     private $userIdentifier;
     private $reporte_by;
     private $is_primarios = false;
+    private $limit = ReporteDetalleLlamada::LIMIT;
 
     public function __construct(AuthService $authService)
     {
@@ -31,7 +34,7 @@ class EloquentDetalleLlamadasRepository implements DetalleLlamadasRepository
         $this->userIdentifier = $this->authService->getUserIdentifier();
     }
 
-    public function getReporteByPeriodo_CodCliente_tipo(DateTime $periodo1, DateTime $periodo2, array $cod_cliente, string $tipo_reporte)
+    public function getReporteByPeriodo_CodCliente_tipo(DateTime $periodo1, DateTime $periodo2, array $cod_cliente, string $tipo_reporte): ReporteDetalleLlamada
     {
         $this->setConnection($periodo2);
 
@@ -49,7 +52,7 @@ class EloquentDetalleLlamadasRepository implements DetalleLlamadasRepository
 
         $this->generateReporte($periodo1, $periodo2, $tipo_reporte);
         //return $this->reporteBuilder()->get()->toArray();
-        return $this->reporteBuilder();
+        return $this->getReporteLlamadas();
 
         /*return $this->reporteBuilder()
         ->where('charging_start_time', '>=', $str_periodo_1)
@@ -62,7 +65,33 @@ class EloquentDetalleLlamadasRepository implements DetalleLlamadasRepository
         ->toArray();*/
     }
 
-    public function getReporteByPeriodo_NumDocumento_tipo(DateTime $periodo1, DateTime $periodo2, array $num_documento, string $tipo_reporte)
+    private function getReporteLlamadas(): ReporteDetalleLlamada {
+        $offset = 0;
+        $chunks = [];
+        $dataCount = 1;
+        while ($dataCount > 0) {
+            $data = $this->reporteBuilder($this->limit, $offset);
+            $offset += $this->limit;
+            $dataCount = count($data);
+            $filepath = $this->getTempfilename();
+            $f = fopen($filepath, "w");
+            fwrite($f, json_encode($data));
+            fclose($f);
+            if($dataCount > 0){
+                $chunks[] = [
+                    "file" => $filepath
+                ];
+            }
+        }
+        return new ReporteDetalleLlamada($chunks);
+    }
+
+    private function getTempfilename(){
+        $filename = sys_get_temp_dir() ."/phpexport-". Uuid::uuid4()->toString().".json";
+        return $filename;
+    }
+
+    public function getReporteByPeriodo_NumDocumento_tipo(DateTime $periodo1, DateTime $periodo2, array $num_documento, string $tipo_reporte): ReporteDetalleLlamada
     {
         $this->setConnection($periodo2);
 
@@ -75,7 +104,7 @@ class EloquentDetalleLlamadasRepository implements DetalleLlamadasRepository
 
         $this->generateReporte($periodo1, $periodo2, $tipo_reporte);
         //return $this->reporteBuilder()->get()->toArray();
-        return $this->reporteBuilder();
+        return $this->getReporteLlamadas();
 
         /*return $this->reporteBuilder()
         ->where('charging_start_time', '>=', $str_periodo_1)
@@ -88,7 +117,7 @@ class EloquentDetalleLlamadasRepository implements DetalleLlamadasRepository
         ->toArray();*/
     }
 
-    public function getReporteByPeriodo_NumCuenta_tipo(DateTime $periodo1, DateTime $periodo2, array $num_cuenta, string $tipo_reporte)
+    public function getReporteByPeriodo_NumCuenta_tipo(DateTime $periodo1, DateTime $periodo2, array $num_cuenta, string $tipo_reporte): ReporteDetalleLlamada
     {
         $this->setConnection($periodo2);
 
@@ -101,7 +130,8 @@ class EloquentDetalleLlamadasRepository implements DetalleLlamadasRepository
 
         $this->generateReporte($periodo1, $periodo2, $tipo_reporte);
         //return $this->reporteBuilder()->get()->toArray();
-        return $this->reporteBuilder();
+        // return $this->reporteBuilder();
+        return $this->getReporteLlamadas();
 
         /*return $this->reporteBuilder()
         ->where('charging_start_time', '>=', $str_periodo_1)
@@ -114,7 +144,7 @@ class EloquentDetalleLlamadasRepository implements DetalleLlamadasRepository
         ->toArray();*/
     }
 
-    public function getReporteByPeriodo_Lineas_tipo(DateTime $periodo1, DateTime $periodo2, array $lineas, string $tipo_reporte, $is_primarios = false)
+    public function getReporteByPeriodo_Lineas_tipo(DateTime $periodo1, DateTime $periodo2, array $lineas, string $tipo_reporte, $is_primarios = false): ReporteDetalleLlamada
     {
         $this->setConnection($periodo2);
 
@@ -128,7 +158,8 @@ class EloquentDetalleLlamadasRepository implements DetalleLlamadasRepository
 
         $this->generateReporte($periodo1, $periodo2, $tipo_reporte);
         //return $this->reporteBuilder()->get()->toArray();
-        return $this->reporteBuilder();
+        // return $this->reporteBuilder();
+        return $this->getReporteLlamadas();
 
         /*return $this->reporteBuilder()
         ->where('charging_start_time', '>=', $str_periodo_1)
@@ -139,6 +170,26 @@ class EloquentDetalleLlamadasRepository implements DetalleLlamadasRepository
         ->orderBy('charging_start_time')
         ->get()
         ->toArray();*/
+    }
+
+    public function saveLogReporteTemp(string $filename, DateTime $createAt, int $size_bytes)
+    {
+        DB::table("USRAES.REP_LLAMADAS_ARCHIVO")->where("filename", $filename)->delete();
+        DB::table("USRAES.REP_LLAMADAS_ARCHIVO")->insert([
+            "filename" => $filename,
+            "created_at" => $createAt->format("Y-m-d H:i:s"),
+            "size_bytes" => $size_bytes,
+        ]);
+    }
+
+    public function getLogReporteTemp()
+    {
+        return DB::table("USRAES.REP_LLAMADAS_ARCHIVO")->get();
+    }
+
+    public function deleteLogReporteTemp()
+    {
+        return DB::table("USRAES.REP_LLAMADAS_ARCHIVO")->delete();
     }
 
     private function generateLineasTableBy(DateTime $fecha2, string $field, array $values)
@@ -235,7 +286,7 @@ class EloquentDetalleLlamadasRepository implements DetalleLlamadasRepository
         }
     }
 
-    private function reporteBuilder(){
+    private function reporteBuilder($limit, $offset){
         /*$schema = 'dwm';
         if($this->connection === 'oracle_reptdm'){
             $schema = 'dm';
@@ -283,7 +334,8 @@ class EloquentDetalleLlamadasRepository implements DetalleLlamadasRepository
         )
         GROUP BY NUMERO_ORIGEN,FECHA,HORA_FIN,NUMERO_DESTINO,TIPO"));*/
         return DB::connection($this->connection)
-        ->select(DB::raw("SELECT NUMERO_ORIGEN,FECHA,HORA_INICIO,HORA_FIN,NUMERO_DESTINO,CONSUMO,TIPO FROM USRAES.T_REP_LLA2_{$this->userIdentifier}"));
+        ->select(DB::raw("SELECT NUMERO_ORIGEN,FECHA,HORA_INICIO,HORA_FIN,NUMERO_DESTINO,CONSUMO,TIPO FROM USRAES.T_REP_LLA2_{$this->userIdentifier}
+        OFFSET {$offset} ROWS FETCH NEXT {$limit} ROWS ONLY"));
     }
 
     private function generateReporte(DateTime $periodo1, DateTime $periodo2, $tipo_reporte)
@@ -512,6 +564,37 @@ class EloquentDetalleLlamadasRepository implements DetalleLlamadasRepository
 
             $periodo->modify("+1 day");
         }
+
+        // quitar duplicados
+
+        $queries[] = ['sql' => "BEGIN
+            EXECUTE IMMEDIATE 'DROP TABLE USRAES.T_REP_LLA2_{$this->userIdentifier}_TEMP';
+        EXCEPTION
+            WHEN OTHERS THEN
+                IF SQLCODE != -942 THEN
+                    RAISE;
+                END IF;
+        END;"];
+        $queries[] = ['sql' => "CREATE TABLE USRAES.T_REP_LLA2_{$this->userIdentifier}_TEMP (
+            NUMERO_ORIGEN  VARCHAR2(100),
+            FECHA          VARCHAR2(10),
+            HORA_INICIO    VARCHAR2(8),
+            HORA_FIN       VARCHAR2(8),
+            NUMERO_DESTINO VARCHAR2(100),
+            CONSUMO        VARCHAR2(100),
+            TIPO           VARCHAR2(100)
+        ) $tablespace"];
+        $queries[] = ['sql' => "BEGIN
+            INSERT INTO USRAES.T_REP_LLA2_{$this->userIdentifier}_TEMP
+            (NUMERO_ORIGEN,FECHA,HORA_INICIO,HORA_FIN,NUMERO_DESTINO,CONSUMO,TIPO)
+            SELECT NUMERO_ORIGEN,FECHA,HORA_INICIO,HORA_FIN,NUMERO_DESTINO,CONSUMO,TIPO FROM USRAES.T_REP_LLA2_{$this->userIdentifier}
+            GROUP BY NUMERO_ORIGEN,FECHA,HORA_INICIO,HORA_FIN,NUMERO_DESTINO,CONSUMO,TIPO;
+            COMMIT;
+        END;"];
+        $queries[] = ['sql' => "DROP TABLE USRAES.T_REP_LLA2_{$this->userIdentifier}"];
+        // $queries[] = ['sql' => "RENAME TABLE USRAES.T_REP_LLA2_{$this->userIdentifier}_TEMP to USRAES.T_REP_LLA2_{$this->userIdentifier}"];
+        $queries[] = ['sql' => "CREATE TABLE USRAES.T_REP_LLA2_{$this->userIdentifier} as SELECT * FROM usraes.t_rep_lla2_{$this->userIdentifier}_temp"];
+        $queries[] = ['sql' => "DROP TABLE USRAES.T_REP_LLA2_{$this->userIdentifier}_TEMP"];
 
         /*$periodo->modify("+1 day");
         }*/

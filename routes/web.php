@@ -68,6 +68,10 @@ Route::group([
         Route::get('/', [\AMovil\Reports\RepDetLlamadas\Controllers\DetalleLLamadasController::class, 'entrantes_salientes']);
         Route::post('export', [\AMovil\Reports\RepDetLlamadas\Controllers\DetalleLLamadasController::class, 'exportEntrantesSalientes']);
     });
+    Route::group(['prefix' => 'rep-det-consumo/reportes-log', 'trac_name' => 'detalle_llamadas.reporte_log'], function(){
+        Route::get('/', [\AMovil\Reports\RepDetLlamadas\Controllers\LogReporteLlamadasTempController::class, 'view']);
+        Route::get('search', [\AMovil\Reports\RepDetLlamadas\Controllers\LogReporteLlamadasTempController::class, 'search']);
+    });
 
     //Reporte Facturacion fija
     Route::group(['prefix' => 'facturacion-fija', 'trac_name' => 'facturacion_fija.entrantes'], function(){

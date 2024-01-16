@@ -2,7 +2,9 @@
 
 namespace AMovil\Reports\RepDetLlamadas\Services;
 
+use AMovil\Auth\AccessControl\Domain\AuthService;
 use AMovil\Reports\RepDetLlamadas\Domain\DetalleLlamadasRepository;
+use AMovil\Reports\RepDetLlamadas\Domain\ReporteDetalleLlamada;
 use AMovil\Reports\RepDetLlamadas\Domain\TipoReporte;
 use AMovil\Reports\ReportLog\Services\SaveReportLog;
 use AMovil\Shared\Exports\Domain\ExportService;
@@ -17,12 +19,16 @@ class ExportReporteLlamadas
     private $repo;
     private $exportService;
     private $saveReportLog;
+    private $authService;
+    private $storagePath;
 
-    public function __construct(DetalleLlamadasRepository $repo, ExportService $exportService, SaveReportLog $saveReportLog)
+    public function __construct(DetalleLlamadasRepository $repo, ExportService $exportService, SaveReportLog $saveReportLog, AuthService $authService)
     {
         $this->repo = $repo;
         $this->exportService = $exportService;
         $this->saveReportLog = $saveReportLog;
+        $this->authService = $authService;
+        $this->storagePath = "/space/www/html/portalautogestion_rel_llamadas";
     }
 
     public function __invoke($tipo_reporte, $periodo1, $periodo2, $tipo_input, $lineas, $excel, $num_doc, $num_cuenta, $cod_cliente, $numeros_primarios)
@@ -67,51 +73,83 @@ class ExportReporteLlamadas
                     break;
             }
 
-            $headers = [
-                "numero_origen" => ['label' => 'NUMERO_ORIGEN'],
-                "fecha" => ['label' => 'FECHA'],
-                "hora_inicio" => ['label' => 'HORA_INICIO'],
-                "hora_fin" => ['label' => 'HORA_FIN'],
-                "numero_destino" => ['label' => 'NUMBERO_DESTINO'],
-                "consumo" => ['label' => 'CONSUMO'],
-                "tipo" => ['label' => 'TIPO'],
-            ];
+            if($data->getCount() > ReporteDetalleLlamada::LIMIT){
+                $userIdentifier = $this->authService->getUserIdentifier();
+                $now = (new DateTime())->format("YmdH");
+                foreach ($data->getIterator() as $index => $chunk) {
+                    $filename = "Detalle_llamadas_{$userIdentifier}_{$now}_par".($index+1).".xlsx";
+                    $this->export($chunk, "{$periodo1} - {$periodo2}")->save("{$this->storagePath}/{$filename}");
+                    $this->repo->saveLogReporteTemp($filename, new DateTime(), filesize("{$this->storagePath}/{$filename}"));
+                }
+                return [
+                    "message" => "El archivo supera el limite de registros se enviara los reportes al modulo de reportes y estaran disponibles solo por el resto del dia"
+                ];
+            }else{
+                foreach ($data->getIterator() as $chunk) {
+                    $excel_content = $this->export($chunk, "{$periodo1} - {$periodo2}")->getOutput();
 
-            $this->exportService->loadData($headers, $data, [
-                'sheetIndex' => 0,
-                'title' => "{$periodo1} - {$periodo2}",
-                // 'y_start_index' => 0,
-                // 'x_start_index' => 0,
-                'styles' => [
-                    'header' => [
-                        'font' => ['bold' => true, 'size' => 9],
-                        'borders'=> [
-                            'allBorders' => ['borderStyle' => SpreadsheetStyle\Border::BORDER_THIN, 'color' => array('rgb'=>'000000')]
-                        ]
-                    ],
-                    'body' => [
-                        'font' => ['size' => 9],
-                    ]
-                ]
-            ]);
-
-            $columns_to_autosize = ['A','B','C','D', 'E', 'F', 'G'];
-            $sheet = $this->exportService->getExportReference()->getActiveSheet();
-            foreach($columns_to_autosize as $col){
-                $sheet->getColumnDimension($col)->setAutoSize(true);
+                    $this->exportService->reset();
+                    $headers = [
+                        "numero_origen" => ['label' => 'NUMERO_ORIGEN'],
+                        "fecha" => ['label' => 'FECHA'],
+                        "hora_inicio" => ['label' => 'HORA_INICIO'],
+                        "hora_fin" => ['label' => 'HORA_FIN'],
+                        "numero_destino" => ['label' => 'NUMBERO_DESTINO'],
+                        "consumo" => ['label' => 'CONSUMO'],
+                        "tipo" => ['label' => 'TIPO'],
+                    ];
+                    $this->exportService->loadData($headers, $chunk, []);
+                    $this->reportLog($tipo_reporte, $this->exportService, $dt_start, new DateTime());
+                    return $excel_content;
+                }
             }
-
-            $excel_content = $this->exportService->getWriter(WriterType::XLSX)->getOutput();
-
-            $this->exportService->reset();
-            $this->exportService->loadData($headers, $data, []);
-            $this->reportLog($tipo_reporte, $this->exportService, $dt_start, new DateTime());
-
-            return $excel_content;
         } catch (\Throwable $th) {
             $this->reportLog($tipo_reporte, null, $dt_start, new DateTime(), ['mensaje' => $th->getMessage()]);
             throw $th;
         }
+    }
+
+    private function export(&$data, $title)
+    {
+        $this->exportService->reset();
+        $headers = [
+            "numero_origen" => ['label' => 'NUMERO_ORIGEN'],
+            "fecha" => ['label' => 'FECHA'],
+            "hora_inicio" => ['label' => 'HORA_INICIO'],
+            "hora_fin" => ['label' => 'HORA_FIN'],
+            "numero_destino" => ['label' => 'NUMBERO_DESTINO'],
+            "consumo" => ['label' => 'CONSUMO'],
+            "tipo" => ['label' => 'TIPO'],
+        ];
+
+        $this->exportService->loadData($headers, $data, [
+            'sheetIndex' => 0,
+            'title' => $title,
+            'styles' => [
+                'header' => [
+                    'font' => ['bold' => true, 'size' => 9],
+                    'borders'=> [
+                        'allBorders' => ['borderStyle' => SpreadsheetStyle\Border::BORDER_THIN, 'color' => array('rgb'=>'000000')]
+                    ]
+                ],
+                'body' => [
+                    'font' => ['size' => 9],
+                ]
+            ]
+        ]);
+
+        $columns_to_autosize = ['A','B','C','D', 'E', 'F', 'G'];
+        $sheet = $this->exportService->getExportReference()->getActiveSheet();
+        foreach($columns_to_autosize as $col){
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // $excel_content = $this->exportService->getWriter(WriterType::XLSX)->getOutput();
+
+        // $this->exportService->reset();
+        // $this->exportService->loadData($headers, $data, []);
+        // $this->reportLog($tipo_reporte, $this->exportService, $dt_start, new DateTime());
+        return $this->exportService->getWriter(WriterType::XLSX);
     }
 
     private function getDataFromExcel($excel)
