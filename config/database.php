@@ -157,6 +157,19 @@ return [
             'edition'       => env('DB8_EDITION', 'ora$base'),
         ],
 
+        'ch-dn04' => [
+            'driver' => 'bavix::clickhouse',
+            'host' => env('DB9_HOST', 'localhost'),
+            'port' => env('DB9_PORT', '8123'),
+            'database' => env('DB9_DATABASE', 'default'),
+            'username' => env('DB9_USERNAME', 'default'),
+            'password' => env('DB9_PASSWORD', ''),
+            'options' => [
+                'timeout' => 30,
+                'protocol' => 'http'
+            ]
+        ],
+
         'sqlite' => [
             'driver' => 'sqlite',
             'url' => env('DATABASE_URL'),

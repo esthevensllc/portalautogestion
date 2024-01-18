@@ -188,5 +188,9 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\ExtraccionDevolucion\InformesCCPP\Domain\InformeCCPPRepository::class,
             \AMovil\Reports\ExtraccionDevolucion\InformesCCPP\Infrastructure\EloquentInformeCCPPRepository::class
         );
+        $this->app->bind(
+            \AMovil\Reports\ReporteEsim\Domain\ReporteEsimRepository::class,
+            \AMovil\Reports\ReporteEsim\Infrastructure\EloquentReporteEsimRepository::class
+        );
     }
 }

@@ -82,6 +82,18 @@ return [
             'privateKey' => env('SFTP3_PRIVATE_KEY'),
             'password' => env('SFTP3_PASSWORD'),
         ],
+        'sftp_dn04' => [
+            'driver' => 'sftp',
+            'host' => env('SFTP4_HOST'),
+         
+            // Settings for basic authentication...
+            'username' => env('SFTP4_USERNAME'),
+            'password' => env('SFTP4_PASSWORD'),
+         
+            // Settings for SSH key based authentication with encryption password...
+            'privateKey' => env('SFTP4_PRIVATE_KEY'),
+            'password' => env('SFTP4_PASSWORD'),
+        ],
 
     ],
 

@@ -8,4 +8,5 @@ class StorageSystemName
     const LOCAL2 = 'sftp_local';
     const REPORTS_LOG = 'sftp_reports_log';
     const EIR = 'sftp_eir';
+    const DN04 = 'sftp_dn04';
 }

@@ -469,4 +469,9 @@ Route::group([
         Route::post('export', [\AMovil\Reports\OltCmts\Controllers\OltCmtsController::class, 'export']);
     });
 
+    Route::group(['prefix' => 'reporte-esim', 'trac_name' => 'reporte-esim'], function(){
+        Route::get('/', [\AMovil\Reports\ReporteEsim\Controllers\ReporteEsimController::class, 'view']);
+        Route::post('export', [\AMovil\Reports\ReporteEsim\Controllers\ReporteEsimController::class, 'export']);
+    });
+
 });
