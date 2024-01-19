@@ -21,7 +21,7 @@ class EloquentOltCmtsRepository implements OltCmtsRepository
     public function getReportTypes()
     {
         $data = [
-            ["id" => "1", "label" => "OTL"],
+            ["id" => "1", "label" => "OLT"],
             // ["id" => "2", "label" => "CMTS"],
         ];
         return json_decode(json_encode($data), false);

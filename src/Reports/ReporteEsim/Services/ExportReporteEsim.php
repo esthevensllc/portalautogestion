@@ -24,7 +24,7 @@ class ExportReporteEsim
         $this->repo = $repo;
         $this->exportService = $exportService;
         $this->storage = $storageService->getStorageSystemByName(StorageSystemName::DN04);
-        $this->baseStoragePath = "/space/reportes/output";
+        $this->baseStoragePath = "/space/reportes/reportes_esim/output";
     }
 
     public function __invoke(string $nintex, FileInput $file)
@@ -35,8 +35,7 @@ class ExportReporteEsim
         $writer = $this->export($result);
         $content = $writer->getOutput();
 
-        $now = (new DateTime())->format("YmdHis");
-        $filename = "repote_esim_{$now}.csv";
+        $filename = "repote_esim_{$nintex}.csv";
         $this->storage->put("{$this->baseStoragePath}/{$filename}", $content);
         return Response::respData([
             "filename" => $filename,
@@ -76,10 +75,24 @@ class ExportReporteEsim
         $values = [];
         // $reader = IOFactory::createReader('Csv');
         $reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
-        $reader->setDelimiter(";");
+        $reader->setDelimiter(",");
         $spreedsheet = $reader->load($file->getFilePath());
         $sheet = $spreedsheet->getSheet(0);
         $highestRow = $sheet->getHighestRow();
+        $highestColumn = $sheet->getHighestColumn();
+        $headers = ["FECHA","N_LINEA","ICCID","IMSI_NUEVO","TAC","DESCRIPCION_GSMA"];
+        if($highestColumn !== "F"){
+            throw new Exception("El archivo debe tener 6 cabeceras");
+        }
+        $counter = 1;
+        for ($i=1; $i <= 6; $i++) {
+            $header = $sheet->getCellByColumnAndRow($counter, 1)->getValue();
+            if($headers[$counter-1] !== $header){
+                throw new Exception("La cabecera {$header} debe ser igual a {$headers[$counter-1]}");
+            }
+            $counter += 1;
+        }
+
         for ($i=2; $i <= $highestRow; $i++) {
             $row = [
                 "fecha" => $sheet->getCellByColumnAndRow(1, $i)->getValue(),

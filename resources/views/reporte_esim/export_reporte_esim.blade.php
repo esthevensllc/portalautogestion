@@ -12,12 +12,21 @@
                     <div class="form-group tab-item tab_lineas">
                         <label for="">Nintex</label>
                         <input type="text" class="form-control form-control-sm" name="nintex" required>
+                        <div class="invalid-feedback d-block text-dark">
+                            Ingresar un número de cinco digitos como máximo
+                            Ej. 00001
+                        </div>
                     </div>
                 </div>
-                <div class="col-lg-3 col-md-4">
+                <div class="col-lg-4 col-md-4">
                     <div class="form-group">
-                        <label for="">Archivo</label>
+                        <label for="">Archivo csv</label>
                         <input type="file" accept=".csv" name="archivo" required>
+                        <div class="invalid-feedback d-block text-dark">
+                            Cargar un archivo csv delimitado por comas ",".<br>
+                            Cargar cabeceras validas<br>
+                            Ej. FECHA,N_LINEA,ICCID,IMSI_NUEVO,TAC,DESCRIPCION_GSMA
+                        </div>
                     </div>
                 </div>
             </div>
@@ -40,6 +49,14 @@
 let config = @json($config);
 document.querySelector("form")
 .addEventListener("submit", function(e){
+    e.preventDefault();
+    const data = new FormData(e.target);
+
+    let cellExpression = /^[0-9]/;
+    if(data.get("nintex").length !== 5 || !data.get("nintex").match(cellExpression)){
+        alert("El nintex debe ser un numero y contener como maximo 5 digitos");
+        return;
+    }
     utils.downloadHandler({
         url: config.url_export,
         requestOptions: {

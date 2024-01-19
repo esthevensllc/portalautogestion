@@ -26,8 +26,8 @@ class ClickhouseDB
             // 'https' => true
         ]);
         $db->database($config["database"]);
-        $db->setTimeout(30);       // 10 seconds
-        $db->setConnectTimeOut(5); // 5 seconds
+        $db->setTimeout(60);
+        $db->setConnectTimeOut(5);
         $db->ping(true);
         return $this->connections[$connectionId] = $db;
     }
