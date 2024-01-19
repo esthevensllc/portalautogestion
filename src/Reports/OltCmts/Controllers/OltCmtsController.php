@@ -21,7 +21,7 @@ class OltCmtsController
     public function view()
     {
         $config = [
-            'title' => 'OLT CMTS',
+            'title' => 'OLT',
             'url' => url('olt-cmts/export'),
             'findValuesApi' => url('olt-cmts/find-values'),
             "types" => $this->finder->getReportTypes(),

@@ -22,7 +22,7 @@ class EloquentOltCmtsRepository implements OltCmtsRepository
     {
         $data = [
             ["id" => "1", "label" => "OTL"],
-            ["id" => "2", "label" => "CMTS"],
+            // ["id" => "2", "label" => "CMTS"],
         ];
         return json_decode(json_encode($data), false);
     }
