@@ -68,6 +68,13 @@ class ExportReporteEsim
         $options = ["rowType" => "array"];
 
         $this->exportService->loadData($headers, $result, $options);
+
+        $sheet = $this->exportService->getExportReference()->getActiveSheet();
+        $columns_to_autosize = ['A','B','C','D','E','F'];
+
+        foreach($columns_to_autosize as $col){
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
         return $this->exportService->getWriter(WriterType::XLSX);
     }
 
