@@ -9,6 +9,7 @@ use AMovil\Shared\Exports\Domain\ExportService;
 use AMovil\Shared\Exports\Domain\WriterType;
 use AMovil\Shared\FileStorage\Domain\StorageService;
 use AMovil\Shared\FileStorage\Domain\StorageSystemName;
+use PhpOffice\PhpSpreadsheet\Style as SpreadsheetStyle;
 use DateTime;
 use Exception;
 
@@ -35,11 +36,11 @@ class ExportReporteEsim
         $writer = $this->export($result);
         $content = $writer->getOutput();
 
-        $filename = "reporte_esim_{$nintex}.csv";
+        $filename = "reporte_esim_{$nintex}.xlsx";
         $this->storage->put("{$this->baseStoragePath}/{$filename}", $content);
         return Response::respData([
             "filename" => $filename,
-            "type" => "csv",
+            "type" => "xlsx",
             "content" => $content
         ]);
     }
@@ -58,8 +59,8 @@ class ExportReporteEsim
         $headers = [
             "fecha" => ["label" => "FECHA"],
             "msisdn" => ["label" => "N_LINEA"],
-            "iccid" => ["label" => "ICCID"],
-            "imsi_nuevo" => ["label" => "IMSI_NUEVO"],
+            "iccid" => ["label" => "ICCID", "bodyStyles" => ['numberFormat' => ['formatCode' => SpreadsheetStyle\NumberFormat::FORMAT_TEXT]]],
+            "imsi_nuevo" => ["label" => "IMSI_NUEVO", "bodyStyles" => ['numberFormat' => ['formatCode' => SpreadsheetStyle\NumberFormat::FORMAT_TEXT]]],
             "tac" => ["label" => "TAC"],
             "descripcion_gsma" => ["label" => "DESCRIPCION_GSMA"],
         ];
@@ -67,7 +68,7 @@ class ExportReporteEsim
         $options = ["rowType" => "array"];
 
         $this->exportService->loadData($headers, $result, $options);
-        return $this->exportService->getWriter(WriterType::CSV);
+        return $this->exportService->getWriter(WriterType::XLSX);
     }
 
     private function getDataFromCsv(FileInput $file)
