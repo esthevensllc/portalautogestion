@@ -5,6 +5,7 @@ namespace AMovil\Shared\Exports\Infrastructure;
 use AMovil\Shared\Exports\Domain\ExportService;
 use AMovil\Shared\Exports\Domain\Writer;
 use AMovil\Shared\Exports\Domain\WriterType;
+use PhpOffice\PhpSpreadsheet\Cell\Cell;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\IOFactory as IOFactorySpread;
 use PhpOffice\PhpSpreadsheet\Style as SpreadsheetStyle;
@@ -139,7 +140,9 @@ class SpreedSheetExport implements ExportService
 				foreach($data as $index => $row){
 					$j = $x_start_index;
 					foreach($headers as $name => $header){
-						$objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($j, $i+2, $row[$name]);
+						$objPHPExcel->getActiveSheet()
+						->setCellValueExplicitByColumnAndRow($j, $i+2, $row[$name], \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+						// $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($j, $i+2, $row[$name]);
 						$j++;
 					}
 					$i++;
