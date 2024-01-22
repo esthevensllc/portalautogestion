@@ -83,15 +83,13 @@ class ExportReporteEsim
         $highestColumn = $sheet->getHighestColumn();
         $headers = ["FECHA","N_LINEA","ICCID","IMSI_NUEVO","TAC",'DESCRIPCI'];
         if($highestColumn !== "F"){
-            throw new Exception("El archivo debe tener 6 cabeceras");
+            throw new Exception("El archivo debe tener 6 columnas");
         }
         $counter = 1;
         for ($i=1; $i <= 6; $i++) {
             $header = $sheet->getCellByColumnAndRow($counter, 1)->getValue();
-            // $matches = [];
-            // preg_match('/'.$headers[$counter-1].'/', $header, $matches);
             if(!str_contains($header, $headers[$counter-1])){
-                throw new Exception("La cabecera {$header} debe ser igual a {$headers[$counter-1]}");
+                throw new Exception("La columna #{$i} {$header} debe ser igual a {$headers[$counter-1]}");
             }
             $counter += 1;
         }

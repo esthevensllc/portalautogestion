@@ -11,7 +11,7 @@
                 <div class="col-lg-3 col-md-4 tabs">
                     <div class="form-group tab-item tab_lineas">
                         <label for="">Nintex</label>
-                        <input type="text" class="form-control form-control-sm" name="nintex" required>
+                        <input type="text" class="form-control form-control-sm" name="nintex" maxlength="5" required>
                         <div class="invalid-feedback d-block text-dark">
                             Ingresar un número de cinco digitos como máximo
                             Ej. 00001
@@ -33,7 +33,7 @@
             <div class="row">
                 <div class="col-lg-3" style="display: flex; align-items: end;">
                     <div class="form-group">
-                        <button type="submit" class="btn btn-primary btn-sm btn_export">Descargar</button>
+                        <button type="submit" style="background: darkcyan;color:white;" class="btn btn-primary btn-sm btn_export">Descargar</button>
                     </div>
                 </div>
             </div>
