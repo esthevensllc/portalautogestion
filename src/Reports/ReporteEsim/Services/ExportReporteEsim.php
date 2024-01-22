@@ -35,7 +35,7 @@ class ExportReporteEsim
         $writer = $this->export($result);
         $content = $writer->getOutput();
 
-        $filename = "repote_esim_{$nintex}.csv";
+        $filename = "reporte_esim_{$nintex}.csv";
         $this->storage->put("{$this->baseStoragePath}/{$filename}", $content);
         return Response::respData([
             "filename" => $filename,
@@ -76,18 +76,21 @@ class ExportReporteEsim
         // $reader = IOFactory::createReader('Csv');
         $reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
         $reader->setDelimiter(",");
+        $reader->setInputEncoding("UTF-8");
         $spreedsheet = $reader->load($file->getFilePath());
         $sheet = $spreedsheet->getSheet(0);
         $highestRow = $sheet->getHighestRow();
         $highestColumn = $sheet->getHighestColumn();
-        $headers = ["FECHA","N_LINEA","ICCID","IMSI_NUEVO","TAC","DESCRIPCION_GSMA"];
+        $headers = ["FECHA","N_LINEA","ICCID","IMSI_NUEVO","TAC",'DESCRIPCI'];
         if($highestColumn !== "F"){
             throw new Exception("El archivo debe tener 6 cabeceras");
         }
         $counter = 1;
         for ($i=1; $i <= 6; $i++) {
             $header = $sheet->getCellByColumnAndRow($counter, 1)->getValue();
-            if($headers[$counter-1] !== $header){
+            // $matches = [];
+            // preg_match('/'.$headers[$counter-1].'/', $header, $matches);
+            if(!str_contains($header, $headers[$counter-1])){
                 throw new Exception("La cabecera {$header} debe ser igual a {$headers[$counter-1]}");
             }
             $counter += 1;
@@ -102,6 +105,14 @@ class ExportReporteEsim
                 "tac" => $sheet->getCellByColumnAndRow(5, $i)->getValue(),
                 "descripcion_gsma" => $sheet->getCellByColumnAndRow(6, $i)->getValue(),
             ];
+            $dtFecha = DateTime::createFromFormat("Y-m-d", $row["fecha"]);
+            if($dtFecha === false){
+                $dtFecha = DateTime::createFromFormat("d/m/Y", $row["fecha"]);
+            }
+            if($dtFecha === false){
+                throw new Exception("La fecha {$row['fecha']} no es valida");
+            }
+            $row["fecha"] = $dtFecha->format("Y-m-d");
             $values[] = $row;
         }
         return $values;
