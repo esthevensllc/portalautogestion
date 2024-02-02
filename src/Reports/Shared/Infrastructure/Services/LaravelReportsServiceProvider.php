@@ -192,5 +192,9 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\ReporteEsim\Domain\ReporteEsimRepository::class,
             \AMovil\Reports\ReporteEsim\Infrastructure\EloquentReporteEsimRepository::class
         );
+        $this->app->bind(
+            \AMovil\Reports\MantenimientoCeldas\Mantenimiento\Domain\MantenimientoCeldaRepository::class,
+            \AMovil\Reports\MantenimientoCeldas\Mantenimiento\Infrastructure\EloquentMantenimientoCeldaRepository::class
+        );
     }
 }
