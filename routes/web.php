@@ -474,4 +474,10 @@ Route::group([
         Route::post('export', [\AMovil\Reports\ReporteEsim\Controllers\ReporteEsimController::class, 'export']);
     });
 
+    Route::group(['prefix' => 'mantenimiento-celdas', 'trac_name' => 'mantenimiento-celdas'], function(){
+        Route::get('/', [\AMovil\Reports\MantenimientoCeldas\Mantenimiento\Controllers\MantenimientoCeldaController::class, 'view']);
+        Route::post('process', [\AMovil\Reports\MantenimientoCeldas\Mantenimiento\Controllers\MantenimientoCeldaController::class, 'process']);
+        // Route::post('export', [\AMovil\Reports\MantenimientoCeldas\Mantenimiento\Controllers\MantenimientoCeldaController::class, 'export']);
+    });
+
 });
