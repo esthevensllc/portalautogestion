@@ -3,7 +3,7 @@
 namespace AMovil\Reports\MantenimientoCeldas\Mantenimiento\Controllers;
 
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services\ProcessExtraccion;
-use AMovil\Reports\MantenimientoCeldas\Mantenimiento\Services\ExportaMantenimientoCeldas;
+// use AMovil\Reports\MantenimientoCeldas\Mantenimiento\Services\ExportaMantenimientoCeldas;
 use AMovil\Reports\MantenimientoCeldas\Mantenimiento\Services\MantenimientoCeldaProcessor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -11,12 +11,12 @@ use Illuminate\Support\Facades\DB;
 class MantenimientoCeldaController
 {
     private $processor;
-    private $exporter;
+    // private $exporter;
 
-    public function __construct(MantenimientoCeldaProcessor $processor, ExportaMantenimientoCeldas $exporter)
+    public function __construct(MantenimientoCeldaProcessor $processor)
     {
         $this->processor = $processor;
-        $this->exporter = $exporter;
+        // $this->exporter = $exporter;
     }
 
     public function view()
@@ -87,7 +87,7 @@ class MantenimientoCeldaController
         return response()->json(["result" => $resp]);
     }
 
-    public function export(Request $request)
+    /*public function export(Request $request)
     {
         $response = $this->exporter->__invoke(
             $request->post("ticket"),
@@ -97,5 +97,5 @@ class MantenimientoCeldaController
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition' => 'attachment;filename="'.$response["filename"].'"'
         ]);
-    }
+    }*/
 }
