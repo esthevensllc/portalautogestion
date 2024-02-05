@@ -196,5 +196,9 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\MantenimientoCeldas\Mantenimiento\Domain\MantenimientoCeldaRepository::class,
             \AMovil\Reports\MantenimientoCeldas\Mantenimiento\Infrastructure\EloquentMantenimientoCeldaRepository::class
         );
+        $this->app->bind(
+            \AMovil\Reports\MantenimientoCeldas\TicketReports\Domain\TicketReportRepository::class,
+            \AMovil\Reports\MantenimientoCeldas\TicketReports\Infrastructure\EloquentTicketReportRepository::class
+        );
     }
 }

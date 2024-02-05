@@ -227,6 +227,12 @@ class EloquentMantenimientoCeldaRepository implements MantenimientoCeldaReposito
         ]);
 
         DB::connection($this->connection)
+        ->table("USRAES.M_BASE_PREV_BASEDEV_INPUT_CELDA")
+        ->where("ticket", $ticketOsiptel)
+        ->where("departamento", $provincias[0][0])
+        ->delete();
+
+        DB::connection($this->connection)
         ->statement("BEGIN
             INSERT INTO USRAES.M_BASE_PREV_BASEDEV_INPUT_CELDA(TICKET, DEPARTAMENTO, CELDA)
             SELECT :p_ticket AS TICKET, :p_departamento AS DEPARTAMENTO, CELDA FROM USRAES.M_TABLE_CELDAS_{$this->userIdentifier};
@@ -556,9 +562,24 @@ class EloquentMantenimientoCeldaRepository implements MantenimientoCeldaReposito
         ->delete();
     }
 
-    public function getInputs()
+    public function getInputs($ticket, $departamento)
     {
-        
+        $input = DB::connection("oracle_reptdm")
+        ->table("USRAES.M_BASE_PREV_BASEDEV_INPUT")
+        ->where("ticket", $ticket)        
+        ->where("departamento", $departamento)
+        ->first();
+
+        if($input !== null){
+            // M_BASE_PREV_BASEDEV_INPUT_CELDA
+            $input->celdas =  DB::connection("oracle_reptdm")
+            ->table("USRAES.M_BASE_PREV_BASEDEV_INPUT_CELDA")
+            ->select("celda")
+            ->where("ticket", $ticket)        
+            ->where("departamento", $departamento)
+            ->get();
+        }
+        return $input;
     }
 
     private function exec_sql(array $plsql)

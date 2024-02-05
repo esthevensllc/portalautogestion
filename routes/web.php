@@ -479,5 +479,18 @@ Route::group([
         Route::post('process', [\AMovil\Reports\MantenimientoCeldas\Mantenimiento\Controllers\MantenimientoCeldaController::class, 'process']);
         // Route::post('export', [\AMovil\Reports\MantenimientoCeldas\Mantenimiento\Controllers\MantenimientoCeldaController::class, 'export']);
     });
+    Route::group(['prefix' => 'mantenimiento-celdas/tickets', 'trac_name' => 'mantenimiento-celdas.tickets'], function(){
+        Route::get('/', [\AMovil\Reports\MantenimientoCeldas\TicketReports\Controllers\TicketReportController::class, 'view']);
+        Route::post('search', [\AMovil\Reports\MantenimientoCeldas\TicketReports\Controllers\TicketReportController::class, 'search']);
+    });
+    Route::group(['prefix' => 'mantenimiento-celdas/eliminar-ticket', 'trac_name' => 'mantenimiento-celdas.eliminar-ticket'], function(){
+        Route::get('/', [\AMovil\Reports\MantenimientoCeldas\TicketReports\Controllers\TicketReportController::class, 'deleteView']);
+        Route::post('/', [\AMovil\Reports\MantenimientoCeldas\TicketReports\Controllers\TicketReportController::class, 'delete']);
+    });
+    Route::group(['prefix' => 'mantenimiento-celdas/reportes', 'trac_name' => 'mantenimiento-celdas.reportes'], function(){
+        Route::get('/', [\AMovil\Reports\MantenimientoCeldas\Mantenimiento\Controllers\MantenimientoCeldaController::class, 'reportsView']);
+        Route::post('input', [\AMovil\Reports\MantenimientoCeldas\Mantenimiento\Controllers\MantenimientoCeldaController::class, 'findInput']);
+        Route::post('export', [\AMovil\Reports\MantenimientoCeldas\Mantenimiento\Controllers\MantenimientoCeldaController::class, 'export']);
+    });
 
 });

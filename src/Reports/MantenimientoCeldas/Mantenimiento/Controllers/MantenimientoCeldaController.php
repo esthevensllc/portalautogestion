@@ -3,20 +3,30 @@
 namespace AMovil\Reports\MantenimientoCeldas\Mantenimiento\Controllers;
 
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services\ProcessExtraccion;
-// use AMovil\Reports\MantenimientoCeldas\Mantenimiento\Services\ExportaMantenimientoCeldas;
+use AMovil\Reports\MantenimientoCeldas\Mantenimiento\Services\ExportMantenimientoCeldas;
 use AMovil\Reports\MantenimientoCeldas\Mantenimiento\Services\MantenimientoCeldaProcessor;
+use AMovil\Reports\MantenimientoCeldas\Mantenimiento\Services\MantenimientoCeldasInputFinder;
+use AMovil\Reports\MantenimientoCeldas\TicketReports\Services\TicketReportFinder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class MantenimientoCeldaController
 {
     private $processor;
-    // private $exporter;
+    private $finder;
+    private $inputFinder;
+    private $exporter;
 
-    public function __construct(MantenimientoCeldaProcessor $processor)
-    {
+    public function __construct(
+        MantenimientoCeldaProcessor $processor,
+        TicketReportFinder $finder,
+        MantenimientoCeldasInputFinder $inputFinder,
+        ExportMantenimientoCeldas $exporter
+    ) {
         $this->processor = $processor;
-        // $this->exporter = $exporter;
+        $this->finder = $finder;
+        $this->inputFinder = $inputFinder;
+        $this->exporter = $exporter;
     }
 
     public function view()
@@ -87,7 +97,7 @@ class MantenimientoCeldaController
         return response()->json(["result" => $resp]);
     }
 
-    /*public function export(Request $request)
+    public function export(Request $request)
     {
         $response = $this->exporter->__invoke(
             $request->post("ticket"),
@@ -97,5 +107,25 @@ class MantenimientoCeldaController
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition' => 'attachment;filename="'.$response["filename"].'"'
         ]);
-    }*/
+    }
+
+    public function reportsView()
+    {
+        $config = [
+            "title" => "DESCARGA REPORTES",
+            "url" => url("mantenimiento-celdas/reportes/export"),
+            "inputsApi" => url("mantenimiento-celdas/reportes/input"),
+            "tickets" => $this->finder->__invoke()
+        ];
+        return view("mantenimiento_celdas.descarga_reportes", compact("config"));
+    }
+
+    public function findInput(Request $request)
+    {
+        $data = $this->inputFinder->__invoke(
+            $request->input("ticket"),
+            $request->input("departamento")
+        );
+        return response()->json(["data" => $data]);
+    }
 }

@@ -10,5 +10,5 @@ interface MantenimientoCeldaRepository
     public function getReporte($ticket, $departamento);
     public function delete($ticket, $departamento);
 
-    public function getInputs();
+    public function getInputs($ticket, $departamento);
 }
