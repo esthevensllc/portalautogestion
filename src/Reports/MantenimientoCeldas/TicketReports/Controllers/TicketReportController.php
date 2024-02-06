@@ -21,7 +21,7 @@ class TicketReportController
     public function view()
     {
         $config = [
-            "title" => "REGISTROS DE TICKET",
+            "title" => "REGISTROS DE MANTENIMIENTO",
             "url" => asset("mantenimiento-celdas/tickets/search")
         ];
         return view("mantenimiento_celdas.ticket_reports", compact("config"));
@@ -37,7 +37,7 @@ class TicketReportController
     public function deleteView()
     {
         $config = [
-            "title" => "ELIMINAR TICKET",
+            "title" => "ELIMINAR MANTENIMIENTO",
             "api" => url("mantenimiento-celdas/eliminar-ticket"),
             "tickets" => $this->finder->__invoke(),
         ];

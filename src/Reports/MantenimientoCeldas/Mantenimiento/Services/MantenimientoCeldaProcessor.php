@@ -17,6 +17,9 @@ class MantenimientoCeldaProcessor
     private $tablaInteresRepo;
     private $saveReportLog;
 
+    const MESES_INTERES = 24;
+    // const MINUTOS_USUARIOS = 3;
+
     public function __construct(MantenimientoCeldaRepository $repo, TablaInteresRepository $tablaInteresRepo, SaveReportLog $saveReportLog,)
     {
         $this->repo = $repo;
@@ -24,7 +27,7 @@ class MantenimientoCeldaProcessor
         $this->saveReportLog = $saveReportLog;
     }
 
-    public function __invoke(?int $step, $tipoInput, $celdas, $provincias, $excel, $fechaIni, $fechaFin, $ticketOsiptel, $fechaInteres, $corteFechaIni, $corteFechaFin, $minutos_usuarios)
+    public function __invoke(?int $step, $tipoInput, $celdas, $provincias, $excel, $fechaIni, $fechaFin, $ticketOsiptel, $fechaInteres, $corteFechaIni, $corteFechaFin)
     {
         $dtStart = new DateTime();
         try {
@@ -35,8 +38,10 @@ class MantenimientoCeldaProcessor
             }
             // $dtFechaIni = DateTime::createFromFormat("Y-m-d H:i:s", $fechaIni);
             // $dtFechaFin = DateTime::createFromFormat("Y-m-d H:i:s", $fechaFin);
-            $dtFechaFin = DateTime::createFromFormat("Y-m-d H:i:s", $corteFechaIni);
-            $dtFechaIni = (clone $dtFechaFin)->modify("-{$minutos_usuarios} minute");
+            // $dtFechaFin = DateTime::createFromFormat("Y-m-d H:i:s", $corteFechaIni);
+            // $dtFechaIni = (clone $dtFechaFin)->modify("-{$minutos_usuarios} minute");
+            $dtFechaIni = DateTime::createFromFormat("Y-m-d H:i:s", $corteFechaIni);
+            $dtFechaFin = DateTime::createFromFormat("Y-m-d H:i:s", $corteFechaFin);
 
             $dtFechaInteres = new DateTime();
             $dtFechaInteres->modify("+{$fechaInteres} month");
