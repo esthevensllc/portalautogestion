@@ -96,7 +96,7 @@ class LaravelMtcSuspensionesRepository implements MtcSuspensionesRepository
         $array_sql[] = [
             'sql' => "CREATE TABLE USRAES.T_LINEAS_{$this->userIdentifier} AS SELECT ASNV_NUMERO_LINEA as LINEAS FROM USRAES.TMP_PLANTILLA_{$this->userIdentifier}"
         ];
-        $array_sql[] = [
+        /*$array_sql[] = [
             'sql' => "BEGIN
                 EXECUTE IMMEDIATE 'DROP TABLE USRAES.T_LLAM_MAL_{$this->userIdentifier}';
             EXCEPTION
@@ -119,7 +119,7 @@ class LaravelMtcSuspensionesRepository implements MtcSuspensionesRepository
                  WHEN B.IDPLATAFORMA ='1' AND B.IDESTADO='4' THEN 'DESACTIVO' END ULTIMO_ESTADO_REGISTRADO,
             B.TIPO_DOCUMENTO,B.NRO_DOCUMENTO, B.NOMBRES||' '||B.APELLIDOS NOMBRES
             FROM DM.F_M_ABONADOS B WHERE B.MSISDN IN (SELECT '51'||to_char(to_number(LINEAS)) FROM USRAES.T_LINEAS_{$this->userIdentifier}) AND B.MES ='{$str_periodo}'"
-        ];
+        ];*/
         
         $array_sql[] = [
             'sql' => "BEGIN
@@ -148,7 +148,7 @@ class LaravelMtcSuspensionesRepository implements MtcSuspensionesRepository
             FECHA_DATA DATE
             )"
         ];
-        $array_sql[] = [
+        /*$array_sql[] = [
             'sql' => "DECLARE
                 CURSOR VA IS SELECT NRO_DOCUMENTO FROM USRAES.T_LLAM_MAL_{$this->userIdentifier} WHERE MODALIDAD='PREPAGO';
                 DNI VARCHAR2(20);
@@ -177,6 +177,30 @@ class LaravelMtcSuspensionesRepository implements MtcSuspensionesRepository
                 FROM USRAES.T_LLAM_MAL_{$this->userIdentifier} A,DM.F_M_ABONADOS B,DMRED.CCONTACT_ALL C  
                 WHERE A.MODALIDAD='POSTPAGO' AND A.MSISDN=B.MSISDN AND B.ID_CLIENTE=C.CUSTOMER_ID AND C.CCBILL='X' AND B.MES = '{$str_periodo}';
 
+                COMMIT;
+            END;"
+        ];*/
+
+        $array_sql[] = [
+            'sql' => "BEGIN
+                INSERT INTO USRAES.T_LLAM_MAL_DIR_{$this->userIdentifier}(
+                    MSISDN, MES, MODALIDAD, ULTIMO_ESTADO_REGISTRADO, TIPO_DOCUMENTO, NRO_DOCUMENTO, NOMBRES, CCNAME, OPERADORA, DEPARTAMENTO,
+                    PROVINCIA, DISTRITO, FECHA_DATA
+                )
+                select  /*+ PARALLEL(4)*/ MSISDN,MES,MODALIDAD,ULTIMO_ESTADO_REGISTRADO,
+                TIPO_DOCUMENTO,NRO_DOCUMENTO,NOMBRES,CCNAME,OPERADORA,DEPARTAMENTO,PROVINCIA,
+                DISTRITO,FECHA_DATA from (
+                    select  /*+ PARALLEL(4)*/ customer_account_sc ,SUBSCRIPTION_ACCESS_NUMBER MSISDN,
+                    PERIOD MES,AGREEMENT_MODE MODALIDAD,agreement_status ULTIMO_ESTADO_REGISTRADO,
+                    TRUNC(AGREEMENT_START_DATE, 'DD') FECHA_DATA,TO_CHAR(AGREEMENT_END_DATE,'yyyy-mm-dd') FECHA_BAJA,ID_CARD_TYPE_VALUE TIPO_DOCUMENTO,
+                    ID_CARD_VALUE NRO_DOCUMENTO,CUSTOMER_FULL_NAME NOMBRES,CUSTOMER_FULL_NAME CCNAME,'CLARO' OPERADORA,
+                    CASE WHEN CUSTOMER_ACCOUNT_BILLING_DEPARTMENT IS NULL THEN INSTALLATION_DEPARTMENT ELSE CUSTOMER_ACCOUNT_BILLING_DEPARTMENT END DEPARTAMENTO,
+                    CASE WHEN CUSTOMER_ACCOUNT_BILLING_PROVINCE IS NULL THEN INSTALLATION_PROVINCE ELSE CUSTOMER_ACCOUNT_BILLING_PROVINCE END PROVINCIA,
+                    CASE WHEN CUSTOMER_ACCOUNT_BILLING_DISTRICT IS NULL THEN INSTALLATION_DISTRICT ELSE CUSTOMER_ACCOUNT_BILLING_DISTRICT END DISTRITO,
+                    row_number() over(PARTITION by SUBSCRIPTION_ACCESS_NUMBER order by AGREEMENT_START_DATE desc) flag
+                    from DWA.DW_M_SUBSCRIPTION_HIST PARTITION(P_{$str_periodo})
+                    WHERE SUBSCRIPTION_ACCESS_NUMBER IN (SELECT '51'||to_char(to_number(LINEAS)) FROM USRAES.T_LINEAS_{$this->userIdentifier}) 
+                ) where flag=1;
                 COMMIT;
             END;"
         ];
