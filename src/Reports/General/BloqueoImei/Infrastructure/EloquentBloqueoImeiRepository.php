@@ -21,7 +21,7 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
             $cdrField = "substr(toString(served_imeisv),1,14)";
             $filterQuery = "SELECT imei from bloqueo_imei.base_imei where id_report = '{$id}' group by 1";
             foreach($imeis as $imei){
-                DB::connection("ch-dn02")
+                DB::connection("ch-dn01")
                 ->table("bloqueo_imei.base_imei")
                 ->insert([
                     "id_report" => $id,
@@ -33,7 +33,7 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
             $cdrField = "served_msisdn";
             $filterQuery = "SELECT msisdn from bloqueo_imei.base_msisdn where id_report = '{$id}' group by 1";
             foreach($imeis as $imei){
-                DB::connection("ch-dn02")
+                DB::connection("ch-dn01")
                 ->table("bloqueo_imei.base_msisdn")
                 ->insert([
                     "id_report" => $id,
@@ -70,7 +70,7 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
         group by 1,2,3,4,5,6,7,8,9,10,
         11,12,13,14,15,16,17,18,19,20,21,22";
 
-        $data = DB::connection("ch-dn02")->select($sql);
+        $data = DB::connection("ch-dn01")->select($sql);
         return $data;
     }
 
@@ -99,7 +99,7 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
         join cdrdatos.access_points y on toString(x.access_point_name_ni)=toString(y.id)  
         group by 1,2,3,4,5,6,7,8,9,10";
 
-        $data = DB::connection("ch-dn02")->select($sql);
+        $data = DB::connection("ch-dn01")->select($sql);
         return $data;
     }
 
@@ -136,13 +136,13 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
         join eir.subscriber_eir_1day z on substring(toString(z.imei), 1, 14) = toString(x.served_imeisv2)
         group by 1,2,3,4,5,6,7,8,9,10,11";
 
-        $data = DB::connection("ch-dn02")->select($sql);
+        $data = DB::connection("ch-dn01")->select($sql);
         return $data;
     }
 
     public function getReporteLogByCriteria($filters)
     {
-        $builder = DB::connection("ch-dn02")->table("bloqueo_imei.base_imei_log");
+        $builder = DB::connection("ch-dn01")->table("bloqueo_imei.base_imei_log");
         foreach($filters as $row){
             $builder->where($row[0], $row[1]);
         }
@@ -154,7 +154,7 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
     public function saveReporteLog($id, $tipoBusquedaId, $username, $filename, $nRegistros)
     {
         $now = new DateTime();
-        DB::connection("ch-dn02")
+        DB::connection("ch-dn01")
         ->table("bloqueo_imei.base_imei_log")
         ->insert([
             "id_report" => $id,
@@ -168,18 +168,18 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
 
     public function deleteReporteLog($id)
     {
-        DB::connection("ch-dn02")
+        DB::connection("ch-dn01")
         ->statement(DB::raw("alter table bloqueo_imei.base_imei_log update delete_flag = 1 where id_report = '{$id}'"));
 
-        DB::connection("ch-dn02")
+        DB::connection("ch-dn01")
         ->statement(DB::raw("alter table bloqueo_imei.base_imei update delete_flag = 1 where id_report = '{$id}'"));
-        DB::connection("ch-dn02")
+        DB::connection("ch-dn01")
         ->statement(DB::raw("alter table bloqueo_imei.base_msisdn update delete_flag = 1 where id_report = '{$id}'"));
     }
 
     public function getAutomaticReportLogByCriteria($filters)
     {
-        $builder = DB::connection("ch-dn02")->table("bloqueo_imei.base_imei_automatico_log");
+        $builder = DB::connection("ch-dn01")->table("bloqueo_imei.base_imei_automatico_log");
         foreach($filters as $row){
             $builder->where($row[0], $row[1]);
         }
@@ -188,17 +188,17 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
 
     public function deleteAutomaticReportLog($id)
     {
-        DB::connection("ch-dn02")
+        DB::connection("ch-dn01")
         ->statement(DB::raw("alter table bloqueo_imei.base_imei_automatico_log update delete_flag = 1 where id_report = '{$id}'"));
 
-        DB::connection("ch-dn02")
+        DB::connection("ch-dn01")
         ->statement(DB::raw("alter table bloqueo_imei.base_imei_automatico update delete_flag = 1 where id_report = '{$id}'"));
     }
 
     public function importBaseImeiAutomatico($id, $filename, $imeis)
     {
         foreach($imeis as $imei){
-            DB::connection("ch-dn02")
+            DB::connection("ch-dn01")
             ->table("bloqueo_imei.base_imei_automatico")
             ->insert([
                 "id_report" => $id,
@@ -211,7 +211,7 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
     public function deleteBaseImeiAutomatico($imeis)
     {
         foreach($imeis as $imei){
-            DB::connection("ch-dn02")
+            DB::connection("ch-dn01")
             ->statement(DB::raw("alter table bloqueo_imei.base_imei_automatico
             update delete_flag = 1
             where imei = '{$imei}'"));
@@ -221,7 +221,7 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
     public function saveAutomaticReportLog($id, $username, $filename, $nRegistros)
     {
         $now = new DateTime();
-        DB::connection("ch-dn02")
+        DB::connection("ch-dn01")
         ->table("bloqueo_imei.base_imei_automatico_log")
         ->insert([
             "id_report" => $id,
@@ -234,11 +234,11 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
 
     public function saveAutomaticReport($id, $filename, $nRegistros, $sizeBytes, DateTime $fecha)
     {
-        DB::connection("ch-dn02")
+        DB::connection("ch-dn01")
         ->statement(DB::raw("alter table bloqueo_imei.report_imei_automatico delete where id = '{$id}'"));
 
         $now = new DateTime();
-        DB::connection("ch-dn02")
+        DB::connection("ch-dn01")
         ->table("bloqueo_imei.report_imei_automatico")
         ->insert([
             "id" => $id,
@@ -252,11 +252,11 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
 
     public function saveAutomaticReportOnline($id, $filename, $nRegistros, $sizeBytes, DateTime $fecha)
     {
-        DB::connection("ch-dn02")
+        DB::connection("ch-dn01")
         ->statement(DB::raw("alter table bloqueo_imei.report_imei_automatico_online delete where id = '{$id}'"));
 
         $now = new DateTime();
-        DB::connection("ch-dn02")
+        DB::connection("ch-dn01")
         ->table("bloqueo_imei.report_imei_automatico_online")
         ->insert([
             "id" => $id,
@@ -270,7 +270,7 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
 
     public function getAutomaticReportByCriteria($filters)
     {
-        $builder = DB::connection("ch-dn02")->table("bloqueo_imei.report_imei_automatico");
+        $builder = DB::connection("ch-dn01")->table("bloqueo_imei.report_imei_automatico");
         foreach($filters as $row){
             $builder->where($row[0], $row[1]);
         }
@@ -279,7 +279,7 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
 
     public function getAutomaticOnlineReportByCriteria($filters)
     {
-        $builder = DB::connection("ch-dn02")->table("bloqueo_imei.report_imei_automatico_online");
+        $builder = DB::connection("ch-dn01")->table("bloqueo_imei.report_imei_automatico_online");
         foreach($filters as $row){
             $builder->where($row[0], $row[1]);
         }
@@ -293,7 +293,7 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
 
         $generateReport = $generateReport ? 1 : 0;
         if($config === null){
-            DB::connection("ch-dn02")
+            DB::connection("ch-dn01")
             ->table("bloqueo_imei.imei_cdr_automatico_config")
             ->insert([
                 "id" => '1',
@@ -302,7 +302,7 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
                 "updated_at" => $now->format("Y-m-d H:i:s")
             ]);
         }else{
-            DB::connection("ch-dn02")
+            DB::connection("ch-dn01")
             ->statement(DB::raw("alter table bloqueo_imei.imei_cdr_automatico_config
             update generate_report = {$generateReport}, updated_at = now() where 1 = 1"));
         }
@@ -310,12 +310,12 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
 
     public function getConfig()
     {
-        return DB::connection("ch-dn02")->table("bloqueo_imei.imei_cdr_automatico_config")->first();
+        return DB::connection("ch-dn01")->table("bloqueo_imei.imei_cdr_automatico_config")->first();
     }
 
     public function getControlEirImeiByCriteria($filters)
     {
-        $builder = DB::connection("ch-dn02")->table("eir.table_eir_control_log_v2");
+        $builder = DB::connection("ch-dn01")->table("eir.table_eir_control_log_v2");
         foreach($filters as $row){
             if($row[0] === 'imei'){
                 $builder->where($row[0], 'LIKE', $row[1] . '%');
@@ -359,7 +359,7 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
             $cdrField = "substr(toString(served_imeisv),1,14)";
             $filterQuery = "SELECT imei from bloqueo_imei.base_imei where id_report = '{$id}' group by 1";
             foreach($imeis as $imei){
-                DB::connection("ch-dn02")
+                DB::connection("ch-dn01")
                 ->table("bloqueo_imei.base_imei")
                 ->insert([
                     "id_report" => $id,
@@ -371,7 +371,7 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
             $cdrField = "served_msisdn";
             $filterQuery = "SELECT msisdn from bloqueo_imei.base_msisdn where id_report = '{$id}' group by 1";
             foreach($imeis as $imei){
-                DB::connection("ch-dn02")
+                DB::connection("ch-dn01")
                 ->table("bloqueo_imei.base_msisdn")
                 ->insert([
                     "id_report" => $id,
@@ -408,7 +408,7 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
         group by 1,2,3,4,5,6,7,8,9,10,
         11,12,13,14,15,16,17,18,19,20,21,22";
 
-        $data = DB::connection("ch-dn02")->select($sql);
+        $data = DB::connection("ch-dn01")->select($sql);
         return $data;
     }
 

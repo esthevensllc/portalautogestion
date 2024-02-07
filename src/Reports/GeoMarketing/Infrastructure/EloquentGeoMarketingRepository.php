@@ -144,13 +144,13 @@ class EloquentGeoMarketingRepository implements GeoMarketingRepository
         $sql = null;
         if($whiteList === 1){
             $sql = "SELECT msisdn FROM cdrdatos.usuarios_estadio_{$this->userIdentifier} a
-            inner join dwa.f_d_base_wl_bl b on toString(a.msisdn)=toString(b.msisdn)
+            inner join remote('172.19.242.57',dwa.f_d_base_wl_bl,'nifi','nifi') b on toString(a.msisdn)=toString(b.msisdn)
             where toString(msisdn) like '519%' and b.wl='X' group by 1";
         }else{
             $sql = "SELECT msisdn FROM cdrdatos.usuarios_estadio_{$this->userIdentifier}
             where toString(msisdn) like '519%' group by 1";
         }
-        $data = DB::connection("ch-dn02")->select($sql);
+        $data = DB::connection("ch-dn01")->select($sql);
 
         $queries = [];
         $queries[] = [
@@ -166,7 +166,7 @@ class EloquentGeoMarketingRepository implements GeoMarketingRepository
     public function saveLog($nintex, $base, DateTime $fechaIni, DateTime $fechaFin, DateTime $createAt, $filename, int $whiteList)
     {
         $this->userIdentifier = $this->authService->getUserIdentifier();
-        DB::connection("ch-dn02")->table("cdrdatos.table_nintex_geomarketing")
+        DB::connection("ch-dn01")->table("cdrdatos.table_nintex_geomarketing")
         ->insert([
             "codigo_c" => $this->userIdentifier,
             "nintex" => $nintex,
@@ -181,7 +181,7 @@ class EloquentGeoMarketingRepository implements GeoMarketingRepository
 
     public function getLogs()
     {
-        return DB::connection("ch-dn02")->table("cdrdatos.table_nintex_geomarketing")->get();
+        return DB::connection("ch-dn01")->table("cdrdatos.table_nintex_geomarketing")->get();
     }
     
     public function getBlackAndWhiteListSummary()
@@ -190,13 +190,13 @@ class EloquentGeoMarketingRepository implements GeoMarketingRepository
         ->select(DB::raw("SELECT date(fecha_carga) as fecha_actualizacion,
         count(distinct if(toString(wl)='X',msisdn,null)) as UserWhiteList,
         count(distinct if(toString(bl)='X',msisdn,null)) as UserBlackList
-        from dwa.f_d_base_wl_bl group by 1"));
+        from remote('172.19.242.57',dwa.f_d_base_wl_bl,'nifi','nifi') group by 1"));
     }
 
     private function exec_sql(array $queries)
     {
         foreach($queries as $row){
-            DB::connection("ch-dn02")->statement(DB::raw($row["sql"]));
+            DB::connection("ch-dn01")->statement(DB::raw($row["sql"]));
         }
     }
 }

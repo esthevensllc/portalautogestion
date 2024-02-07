@@ -170,6 +170,19 @@ return [
             ]
         ],
 
+        'ch-dn01' => [
+            'driver' => 'bavix::clickhouse',
+            'host' => env('DB10_HOST', 'localhost'),
+            'port' => env('DB10_PORT', '1433'),
+            'database' => env('DB10_DATABASE', 'default'),
+            'username' => env('DB10_USERNAME', 'default'),
+            'password' => env('DB10_PASSWORD', ''),
+            'options' => [
+                'timeout' => 30,
+                'protocol' => 'http'
+            ]
+        ],
+
         'sqlite' => [
             'driver' => 'sqlite',
             'url' => env('DATABASE_URL'),
