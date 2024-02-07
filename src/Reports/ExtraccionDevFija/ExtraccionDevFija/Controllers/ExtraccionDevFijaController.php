@@ -7,8 +7,10 @@ use AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Services\ExportExtraccion
 use AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Services\FindReportInputs;
 use AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Services\GetReportInputs;
 use AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Services\ProcessExtraccionDevFija;
+use AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Services\UploadReportExtraccionFija;
 use AMovil\Reports\ExtraccionDevFija\InformesFalla\Services\InformeFallasFinder;
 use AMovil\Reports\ExtraccionDevFija\TicketReports\Services\FijaTicketReportFinder;
+use AMovil\Shared\Application\FileInput;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -21,6 +23,7 @@ class ExtraccionDevFijaController
     private $exportRepPostpago;
     private $ticketReportFinder;
     private $informeFallasFinder;
+    private $reporteExtraccionUploader;
 
     public function __construct(
         ProcessExtraccionDevFija $process,
@@ -29,7 +32,8 @@ class ExtraccionDevFijaController
         ExportExtraccionFijaUsuariosAfectados $exportUsuarioAfectados,
         ExportExtraccionFijaPostpago $exportRepPostpago,
         FijaTicketReportFinder $ticketReportFinder,
-        InformeFallasFinder $informeFallasFinder
+        InformeFallasFinder $informeFallasFinder,
+        UploadReportExtraccionFija $reporteExtraccionUploader
     ) {
         $this->process = $process;
         $this->getReportInputs = $getReportInputs;
@@ -38,6 +42,7 @@ class ExtraccionDevFijaController
         $this->exportRepPostpago = $exportRepPostpago;
         $this->ticketReportFinder = $ticketReportFinder;
         $this->informeFallasFinder = $informeFallasFinder;
+        $this->reporteExtraccionUploader = $reporteExtraccionUploader;
     }
 
     public function view()
@@ -138,5 +143,27 @@ class ExtraccionDevFijaController
             ]
             ];
         return response($response["content"], 200, $headersByTipe[$response["type"]]);
+    }
+
+    
+    public function cargaReporteView()
+    {
+        $ticketReports = $this->ticketReportFinder->getByCriteria([])["data"];
+        $config = [
+            "title" => "CARGA DE REPORTES",
+            "api" => url("extraccion-dev-fija/carga-reportes/upload"),
+            "tickets" => $ticketReports,
+        ];
+        return view("extraccion_dev_fija.carga_reportes", compact("config"));
+    }
+
+    public function uploadReport(Request $request)
+    {   
+        $file = new FileInput(
+            $request->file("excel")->getPathname(),
+            $request->file("excel")->getClientOriginalName()
+        );
+        $this->reporteExtraccionUploader->__invoke($file);
+        return response()->json([]);
     }
 }
