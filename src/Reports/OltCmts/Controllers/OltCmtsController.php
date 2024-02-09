@@ -52,6 +52,7 @@ class OltCmtsController
 
     public function export(Request $request)
     {
+        ini_set('max_execution_time', '3600');
         $response = $this->exporter->__invoke(
             $request->input("type_id"),
             $request->input("fecha"),

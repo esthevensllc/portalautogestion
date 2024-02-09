@@ -22,7 +22,7 @@ class EloquentOltCmtsRepository implements OltCmtsRepository
     {
         $data = [
             ["id" => "1", "label" => "OLT"],
-            // ["id" => "2", "label" => "CMTS"],
+            ["id" => "2", "label" => "CMTS"],
         ];
         return json_decode(json_encode($data), false);
     }
@@ -49,6 +49,18 @@ class EloquentOltCmtsRepository implements OltCmtsRepository
 
     public function getOltReport(DateTime $fecha, array $olts)
     {
+        $this->generateReport(1, $fecha, $olts);
+        return DB::connection("oracle")->select("select * from usraes.olt_mac_final_{$this->userIdentifier}");
+    }
+
+    public function getCmtsReport(DateTime $fecha, array $cmts)
+    {
+        $this->generateReport(2, $fecha, $cmts);
+        return DB::connection("oracle")->select("select * from usraes.cmts_table_final_{$this->userIdentifier}");
+    }
+
+    private function generateReport(int $type_id, DateTime $fecha, array $values)
+    {
         $now = new DateTime();
         $diff = $fecha->diff($now);
         // $strValues = implode("','", $olts);
@@ -56,9 +68,9 @@ class EloquentOltCmtsRepository implements OltCmtsRepository
         
 
         $request = [
-            "type_id" => "1",
+            "type_id" => $type_id,
             "days" => "{$diff->days}",
-            "values" => $olts
+            "values" => $values
         ];
         $http_response = Http::withHeaders([
             "x-user-identifier" => $this->userIdentifier,
@@ -71,7 +83,6 @@ class EloquentOltCmtsRepository implements OltCmtsRepository
             $error_message = $http_response->body();
             throw new Exception(json_encode($error_message));
         }
-        return DB::connection("oracle")->select("select * from usraes.olt_mac_final_{$this->userIdentifier}");
     }
 
     public function getOltListSummary()

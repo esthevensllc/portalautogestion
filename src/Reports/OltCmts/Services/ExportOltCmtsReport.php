@@ -38,13 +38,20 @@ class ExportOltCmtsReport
         $this->authService = $authService;
     }
 
-    public function __invoke($typeId, $fecha, $values)
+    public function __invoke(int $typeId, $fecha, $values)
     {
         $dtStart = new DateTime();
         $this->userIdentifier = $this->authService->getUserIdentifier();
         try {
             $dtFecha = DateTime::createFromFormat("Y-m-d", $fecha);
-            $data = $this->repo->getOltReport($dtFecha, $values);
+            $data = [];
+            if($typeId === 1){
+                $data = $this->repo->getOltReport($dtFecha, $values);
+            } elseif ($typeId === 2){
+                $data = $this->repo->getCmtsReport($dtFecha, $values);
+            } else {
+                throw new Exception("El tipo de reporte no es valido");
+            }
             $tempfile = $this->export($data);
             $dtEnd = new DateTime();
             $this->reportLog($tempfile, $dtStart, $dtEnd);
