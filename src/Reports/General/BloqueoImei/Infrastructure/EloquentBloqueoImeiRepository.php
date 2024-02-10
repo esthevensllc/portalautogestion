@@ -90,7 +90,7 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
             from cdrdatos.cdr{$strFecha}
             where (toDateTime('{$strFechaIni}') <= record_opening_time and record_opening_time <= toDateTime('{$strFechaFin}'))
             AND substr(toString(served_imeisv),1,14)
-            in (select imei from bloqueo_imei.base_imei_automatico where delete_flag=0 group by 1)
+            in (select substr(toString(imei),1,14) imei from bloqueo_imei.base_imei_automatico where delete_flag=0 group by 1)
             --and toString(rattype) not in ('3')
             group by served_imeisv2, served_msisdn,serving_node_address1,serving_node_plmn_identifier,
             record_opening_time,rattype,access_point_name_ni,cause_for_rec_closing,losd_datavolume_fbc_uplink,
@@ -127,13 +127,13 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
             from cdrdatos.cdr{$strFecha}
             where (toDateTime('{$strFechaIni}') <= record_opening_time and record_opening_time <= toDateTime('{$strFechaFin}'))
             AND substr(toString(served_imeisv),1,14)
-            in (select substring(toString(imei),1,14) as imei1 from eir.subscriber_eir_1day group by 1)
+            in (select substring(toString(imei),1,14) as imei1 from remote('172.19.242.57',eir.subscriber_eir_1day) group by 1)
             group by served_imeisv2, served_msisdn,serving_node_address1,serving_node_plmn_identifier,
             record_opening_time,rattype,access_point_name_ni,cause_for_rec_closing,losd_datavolume_fbc_uplink,
             losd_datavolume_fbc_downlink
         )  x
         join cdrdatos.access_points y on toString(x.access_point_name_ni)=toString(y.id)  
-        join eir.subscriber_eir_1day z on substring(toString(z.imei), 1, 14) = toString(x.served_imeisv2)
+        join remote('172.19.242.57',eir.subscriber_eir_1day) z on substring(toString(z.imei), 1, 14) = toString(x.served_imeisv2)
         group by 1,2,3,4,5,6,7,8,9,10,11";
 
         $data = DB::connection("ch-dn01")->select($sql);
@@ -293,7 +293,7 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
 
         $generateReport = $generateReport ? 1 : 0;
         if($config === null){
-            DB::connection("ch-dn01")
+            DB::connection("ch-dn02")
             ->table("bloqueo_imei.imei_cdr_automatico_config")
             ->insert([
                 "id" => '1',
@@ -302,7 +302,7 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
                 "updated_at" => $now->format("Y-m-d H:i:s")
             ]);
         }else{
-            DB::connection("ch-dn01")
+            DB::connection("ch-dn02")
             ->statement(DB::raw("alter table bloqueo_imei.imei_cdr_automatico_config
             update generate_report = {$generateReport}, updated_at = now() where 1 = 1"));
         }
@@ -310,12 +310,12 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
 
     public function getConfig()
     {
-        return DB::connection("ch-dn01")->table("bloqueo_imei.imei_cdr_automatico_config")->first();
+        return DB::connection("ch-dn02")->table("bloqueo_imei.imei_cdr_automatico_config")->first();
     }
 
     public function getControlEirImeiByCriteria($filters)
     {
-        $builder = DB::connection("ch-dn01")->table("eir.table_eir_control_log_v2");
+        $builder = DB::connection("ch-dn02")->table("eir.table_eir_control_log_v2");
         foreach($filters as $row){
             if($row[0] === 'imei'){
                 $builder->where($row[0], 'LIKE', $row[1] . '%');
