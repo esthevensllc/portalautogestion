@@ -98,7 +98,7 @@ $(function() {
         .then(resp => resp.json())
         .then(resp => {
             let html = resp.data.map(row => `<option value="${row.id}">${row.label}</option>`).join("");
-            $("#slc-values").html(html);
+            $("#slc-values").html(`<option value="all">Todos</option>${html}`);
             $("#slc-values").select2({width: '100%'});
         })
         .catch(error => {

@@ -23,19 +23,22 @@ class ExportOltCmtsReport
     private $localStorage;
     private $authService;
     private $userIdentifier;
+    private $inputFinder;
 
     public function __construct(
         OltCmtsRepository $repo,
         ExportService $exportService,
         SaveReportLog $saveReportLog,
         StorageService $storageService,
-        AuthService $authService
+        AuthService $authService,
+        OltCmtsFinder $inputFinder
     ) {
         $this->repo = $repo;
         $this->exportService = $exportService;
         $this->saveReportLog = $saveReportLog;
         $this->localStorage = $storageService->getStorageSystemByName(StorageSystemName::LOCAL2);
         $this->authService = $authService;
+        $this->inputFinder = $inputFinder;
     }
 
     public function __invoke(int $typeId, $fecha, $values)
@@ -46,8 +49,14 @@ class ExportOltCmtsReport
             $dtFecha = DateTime::createFromFormat("Y-m-d", $fecha);
             $data = [];
             if($typeId === 1){
+                if(in_array("all", $values)){
+                    $values = $this->getAllInputs($typeId, $dtFecha);
+                }
                 $data = $this->repo->getOltReport($dtFecha, $values);
             } elseif ($typeId === 2){
+                if(in_array("all", $values)){
+                    $values = $this->getAllInputs($typeId, $dtFecha);
+                }
                 $data = $this->repo->getCmtsReport($dtFecha, $values);
             } else {
                 throw new Exception("El tipo de reporte no es valido");
@@ -72,6 +81,27 @@ class ExportOltCmtsReport
             $dtEnd = new DateTime();
             $this->reportLog(null, $dtStart, $dtEnd);
             throw $th;
+        }
+    }
+
+    private function getAllInputs(int $typeId, Datetime $fecha)
+    {
+        if($typeId === 1){
+            $inputs = $this->inputFinder->getOltsValues($fecha);
+            $values = [];
+            foreach($inputs as $row){
+                $values[] = $row->id;
+            }
+            return $values;
+        } elseif ($typeId === 2){
+            $inputs = $this->inputFinder->getCmtsValues($fecha);
+            $values = [];
+            foreach($inputs as $row){
+                $values[] = $row->id;
+            }
+            return $values;
+        } else {
+            throw new Exception("El tipo de reporte no es valido");
         }
     }
 
