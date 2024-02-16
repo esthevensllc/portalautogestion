@@ -9,7 +9,6 @@
         padding: 0.4rem;
     }
 </style>
-<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
 @endsection
 
 @section('content')
@@ -113,10 +112,6 @@
 <script type="text/javascript" src="{{ asset('packages/datatables.net-fixedheader/js/dataTables.fixedHeader.min.js') }}"></script>
 <script type="text/javascript" src="{{ asset('packages/datatables.net-fixedheader-bs4/js/fixedHeader.bootstrap4.min.js') }}"></script>
 
-{{-- <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script> --}}
-<script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
-
 @include('includes.utils_js')
 <script>
 $(function() {
@@ -214,7 +209,7 @@ $(function() {
     }
 
 
-    $('input[name=date_range]').daterangepicker({
+    /*$('input[name=date_range]').daterangepicker({
         "timePicker": true,
         "timePicker24Hour": true,
         "timePickerSeconds": true,
@@ -223,7 +218,7 @@ $(function() {
         },
     }, function(start, end, label) {
         console.log('New date range selected: ' + start.format('YYYY-MM-DD HH:mm:ss') + ' to ' + end.format('YYYY-MM-DD HH:mm:ss') + ' (predefined range: ' + label + ')');
-    });
+    });*/
 
     let _datatable = $(".tbl-informefallas").DataTable({
         language: {url: "{{ url('packages/datatables-language/spanish.json') }}"},
