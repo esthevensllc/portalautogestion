@@ -497,4 +497,10 @@ Route::group([
         Route::post('export', [\AMovil\Reports\MantenimientoCeldas\Mantenimiento\Controllers\MantenimientoCeldaController::class, 'export']);
     });
 
+    Route::group(['prefix' => 'clientes-planos', 'trac_name' => 'clientes-planos'], function(){
+        Route::get('/', [\AMovil\Reports\ClientesPlanos\Controllers\ClientesPlanosController::class, 'view']);
+        Route::get('find-values', [\AMovil\Reports\ClientesPlanos\Controllers\ClientesPlanosController::class, 'findValues']);
+        Route::post('export', [\AMovil\Reports\ClientesPlanos\Controllers\ClientesPlanosController::class, 'export']);
+    });
+
 });
