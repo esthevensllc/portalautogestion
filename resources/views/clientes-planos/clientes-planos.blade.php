@@ -56,7 +56,7 @@
             <div class="row">
                 <div class="col-lg-3" style="display: flex; align-items: end;">
                     <div class="form-group">
-                        <button type="submit" class="btn btn-primary btn-sm btn_export">Descargar</button>
+                        <button type="submit" class="btn btn-primary btn-sm btn_export">Generar Reporte</button>
                     </div>
                 </div>
             </div>
@@ -75,15 +75,39 @@
 <script>
 $(function() {
     const config = @json($config);
+    const loader_component = document.querySelector('.loader_component');
 
     $("#slc-values").select2({width: '100%'});
 
     $("#form_export").on('submit', function(e){
         e.preventDefault();
-        utils.downloadHandler({
+        var formData = $(this).serialize();
+
+        $.ajax({
             url: config.url,
-            requestOptions: {headers: {accept: "application/json"}}
-        }, e);
+            method: 'POST',
+            data: formData,
+            beforeSend: function() {
+                loader_component.style.display = 'block';
+            },
+            success: function(response) {
+                new Noty({
+                    type: 'success',
+                    text: 'Archivo generado con éxito, puede descargarlo en el menu de reportes',
+                    timeout: 3000
+                }).show();
+            },
+            error: function(xhr, status, error){
+                new Noty({
+                    type: 'error',
+                    text: 'Hubo un error al generar el archivo',
+                    timeout: 3000
+                }).show();
+            },
+            complete: function() {
+                loader_component.style.display = 'none';
+            }
+        });
     });
 
     $(".slc-list-values").on("change", function(){

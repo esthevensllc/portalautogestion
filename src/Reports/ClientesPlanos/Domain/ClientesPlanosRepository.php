@@ -12,4 +12,5 @@ interface ClientesPlanosRepository
     public function getOltReport(DateTime $fecha, array $olts);
     public function getCmtsReport(DateTime $fecha, array $cmts);
     public function getOltListSummary();
+    public function getByCriteria(array $filters, $sortBy = [], $offset=0, $limit=0);
 }

@@ -47,7 +47,7 @@ class ExportClientesPlanosReport
         $this->userIdentifier = $this->authService->getUserIdentifier();
         try {
             $dtFecha = DateTime::createFromFormat("Y-m-d", $fecha);
-            $data = [];
+            $data = "error_php";
             if($typeId === 1){
                 if(in_array("all", $values)){
                     $values = $this->getAllInputs($typeId, $dtFecha);
@@ -63,7 +63,8 @@ class ExportClientesPlanosReport
             } else {
                 throw new Exception("El tipo de reporte no es valido");
             }
-            $tempfile = $this->export($data);
+
+            /*$tempfile = $this->export($data);
             $dtEnd = new DateTime();
             $this->reportLog($tempfile, $dtStart, $dtEnd);
             
@@ -78,7 +79,8 @@ class ExportClientesPlanosReport
                 "filename" => $filenameToSend,
                 "type" => "csv",
                 "content" => $content
-            ]);
+            ]);*/
+            return $data;
         } catch (\Throwable $th) {
             $dtEnd = new DateTime();
             $this->reportLog(null, $dtStart, $dtEnd);
@@ -153,13 +155,13 @@ class ExportClientesPlanosReport
 
     private function reportLog($tempfile, DateTime $ini, DateTime $fin, array $extra_data = [])
     {
-        $filename = "CLIENTES_PLANOS_".$ini->format('YmdHis').".csv";
+        //$filename = "CLIENTES_PLANOS_".$ini->format('YmdHis').".csv";
         $data = array_merge([
             'name' => 'CLIENTES_PLANOS',
             'ini' => $ini->format('Y-m-d H:i:s'),
             'fin' => $fin->format('Y-m-d H:i:s'),
             'trac_name' => 'clientes-planos',
-            "filename" => $tempfile !== null ? $filename : null
+            "filename" => $tempfile !== null ? $tempfile : null
         ], $extra_data);
         $this->saveReportLog->__invoke($data, $tempfile, 'CLIENTES_PLANOS');
     }

@@ -8,6 +8,7 @@ use DateTime;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use AMovil\Shared\Infrastructure\Eloquent\EloquentCriteriaConverter;
 
 class EloquentClientesPlanosRepository implements ClientesPlanosRepository
 {
@@ -49,14 +50,14 @@ class EloquentClientesPlanosRepository implements ClientesPlanosRepository
 
     public function getOltReport(DateTime $fecha, array $olts)
     {
-        $this->generateReport(1, $fecha, $olts);
-        return DB::connection("oracle")->select("select * from USRAES.olt_planos_final_{$this->userIdentifier}");
+        return $this->generateReport(1, $fecha, $olts);
+        //return DB::connection("oracle")->select("select * from USRAES.olt_planos_final_{$this->userIdentifier}");
     }
 
     public function getCmtsReport(DateTime $fecha, array $cmts)
     {
-        $this->generateReport(2, $fecha, $cmts);
-        return DB::connection("oracle")->select("select * from usraes.planos_cmts_table_final_{$this->userIdentifier}");
+        return $this->generateReport(2, $fecha, $cmts);
+        //return DB::connection("oracle")->select("select * from usraes.planos_cmts_table_final_{$this->userIdentifier}");
     }
 
     private function generateReport(int $type_id, DateTime $fecha, array $planos)
@@ -83,6 +84,8 @@ class EloquentClientesPlanosRepository implements ClientesPlanosRepository
         if($http_response->getStatusCode() !== 200){
             $error_message = $http_response->body();
             throw new Exception(json_encode($error_message));
+        }else{
+            return $http_response->getStatusCode();
         }
     }
 
@@ -91,5 +94,31 @@ class EloquentClientesPlanosRepository implements ClientesPlanosRepository
         $query = "SELECT min(fecha) fecha_min, max(fecha) fecha_max FROM portal_autogestion.list_olt_planos_1day";
         $result = DB::connection("ch-dn05")->select($query);
         return json_decode(json_encode($result[0]), false);
+    }
+
+    private $fields = [
+        'id' => ["label" => 'Id', "type" => 'number'],
+        'name' => ["label" => 'name', "type" => 'string'],
+        'codigo_c' => ["label" => 'Código', "type" => 'string'],
+        'filename' => ["label" => 'Archivo', "type" => 'string'],
+        'ini' => ["label" => 'Fecha Creación', "type" => 'datetime']
+    ];
+
+    public function getByCriteria(array $filters, $sortBy = [], $offset=0, $limit=0)
+    {
+        $builder = DB::table('usraes.reporte_log');
+        EloquentCriteriaConverter::fromRawArray($builder, $this->fields, $filters, $sortBy);
+
+        $response = [
+            'recordsTotal' => DB::table('usraes.reporte_log')->count(),
+            'recordsFiltered' => $builder->count(),
+            'data' => []
+        ];
+
+        $builder = DB::table('usraes.reporte_log');
+        EloquentCriteriaConverter::fromRawArray($builder, $this->fields, $filters, $sortBy, $offset, $limit);
+
+        $response['data'] = $builder->get();
+        return $response;
     }
 }

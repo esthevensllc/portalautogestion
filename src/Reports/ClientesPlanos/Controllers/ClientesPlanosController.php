@@ -53,15 +53,43 @@ class ClientesPlanosController
     public function export(Request $request)
     {
         ini_set('max_execution_time', '3600');
+
         $response = $this->exporter->__invoke(
             $request->input("type_id"),
             $request->input("fecha"),
             $request->input("planos", [])
-        )->data();
+        );
 
-        return response($response["content"], 200, [
+        return response()->json(['estado' => $response]);
+        /*return response($response["content"], 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition' => 'attachment;filename="'. $response["filename"] .'"'
-        ]);
+        ]);*/
+    }
+
+    public function viewReports()
+    {
+        $config = [
+            'title' => 'Descarga de reportes',
+            'getApi' => url('clientes-planos/descarga-reportes/search'),
+            'downloadApi' => url('clientes-planos/descarga-reportes/[file]/download'),
+        ];
+        return view("clientes-planos.descarga_reportes", compact("config"));
+    }
+
+    public function search()
+    {
+        $data = $this->finder->get();
+        return response()->json(["data" => $data]);
+    }
+
+    public function download($file){
+        $rutaArchivo = storage_path('app/clientes-planos/reportes/'.$file);
+        $nombreArchivo = $file;
+        return response()->download($rutaArchivo, $nombreArchivo);
+        /*return response($response["content"], 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment;filename="'. $response["filename"] .'"'
+        ]);*/
     }
 }
