@@ -502,4 +502,13 @@ Route::group([
         Route::post('export', [\AMovil\Reports\ListaExcepciones\Controllers\ListaExcepcionesController::class, 'export']);
     });
 
+    Route::group(['prefix' => 'clientes-planos', 'trac_name' => 'clientes-planos'], function(){
+        Route::get('/', [\AMovil\Reports\ClientesPlanos\Controllers\ClientesPlanosController::class, 'view']);
+        Route::get('find-values', [\AMovil\Reports\ClientesPlanos\Controllers\ClientesPlanosController::class, 'findValues']);
+        Route::post('export', [\AMovil\Reports\ClientesPlanos\Controllers\ClientesPlanosController::class, 'export']);
+        Route::get('/descarga-reportes', [\AMovil\Reports\ClientesPlanos\Controllers\ClientesPlanosController::class, 'viewReports']);
+        Route::get('/descarga-reportes/search', [\AMovil\Reports\ClientesPlanos\Controllers\ClientesPlanosController::class, 'search']);
+        Route::get('/descarga-reportes/{file}/download', [\AMovil\Reports\ClientesPlanos\Controllers\ClientesPlanosController::class, 'download']);
+    });
+
 });

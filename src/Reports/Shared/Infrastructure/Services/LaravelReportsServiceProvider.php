@@ -201,6 +201,10 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\MantenimientoCeldas\TicketReports\Infrastructure\EloquentTicketReportRepository::class
         );
         $this->app->bind(
+            \AMovil\Reports\ClientesPlanos\Domain\ClientesPlanosRepository::class,
+            \AMovil\Reports\ClientesPlanos\Infrastructure\EloquentClientesPlanosRepository::class
+        );
+        $this->app->bind(
             \AMovil\Reports\ListaExcepciones\Domain\ListaExcepcionesRepository::class,
             \AMovil\Reports\ListaExcepciones\Infrastructure\EloquentListaExcepcionesRepository::class
         );
