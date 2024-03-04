@@ -496,5 +496,10 @@ Route::group([
         Route::post('input', [\AMovil\Reports\MantenimientoCeldas\Mantenimiento\Controllers\MantenimientoCeldaController::class, 'findInput']);
         Route::post('export', [\AMovil\Reports\MantenimientoCeldas\Mantenimiento\Controllers\MantenimientoCeldaController::class, 'export']);
     });
+    Route::group(['prefix' => 'lista-excepciones', 'trac_name' => 'lista-excepciones'], function(){
+        Route::get('/', [\AMovil\Reports\ListaExcepciones\Controllers\ListaExcepcionesController::class, 'view']);
+        Route::get('search', [\AMovil\Reports\ListaExcepciones\Controllers\ListaExcepcionesController::class, 'search']);
+        Route::post('export', [\AMovil\Reports\ListaExcepciones\Controllers\ListaExcepcionesController::class, 'export']);
+    });
 
 });
