@@ -208,5 +208,9 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\ListaExcepciones\Domain\ListaExcepcionesRepository::class,
             \AMovil\Reports\ListaExcepciones\Infrastructure\EloquentListaExcepcionesRepository::class
         );
+        $this->app->bind(
+            \AMovil\Reports\ClientesMacSn\Domain\ClientesMacSnRepository::class,
+            \AMovil\Reports\ClientesMacSn\Infrastructure\EloquentClientesMacSnRepository::class
+        );
     }
 }

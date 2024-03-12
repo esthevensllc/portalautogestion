@@ -511,4 +511,9 @@ Route::group([
         Route::get('/descarga-reportes/{file}/download', [\AMovil\Reports\ClientesPlanos\Controllers\ClientesPlanosController::class, 'download']);
     });
 
+    Route::group(['prefix' => 'clientes-mac-sn', 'trac_name' => 'clientes-mac-sn'], function(){
+        Route::get('/', [\AMovil\Reports\ClientesMacSn\Controllers\ClientesMacSnController::class, 'view']);
+        Route::post('export', [\AMovil\Reports\ClientesMacSn\Controllers\ClientesMacSnController::class, 'export']);
+    });
+
 });
