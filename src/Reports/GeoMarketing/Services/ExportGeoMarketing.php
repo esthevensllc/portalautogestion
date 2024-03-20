@@ -15,7 +15,7 @@ class ExportGeoMarketing
         "2" => ["name" => "ESTADIO_MONUMENTAL"],
     ];
     private $repository;
-    const MAX_DAYS = 3;
+    const MAX_DAYS = 7;
 
     public function __construct(GeoMarketingRepository $repo)
     {

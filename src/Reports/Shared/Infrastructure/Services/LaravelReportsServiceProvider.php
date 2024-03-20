@@ -212,5 +212,9 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\CargosFijosServiciosActivos\Domain\DetalleRepository::class,
             \AMovil\Reports\CargosFijosServiciosActivos\Infrastructure\Repository\EloquentDetalleRepository::class
         );
+        $this->app->bind(
+            \AMovil\Reports\ClientesMacSn\Domain\ClientesMacSnRepository::class,
+            \AMovil\Reports\ClientesMacSn\Infrastructure\EloquentClientesMacSnRepository::class
+        );
     }
 }
