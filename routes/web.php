@@ -496,6 +496,11 @@ Route::group([
         Route::post('input', [\AMovil\Reports\MantenimientoCeldas\Mantenimiento\Controllers\MantenimientoCeldaController::class, 'findInput']);
         Route::post('export', [\AMovil\Reports\MantenimientoCeldas\Mantenimiento\Controllers\MantenimientoCeldaController::class, 'export']);
     });
+    Route::group(['prefix' => 'lista-excepciones', 'trac_name' => 'lista-excepciones'], function(){
+        Route::get('/', [\AMovil\Reports\ListaExcepciones\Controllers\ListaExcepcionesController::class, 'view']);
+        Route::get('search', [\AMovil\Reports\ListaExcepciones\Controllers\ListaExcepcionesController::class, 'search']);
+        Route::post('export', [\AMovil\Reports\ListaExcepciones\Controllers\ListaExcepcionesController::class, 'export']);
+    });
 
     Route::group(['prefix' => 'clientes-planos', 'trac_name' => 'clientes-planos'], function(){
         Route::get('/', [\AMovil\Reports\ClientesPlanos\Controllers\ClientesPlanosController::class, 'view']);
@@ -504,6 +509,17 @@ Route::group([
         Route::get('/descarga-reportes', [\AMovil\Reports\ClientesPlanos\Controllers\ClientesPlanosController::class, 'viewReports']);
         Route::get('/descarga-reportes/search', [\AMovil\Reports\ClientesPlanos\Controllers\ClientesPlanosController::class, 'search']);
         Route::get('/descarga-reportes/{file}/download', [\AMovil\Reports\ClientesPlanos\Controllers\ClientesPlanosController::class, 'download']);
+    });
+    
+    Route::group(['prefix' => 'cargos-fijos-servicios-activos/reporte', 'trac_name' => 'cargos-fijos-servicios-activos.reporte'], function(){
+        Route::get('/', [\AMovil\Reports\CargosFijosServiciosActivos\Controllers\ReporteController::class, 'reporte']);
+        Route::post('export', [\AMovil\Reports\CargosFijosServiciosActivos\Controllers\ReporteController::class, 'descargaReporte']);
+    });
+
+    Route::group(['prefix' => 'cargos-fijos-servicios-activos/reportes', 'trac_name' => 'cargos-fijos-servicios-activos.search'], function(){
+        Route::get('/', [\AMovil\Reports\CargosFijosServiciosActivos\Controllers\LogReporteTempController::class, 'view']);
+        Route::get('search', [\AMovil\Reports\CargosFijosServiciosActivos\Controllers\LogReporteTempController::class, 'search']);
+        Route::get('{file}/download', [\AMovil\Reports\CargosFijosServiciosActivos\Controllers\LogReporteTempController::class, 'download']);
     });
 
 });

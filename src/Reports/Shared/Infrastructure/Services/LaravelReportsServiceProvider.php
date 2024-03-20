@@ -204,5 +204,13 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\ClientesPlanos\Domain\ClientesPlanosRepository::class,
             \AMovil\Reports\ClientesPlanos\Infrastructure\EloquentClientesPlanosRepository::class
         );
+        $this->app->bind(
+            \AMovil\Reports\ListaExcepciones\Domain\ListaExcepcionesRepository::class,
+            \AMovil\Reports\ListaExcepciones\Infrastructure\EloquentListaExcepcionesRepository::class
+        );
+        $this->app->bind(
+            \AMovil\Reports\CargosFijosServiciosActivos\Domain\DetalleRepository::class,
+            \AMovil\Reports\CargosFijosServiciosActivos\Infrastructure\Repository\EloquentDetalleRepository::class
+        );
     }
 }
