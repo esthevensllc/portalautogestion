@@ -281,6 +281,7 @@ class EloquentDetalleConsumoNFRepository implements DetalleConsumoNFRepository
 
     public function getCiclo(string $numCuenta){
         $dtPartition = new DateTime();
+        $dtPartition->modify("-1 day");
         $strMonthPartition = $dtPartition->format("Ym");
         $query = "SELECT CUSTOMER_ACCOUNT_BILLING_CYCLE_SC ciclo from DWA.DW_M_SUBSCRIPTION_HIST PARTITION(P_{$strMonthPartition}) 
         WHERE CUSTOMER_ACCOUNT_DESC= :num_cuenta group by CUSTOMER_ACCOUNT_BILLING_CYCLE_SC";
