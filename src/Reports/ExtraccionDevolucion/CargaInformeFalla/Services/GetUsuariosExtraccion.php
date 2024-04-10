@@ -25,16 +25,16 @@ class GetUsuariosExtraccion
         $numUsuariosAfectados2 = null;
         $numUsuariosAfectados3 = null;
         if($input !== null){
-            $numUsuariosAfectados1 = $this->getNumUsuariosAfectados($input, $input->ticket, 100);
-            $numUsuariosAfectados2 = $this->getNumUsuariosAfectados($input, $input->ticket, 120);
-            $numUsuariosAfectados3 = $this->getNumUsuariosAfectados($input, $input->ticket, 140);
+            $numUsuariosAfectados1 = $this->getNumUsuariosAfectados($input, $input->ticket, 1);
+            $numUsuariosAfectados2 = $this->getNumUsuariosAfectados($input, $input->ticket, 2);
+            $numUsuariosAfectados3 = $this->getNumUsuariosAfectados($input, $input->ticket, 3);
         }
         $data = [
             "input" => $input,
             "usuarios" => [
-                ["num_usuarios" => $numUsuariosAfectados1, "minutos" => 100],
-                ["num_usuarios" => $numUsuariosAfectados2, "minutos" => 120],
-                ["num_usuarios" => $numUsuariosAfectados3, "minutos" => 140],
+                ["num_usuarios" => $numUsuariosAfectados1, "minutos" => 1],
+                ["num_usuarios" => $numUsuariosAfectados2, "minutos" => 2],
+                ["num_usuarios" => $numUsuariosAfectados3, "minutos" => 3],
             ]
         ];
         $data = json_decode(json_encode($data));
