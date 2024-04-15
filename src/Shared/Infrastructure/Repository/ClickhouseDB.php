@@ -9,7 +9,7 @@ class ClickhouseDB
 {
     private $connections = [];
 
-    public function connection($connectionId)
+    public function connection($connectionId): Client
     {
         if(array_key_exists($connectionId, $this->connections)){
             return $this->connections[$connectionId];
@@ -26,7 +26,7 @@ class ClickhouseDB
             // 'https' => true
         ]);
         $db->database($config["database"]);
-        $db->setTimeout(60);
+        $db->setTimeout(60*5);
         $db->setConnectTimeOut(5);
         $db->ping(true);
         return $this->connections[$connectionId] = $db;
