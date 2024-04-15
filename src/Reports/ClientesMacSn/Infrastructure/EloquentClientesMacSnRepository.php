@@ -42,27 +42,82 @@ class EloquentClientesMacSnRepository implements ClientesMacSnRepository
         }
         $this->db->insert("report_tabla_mac_{$this->userIdentifier}", $data, ["mac"]);
 
+        $this->db->write("DROP TABLE IF EXISTS portal_autogestion.temp_mac_sn_{$this->userIdentifier}");
+        $this->db->write("CREATE TABLE portal_autogestion.temp_mac_sn_{$this->userIdentifier}(
+            mac_sn Nullable(String) DEFAULT NULL CODEC(LZ4),
+            customer_id_codcli Nullable(String) DEFAULT NULL CODEC(LZ4)
+        )
+        ENGINE = MergeTree
+        PRIMARY KEY mac_sn
+        SETTINGS index_granularity = 8192, allow_nullable_key = 1");
+
         $strFecha = $fecha->format('Y-m-d');
 
+        $this->db->write("INSERT INTO portal_autogestion.temp_mac_sn_{$this->userIdentifier}
+        select mac_sn,customer_id_codcli 
+        from portal_autogestion.mac_sn_planos_1day
+        where fecha='{$strFecha}'
+        and mac_sn in (select mac from report_tabla_mac_{$this->userIdentifier} group by 1)");
+
         $query = "SELECT
-            aa.fecha,
-            aa.tipo,
-            aa.mac_sn,
-            bb.tip_documento,
-            bb.nro_documento,
-            aa.customer_id_codcli,
-            aa.plano_tracer plano,
-            bb.customer_account_name,
-            bb.telefono_claro_social,
-            bb.numero_adicional,
-            bb.direccion
-        from portal_autogestion.mac_sn_planos_1day aa
-        left join portal_autogestion.clientes_fijos_1day bb
-        on aa.customer_id_codcli=bb.customer_account_sc
-        where aa.fecha=bb.fecha and aa.fecha='{$strFecha}' -- <--  INGRESAR LA FECHA QUE SELECCIONARON EN EL PORTAL:
-        --and aa.mac_sn in ('64FD966E06F2') -- <-- en caso ingrese uno o varios mac separados por comas.
-        and aa.mac_sn in (select mac from report_tabla_mac_{$this->userIdentifier} group by 1) -- <-- en caso ingrese un excel.
-        group by 1,2,3,4,5,6,7,8,9,10,11";
-        return $this->db->select($query)->rows();
+        aa.mac_sn as mac_sn,
+        aa.customer_id_codcli as customer_id_codcli,
+        bb.modalidad as modalidad,
+        bb.customer_account_name as customer_account_name,
+        bb.tip_documento as tip_documento,
+        bb.nro_documento as nro_documento,
+        bb.direccion as direccion,
+        bb.fecha_activacion as fecha_activacion,
+        bb.estado as estado,
+        bb.fecha_status as fecha_status,
+        bb.motivo_de_estado as motivo_de_estado
+        from portal_autogestion.temp_mac_sn_{$this->userIdentifier} aa 
+        left join 
+        (
+            select * from (
+            select modalidad,
+                customer_account_high_sc customer_id_codcli,
+                customer_account_name,
+                tip_documento,
+                nro_documento,
+                direccion,
+                fecha_activacion,
+                estado,
+                fecha_status,
+                motivo_de_estado 
+            from portal_autogestion.clientes_fijos_1day 
+            where fecha='{$strFecha}' and customer_account_high_sc in 
+                (
+                select customer_id_codcli 
+                from portal_autogestion.temp_mac_sn_{$this->userIdentifier}
+                where customer_id_codcli like '0%'
+                )
+            union all 
+            select modalidad,
+                customer_account_sc customer_id_codcli,
+                customer_account_name,
+                tip_documento,
+                nro_documento,
+                direccion,
+                fecha_activacion,
+                estado,
+                fecha_status,
+                motivo_de_estado 
+            from portal_autogestion.clientes_fijos_1day 
+            where fecha='{$strFecha}' and customer_account_sc in 
+                (
+                select customer_id_codcli 
+                from portal_autogestion.temp_mac_sn_{$this->userIdentifier}
+                where customer_id_codcli not like '0%'
+                )
+            ) group by 1,2,3,4,5,6,7,8,9,10 
+        ) bb 
+        on aa.customer_id_codcli=bb.customer_id_codcli";
+        
+        $data = $this->db->select($query)->rows();
+
+        $this->db->write("DROP TABLE report_tabla_mac_{$this->userIdentifier}");
+        $this->db->write("DROP TABLE portal_autogestion.temp_mac_sn_{$this->userIdentifier}");
+        return $data;
     }
 }

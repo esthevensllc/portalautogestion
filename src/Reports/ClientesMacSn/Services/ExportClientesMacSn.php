@@ -32,13 +32,13 @@ class ExportClientesMacSn
             $macs = $this->getMacs($file);
         }
         $dtEnd = new DateTime();
-        $strNow = $dtEnd->format("YmdHis");
+        $strNow = $dtEnd->format("Ymd");
         $data = $this->repo->getReporte($macs, $dtFecha);
         $tempfile = $this->export($data);
         $content = file_get_contents($tempfile);
         unlink($tempfile);
         return Response::respData([
-            "filename" => "CLIENTE_MAC_SN_{$strNow}.xlsx",
+            "filename" => "CLIENTES_MAC_SN_{$strNow}.csv",
             "type" => "xlsx",
             "content" => $content
         ]);
@@ -62,23 +62,23 @@ class ExportClientesMacSn
     private function export($data)
     {
         $headers = [
-            "fecha" => ['label' => 'FECHA'],
-            "tipo" => ['label' => 'TIPO'],
             "mac_sn" => ['label' => 'MAC_SN'],
-            "tip_documento" => ['label' => 'TIP_DOCUMENTO'],
-            "nro_documento" => ['label' => 'NRO_DOCUMENTO'],
             "customer_id_codcli" => ['label' => 'CUSTOMER_ID_CODCLI'],
-            "plano" => ['label' => 'PLANO'],
+            "modalidad" => ['label' => 'MODALIDAD'],
             "customer_account_name" => ['label' => 'CUSTOMER_ACCOUNT_NAME'],
-            "telefono_claro_social" => ['label' => 'TELEFONO_CLARO_SOCIAL'],
-            "numero_adicional" => ['label' => 'NUMERO_ADICIONAL'],
-            "direccion" => ['label' => 'DIRECCION'],
+            "tip_documento" => ['label' => 'TIPO DOCUMENTO'],
+            "nro_documento" => ['label' => 'NUMERO DOCUMENTO'],
+            "direccion" => ['label' => 'DIRECCIÓN'],
+            "fecha_activacion" => ['label' => 'FECHA DE ACTIVACIÓN'],
+            "estado" => ['label' => 'ESTADO'],
+            "fecha_status" => ['label' => 'FECHA DE ESTADO'],
+            "motivo_de_estado" => ['label' => 'MOTIVO DE ESTADO']
         ];
 
         $this->exportService->loadData($headers, $data, [
             'sheetIndex' => 0,
             'rowType' => "array",
-            'title' => "CLIENTE_MAC_SN",
+            'title' => "CLIENTES_MAC",
             'styles' => [
                 'header' => [
                     'font' => ['bold' => true, 'size' => 9],
@@ -91,6 +91,6 @@ class ExportClientesMacSn
                 ]
             ]
         ]);
-        return $this->exportService->getWriter(WriterType::XLSX)->saveToTempfile();
+        return $this->exportService->getWriter(WriterType::CSV)->saveToTempfile();
     }
 }
