@@ -39,7 +39,7 @@ class LaravelReporteCursadoRepository implements ReporteCursadoRepository
         }*/
     }
 
-    private function load_lineas_table($data)
+    private function load_lineas_table($data,$conexion)
     {   
         // DB::connection($this->connection)->statement(DB::raw());
         $queries[] = ["sql" => "BEGIN
@@ -52,15 +52,13 @@ class LaravelReporteCursadoRepository implements ReporteCursadoRepository
         END;"];
         $queries[] = ["sql" => "CREATE TABLE USRAES.TMP_PULL_LINES_{$this->userIdentifier}(LINEA VARCHAR2(20), CYCLE VARCHAR2(20), IDX NUMBER) {$this->tablespace}"];
         
-        $this->exec_sql($queries);
+        $this->exec_sql($queries,$conexion);
 
         foreach($data as $index => $row){
             $data[$index]['idx'] = $index+1;
         }
 
-
-        DB::table("USRAES.TMP_PULL_LINES_{$this->userIdentifier}")->insert($data);
-        //DB::connection($this->connection)->table("USRAES.TMP_PULL_LINES_{$this->userIdentifier}")->insert($data);
+        DB::connection($conexion)->table("USRAES.TMP_PULL_LINES_{$this->userIdentifier}")->insert($data);        
     }
 
     private function getLineasFrom(DateTime $fecha, $field, $value){
@@ -82,7 +80,8 @@ class LaravelReporteCursadoRepository implements ReporteCursadoRepository
         $this->setUserIdentifier();
         $this->setConnection($fecha2);
         $lineas = $this->getLineasFrom($fecha2, 'customer_account_desc', $num_cuenta);
-        $this->load_lineas_table($lineas);
+        $this->load_lineas_table($lineas,'oracle');
+        $this->load_lineas_table($lineas,'oracle_reptdm');
 
         return $this->getReporte($fecha1, $fecha2);
     }
@@ -92,7 +91,8 @@ class LaravelReporteCursadoRepository implements ReporteCursadoRepository
         $this->setUserIdentifier();
         $this->setConnection($fecha2);
         $lineas = $this->getLineasFrom($fecha2,'customer_account_high_sc', $cod_cliente);
-        $this->load_lineas_table($lineas);
+        $this->load_lineas_table($lineas,'oracle');
+        $this->load_lineas_table($lineas,'oracle_reptdm');
 
         return $this->getReporte($fecha1, $fecha2);
     }
@@ -102,7 +102,8 @@ class LaravelReporteCursadoRepository implements ReporteCursadoRepository
         $this->setUserIdentifier();
         $this->setConnection($fecha2);
         $lineas = $this->getLineasFrom($fecha2, 'id_card_value', $num_documento);
-        $this->load_lineas_table($lineas);
+        $this->load_lineas_table($lineas,'oracle');
+        $this->load_lineas_table($lineas,'oracle_reptdm');
 
         return $this->getReporte($fecha1, $fecha2);
     }
@@ -111,7 +112,8 @@ class LaravelReporteCursadoRepository implements ReporteCursadoRepository
     {
         $this->setUserIdentifier();
         $this->setConnection($fecha2);
-        $this->load_lineas_table($lineas);
+        $this->load_lineas_table($lineas,'oracle');
+        $this->load_lineas_table($lineas,'oracle_reptdm');
 
         return $this->getReporte($fecha1, $fecha2);
     }
@@ -136,7 +138,9 @@ class LaravelReporteCursadoRepository implements ReporteCursadoRepository
             SERVICIO CHAR(100),
             CONSUMO_BYTES NUMBER
         )"];
-        $this->exec_sql($queries);
+
+        $conexion = 'oracle';
+        $this->exec_sql($queries,$conexion);
     }
 
     public function getConsolidado()
@@ -150,7 +154,47 @@ class LaravelReporteCursadoRepository implements ReporteCursadoRepository
         $str_fecha1 = $fecha1->format('d/m/Y');
         $str_fecha2 = $fecha2->format('d/m/Y');
 
+        $before_now = $now->modify('-2 days');
+
+        $sum_traf_mb = 0;
+
+        while($fecha2->format('Ymd') >= $before_now->format('Ymd')){
+
+            $conexion = 'oracle_reptdm';
+
+            $queries = [];
+
+            $queries[] = ["sql" => "BEGIN
+                EXECUTE IMMEDIATE 'DROP TABLE USRAES.REPORTE_GPRS_LINEAS_{$this->userIdentifier}';
+            EXCEPTION
+                WHEN OTHERS THEN
+                    IF SQLCODE != -942 THEN
+                        RAISE;
+                    END IF;
+            END;"];
+
+            $queries[] = ["sql" => "CREATE TABLE USRAES.REPORTE_GPRS_LINEAS_{$this->userIdentifier} AS 
+                SELECT /*+parallel(4)*/ TO_DATE(TO_CHAR(s_rec_opening_time,'YYYY-MM-DD'),'YYYY-MM-DD') as FECHA,
+                served_msisdn AS MSISDN,
+                round(sum(s_uplink+s_downlink)/(1024*1024),2) as traf_mb 
+                from DM.CDR_GPRS PARTITION(P_{$before_now->format('Ymd')}) 
+                where served_msisdn in (select LINEA from USRAES.TMP_PULL_LINES_{$this->userIdentifier}) 
+                group by TO_DATE(TO_CHAR(s_rec_opening_time,'YYYY-MM-DD'),'YYYY-MM-DD'),served_msisdn"
+            ];
+
+            $this->exec_sql($queries,$conexion);
+
+            $result = DB::connection($conexion)->table("USRAES.REPORTE_GPRS_LINEAS_{$this->userIdentifier}")->get();
+
+            $sum_traf_mb = $result->sum('traf_mb') + $sum_traf_mb;
+
+            $before_now = $before_now->modify('+1 days');
+        }
+
+        $conexion = 'oracle';
+
         $queries = [];
+
         $queries[] = ["sql" => "BEGIN
             EXECUTE IMMEDIATE 'DROP TABLE USRAES.T_MB_CONSUMIDOS10_{$this->userIdentifier}';
         EXCEPTION
@@ -187,12 +231,12 @@ class LaravelReporteCursadoRepository implements ReporteCursadoRepository
             v_nro_dias integer;
             v_msisdn varchar2(30);
         BEGIN
-          v_d_fecha_ini:=to_date('{$str_fecha1}','dd/mm/yyyy'); -- COLOCAR FECHA INICIO
-          v_d_fecha_fin:=to_date('{$str_fecha2}','dd/mm/yyyy'); -- COLOCAR FECHA FIN DEL CICLO DE FACTURACION.
-      
-          v_nro_dias:=to_number(v_d_fecha_fin-v_d_fecha_ini)+1;
-      
-          BEGIN
+        v_d_fecha_ini:=to_date('{$str_fecha1}','dd/mm/yyyy'); -- COLOCAR FECHA INICIO
+        v_d_fecha_fin:=to_date('{$str_fecha2}','dd/mm/yyyy'); -- COLOCAR FECHA FIN DEL CICLO DE FACTURACION.
+    
+        v_nro_dias:=to_number(v_d_fecha_fin-v_d_fecha_ini)+1;
+    
+        BEGIN
             FOR J IN 1 .. v_nro_dias LOOP
             v_partition :=to_char(v_d_fecha_fin - J +1,'YYYYMMDD');
 
@@ -212,7 +256,7 @@ class LaravelReporteCursadoRepository implements ReporteCursadoRepository
                 execute immediate sto; 
 
             END LOOP;
-         END;    
+        END;    
         END;"];
 
         $queries[] = ["sql" => "BEGIN
@@ -224,7 +268,7 @@ class LaravelReporteCursadoRepository implements ReporteCursadoRepository
                 END IF;
         END;"];
         $queries[] = ["sql" => "CREATE TABLE USRAES.T_REPORTE_VISANET10_{$this->userIdentifier} {$this->tablespace} AS
-        SELECT '".$fecha1->format('Ym')."' periodo,'{$str_fecha1} - {$str_fecha2}' STR_PERIODO, A.LINEA LINEA,'DATOS MOVIL' SERVICIO,NVL(B.CONSUMO_BYTES,0) CONSUMO_BYTES 
+        SELECT '".$fecha1->format('Ym')."' periodo,'{$str_fecha1} - {$str_fecha2}' STR_PERIODO, A.LINEA LINEA,'DATOS MOVIL' SERVICIO,NVL(B.CONSUMO_BYTES,0) + {$sum_traf_mb} CONSUMO_BYTES 
         FROM USRAES.TMP_PULL_LINES_{$this->userIdentifier} A
         LEFT JOIN (
         SELECT LINEA,SUM(CONSUMO_TOTAL) CONSUMO_BYTES FROM USRAES.T_MB_CONSUMIDOS10_{$this->userIdentifier}
@@ -237,14 +281,14 @@ class LaravelReporteCursadoRepository implements ReporteCursadoRepository
             COMMIT;
         END;"];
 
-        $this->exec_sql($queries);
+        $this->exec_sql($queries,$conexion);
         
-        return DB::connection($this->connection)->table("USRAES.T_REPORTE_VISANET10_{$this->userIdentifier}")->get();
+        return DB::connection($conexion)->table("USRAES.T_REPORTE_VISANET10_{$this->userIdentifier}")->get();
     }
 
-    private function exec_sql($queries){
+    private function exec_sql($queries,$conexion){
         foreach($queries as $row){
-            DB::connection($this->connection)->statement(DB::raw($row['sql']));
+            DB::connection($conexion)->statement(DB::raw($row['sql']));
         }
     }
 

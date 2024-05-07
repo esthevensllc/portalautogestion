@@ -46,26 +46,27 @@
                         <div class="invalid-feedback d-block text-dark">
                             Subir en archivo con formato xlsx y sin cabeceras<br>
                             Ingresar las lineas en la primera columna y anteponer el codigo 51<br>
-                            Ej. 51947123456
+                            Ingresar el ciclo en la segunda columna<br>
+                            Ej. 51947123456 | 18
                         </div>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-4">
                     <div class="form-group">
                         <label for="">Fecha inicio</label>
-                        <input type="date" class="form-control form-control-sm" name="fecha1" required>
+                        <input type="date" class="form-control form-control-sm" name="fecha1" max="{{date('Y-m-d', strtotime('-1 day'))}}" required>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-4">
                     <div class="form-group">
                         <label for="">Fecha fin</label>
-                        <input type="date" class="form-control form-control-sm" name="fecha2" required>
+                        <input type="date" class="form-control form-control-sm" name="fecha2" max="{{date('Y-m-d', strtotime('-1 day'))}}" required>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-4">
                     <div class="form-group">
                         PERIODO DISPONIBLE:<br>
-                        FECHA MAXIMA: {{$periodosDisponibles->max_date}}<br>
+                        FECHA MAXIMA: {{date('Ymd', strtotime('-1 day'))}}<br>
                         FECHA MINIMA: {{$periodosDisponibles->min_date}}
                     </div>
                 </div>
