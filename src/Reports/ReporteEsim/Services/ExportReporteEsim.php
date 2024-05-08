@@ -47,7 +47,7 @@ class ExportReporteEsim
 
     private function guard($nintex, FileInput $file){
         if($file->getExtension() !== "csv"){
-            throw new Exception("El archivo deve ser un csv");
+            throw new Exception("El archivo debe ser un csv");
         }
         if($this->repo->nintexIsProcessed($nintex)){
             throw new Exception("El nintex {$nintex} ya fue procesado");

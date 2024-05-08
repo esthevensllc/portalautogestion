@@ -137,9 +137,9 @@ class EloquentMantenimientoCeldaRepository implements MantenimientoCeldaReposito
         count(*) as counter
         FROM all_tab_partitions
         WHERE table_name = 'CDR_GPRS'
-        and segment_created = 'YES'
+        /*and segment_created = 'YES'
         AND NUM_ROWS IS NOT NULL
-        AND NUM_ROWS<>0
+        AND NUM_ROWS<>0*/ and SEGMENT_CREATED='YES'
         AND replace(PARTITION_name, 'P_') = :p_fecha_ini"), ["p_fecha_ini" => $strFechaIniF1])[0];
 
         if($table_validation->counter > 0){
