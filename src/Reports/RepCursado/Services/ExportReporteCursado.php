@@ -183,19 +183,26 @@ class ExportReporteCursado
 
     private function getPeriodos(DateTime $fecha1, DateTime $fecha2, $ciclo)
     {
-        $fecha_ini = DateTime::createFromFormat("Y-m-d", $fecha1->format("Y-m")."-".$ciclo);
+        $fecha_ciclo = DateTime::createFromFormat("Y-m-d", $fecha1->format("Y-m")."-".$ciclo);
+        $fecha_inicio = (clone $fecha1);
         $fecha_fin = (clone $fecha2);
         
         $periodos = [];
 
-        if($fecha1->format("Ymd") < $fecha_ini->format("Ymd")){
+        if($fecha1->format("Ymd") < $fecha_ciclo->format("Ymd")){
             $periodo = DateTime::createFromFormat("Y-m-d", $fecha1->format("Y-m")."-".$ciclo);
-            $p_fecha_fin = (clone $periodo);
-            $p_fecha_fin->modify("-1 day");
+
+            if($fecha_ciclo->format("Ymd") > $fecha_fin->format("Ymd")){
+                $p_fecha_fin = (clone $fecha_fin);
+            }else{
+                $p_fecha_fin = (clone $periodo);
+                $p_fecha_fin->modify("-1 day");
+            }
+
             $periodos[] = ["periodo" => $periodo->format("Ym") , 'f1' => (clone $fecha1), 'f2' => (clone $p_fecha_fin)];
         }
-        while ($fecha_ini->format("Ymd") <= $fecha_fin->format("Ymd")) {
-            $periodo = (clone $fecha_ini)->modify("+1 month");
+        while ($fecha_ciclo->format("Ymd") <= $fecha_fin->format("Ymd")) {
+            $periodo = (clone $fecha_ciclo)->modify("+1 month");
             //$periodo->modify("-1 day");
 
             $p_fecha_fin = null;
@@ -206,9 +213,14 @@ class ExportReporteCursado
                 $p_fecha_fin->modify("-1 day");
             }
 
+            if($fecha_inicio->format("Ymd") > $fecha_ciclo->format("Ymd")){
+                $p_fecha_inicio = (clone $fecha_inicio);
+            }else{
+                $p_fecha_inicio = (clone $fecha_ciclo);
+            }
 
-            $periodos[] = ["periodo" => $periodo->format("Ym"), 'f1' => (clone $fecha_ini), 'f2' => (clone $p_fecha_fin)];
-            $fecha_ini->modify("+1 month");
+            $periodos[] = ["periodo" => $periodo->format("Ym"), 'f1' => (clone $p_fecha_inicio), 'f2' => (clone $p_fecha_fin)];
+            $fecha_ciclo->modify("+1 month");
         }
         
         return $periodos;

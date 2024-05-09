@@ -87,6 +87,9 @@ class ExportBloqueoImei
             "uli_tai" => ['label' => 'uli_tai'],
             "uli_ecgi" => ['label' => 'uli_ecgi'],
             "losd_time_of_report" => ['label' => 'losd_time_of_report'],
+            "losd_time_of_first_usage" => ['label' => 'losd_time_of_first_usage'],
+            "losd_time_of_last_usage" => ['label' => 'losd_time_of_last_usage'],
+            "losd_time_usage" => ['label' => 'losd_time_usage'],
         ];
 
         $this->exportService->loadData($headers, $data, [

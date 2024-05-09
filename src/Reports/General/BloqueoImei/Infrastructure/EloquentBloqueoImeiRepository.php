@@ -49,12 +49,12 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
         y.name,x.record_opening_time,x.rattype,x.cause_for_rec_closing,
         x.losd_datavolume_fbc_uplink,x.losd_datavolume_fbc_downlink,
         x.pgw_address1,x.charging_id,x.served_pdppdn_address1,x.duration,x.charging_characteristics,
-        x.losd_rating_group,x.uli_lac,x.uli_sac,x.uli_ci,x.uli_tai,x.uli_ecgi,x.losd_time_of_report
+        x.losd_rating_group,x.uli_lac,x.uli_sac,x.uli_ci,x.uli_tai,x.uli_ecgi,x.losd_time_of_report,x.losd_time_of_first_usage,x.losd_time_of_last_usage,x.losd_time_usage 
         from 
         (
             select toInt64(substr(toString(served_imeisv),1,14)) served_imeisv2,INET_NTOA(serving_node_address) as serving_node_address1 ,serving_node_plmn_identifier, served_msisdn,record_opening_time,rattype,access_point_name_ni,cause_for_rec_closing,losd_datavolume_fbc_uplink, losd_datavolume_fbc_downlink,
             INET_NTOA(pgw_address) as pgw_address1,charging_id,INET_NTOA(served_pdppdn_address) as served_pdppdn_address1,duration,charging_characteristics,
-            losd_rating_group,uli_lac,uli_sac,uli_ci,uli_tai,uli_ecgi,losd_time_of_report
+            losd_rating_group,uli_lac,uli_sac,uli_ci,uli_tai,uli_ecgi,losd_time_of_report,losd_time_of_first_usage,losd_time_of_last_usage,losd_time_usage  
             from cdrdatos.cdr{$strFecha}
             where (toDateTime('{$strFechaIni}') <= record_opening_time and record_opening_time <= toDateTime('{$strFechaFin}'))
             AND {$cdrField}
@@ -64,11 +64,11 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
             record_opening_time,rattype,access_point_name_ni,cause_for_rec_closing,losd_datavolume_fbc_uplink,
             losd_datavolume_fbc_downlink,
             pgw_address1,charging_id,served_pdppdn_address1,duration,charging_characteristics,
-            losd_rating_group,uli_lac,uli_sac,uli_ci,uli_tai,uli_ecgi,losd_time_of_report
+            losd_rating_group,uli_lac,uli_sac,uli_ci,uli_tai,uli_ecgi,losd_time_of_report,losd_time_of_first_usage,losd_time_of_last_usage,losd_time_usage 
         )  x
         join cdrdatos.access_points y on toString(x.access_point_name_ni)=toString(y.id)  
         group by 1,2,3,4,5,6,7,8,9,10,
-        11,12,13,14,15,16,17,18,19,20,21,22";
+        11,12,13,14,15,16,17,18,19,20,21,22,23,24,25";
 
         $data = DB::connection("ch-dn01")->select($sql);
         return $data;
@@ -387,12 +387,12 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
         y.name,x.record_opening_time,x.rattype,x.cause_for_rec_closing,
         x.losd_datavolume_fbc_uplink,x.losd_datavolume_fbc_downlink,
         x.pgw_address1,x.charging_id,x.served_pdppdn_address1,x.duration,x.charging_characteristics,
-        x.losd_rating_group,x.uli_lac,x.uli_sac,x.uli_ci,x.uli_tai,x.uli_ecgi,x.losd_time_of_report
+        x.losd_rating_group,x.uli_lac,x.uli_sac,x.uli_ci,x.uli_tai,x.uli_ecgi,x.losd_time_of_report,x.losd_time_of_first_usage,x.losd_time_of_last_usage,x.losd_time_usage 
         from 
         (
             select toInt64(substr(toString(served_imeisv),1,14)) served_imeisv2,INET_NTOA(serving_node_address) as serving_node_address1 ,serving_node_plmn_identifier, served_msisdn,record_opening_time,rattype,access_point_name_ni,cause_for_rec_closing,losd_datavolume_fbc_uplink, losd_datavolume_fbc_downlink,
             INET_NTOA(pgw_address) as pgw_address1,charging_id,INET_NTOA(served_pdppdn_address) as served_pdppdn_address1,duration,charging_characteristics,
-            losd_rating_group,uli_lac,uli_sac,uli_ci,uli_tai,uli_ecgi,losd_time_of_report
+            losd_rating_group,uli_lac,uli_sac,uli_ci,uli_tai,uli_ecgi,losd_time_of_report,losd_time_of_first_usage,losd_time_of_last_usage,losd_time_usage
             from cdrdatos.cdr{$strFecha}
             where (toDateTime('{$strFechaIni}') <= record_opening_time and record_opening_time <= toDateTime('{$strFechaFin}'))
             AND {$cdrField}
@@ -402,11 +402,10 @@ class EloquentBloqueoImeiRepository implements BloqueoImeiRepository
             record_opening_time,rattype,access_point_name_ni,cause_for_rec_closing,losd_datavolume_fbc_uplink,
             losd_datavolume_fbc_downlink,
             pgw_address1,charging_id,served_pdppdn_address1,duration,charging_characteristics,
-            losd_rating_group,uli_lac,uli_sac,uli_ci,uli_tai,uli_ecgi,losd_time_of_report
+            losd_rating_group,uli_lac,uli_sac,uli_ci,uli_tai,uli_ecgi,losd_time_of_report,losd_time_of_first_usage,losd_time_of_last_usage,losd_time_usage 
         )  x
         join cdrdatos.access_points y on toString(x.access_point_name_ni)=toString(y.id)  
-        group by 1,2,3,4,5,6,7,8,9,10,
-        11,12,13,14,15,16,17,18,19,20,21,22";
+        group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25";
 
         $data = DB::connection("ch-dn01")->select($sql);
         return $data;

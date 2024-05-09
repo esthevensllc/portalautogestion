@@ -16,6 +16,11 @@
                             Ingresar un número de cinco digitos como máximo
                             Ej. 00001
                         </div>
+			<br>
+			<div class="invalid-feedback d-block text-dark">
+                            ¡Importante!
+                            Si ya se generó el reporte del Nintex no se podrá volver a generar el reporte.
+                        </div>
                     </div>
                 </div>
                 <div class="col-lg-4 col-md-4">

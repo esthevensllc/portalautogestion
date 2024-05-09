@@ -140,7 +140,7 @@ class LaravelMtcSuspensionesRepository implements MtcSuspensionesRepository
             TIPO_DOCUMENTO VARCHAR2(30),
             NRO_DOCUMENTO VARCHAR2(30),
             NOMBRES VARCHAR2(201),
-            CCNAME VARCHAR2(40),
+            CCNAME VARCHAR2(400),
             OPERADORA CHAR(5),
             DEPARTAMENTO VARCHAR2(40),
             PROVINCIA VARCHAR2(70),
