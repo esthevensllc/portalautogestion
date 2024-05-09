@@ -501,6 +501,11 @@ Route::group([
         Route::get('search', [\AMovil\Reports\ListaExcepciones\Controllers\ListaExcepcionesController::class, 'search']);
         Route::post('export', [\AMovil\Reports\ListaExcepciones\Controllers\ListaExcepcionesController::class, 'export']);
     });
+    Route::group(['prefix' => 'lista-excepciones-eliminar', 'trac_name' => 'lista-excepciones-eliminar'], function(){
+        Route::get('/', [\AMovil\Reports\ListaExcepcionesEliminar\Controllers\ListaExcepcionesEliminarController::class, 'view']);
+        Route::get('search', [\AMovil\Reports\ListaExcepcionesEliminar\Controllers\ListaExcepcionesEliminarController::class, 'search']);
+        Route::post('export', [\AMovil\Reports\ListaExcepcionesEliminar\Controllers\ListaExcepcionesEliminarController::class, 'export']);
+    });
 
     Route::group(['prefix' => 'clientes-planos', 'trac_name' => 'clientes-planos'], function(){
         Route::get('/', [\AMovil\Reports\ClientesPlanos\Controllers\ClientesPlanosController::class, 'view']);
