@@ -106,7 +106,115 @@ class EloquentDetalleConsumoNFRepository implements DetalleConsumoNFRepository
             ]);
         }
         $lineas = [];
+        return $this->generateReportFromTemp($fechaIni, $fechaFin);
+    }
 
+    public function getReporteDetalladoByLineas(array $lineas, DateTime $fechaIni, DateTime $fechaFin)
+    {
+        $this->userIdentifier = $this->authService->getUserIdentifier();
+
+        $dtPartition = new DateTime();
+        $dtPartition->modify("-1 month");
+
+        $strMonthPartition = $dtPartition->format("Ym");
+
+        $this->connection = "oracle";
+
+        $queries = [];
+        $queries[] = ["sql" => "BEGIN
+            EXECUTE IMMEDIATE 'DROP TABLE USRAES.REP_LINEAS_INPUT_{$this->userIdentifier}';
+        EXCEPTION
+        WHEN OTHERS THEN
+            IF SQLCODE != -942 THEN RAISE; END IF;
+        END;"];
+        $queries[] = [
+            "sql" => "CREATE TABLE USRAES.REP_LINEAS_INPUT_{$this->userIdentifier}(
+                MSISDN VARCHAR2(20)
+            )"
+        ];
+
+        $this->exec_sql($queries);
+        
+        $lineasToInsert = [];
+        foreach($lineas as $linea){
+            $lineasToInsert[] = ["msisdn" => $linea];
+        }
+        
+        DB::table("USRAES.REP_LINEAS_INPUT_{$this->userIdentifier}")
+        ->insert($lineasToInsert);
+
+        $queries = [];
+        $queries[] = ["sql" => "BEGIN
+            EXECUTE IMMEDIATE 'DROP TABLE USRAES.REPORTE_LINEAS_TEMP_{$this->userIdentifier}';
+        EXCEPTION
+        WHEN OTHERS THEN
+            IF SQLCODE != -942 THEN RAISE; END IF;
+        END;"];
+        $queries[] = [
+            "sql" => "CREATE TABLE USRAES.REPORTE_LINEAS_TEMP_{$this->userIdentifier}(
+                NUMERO_CUENTA_LARGA VARCHAR2(255),
+                CICLO VARCHAR2(10),
+                SUBSCRIPTION_ACCESS_NUMBER VARCHAR2(20),
+                MSISDN VARCHAR2(20),
+                AGREEMENT_STATUS VARCHAR2(50)
+            )"
+        ];
+        $queries[] = [
+            "sql" => "BEGIN
+                INSERT INTO USRAES.REPORTE_LINEAS_TEMP_{$this->userIdentifier}
+                SELECT /*+ PARALLEL(4)*/ CUSTOMER_ACCOUNT_DESC numero_cuenta_larga,
+                CUSTOMER_ACCOUNT_BILLING_CYCLE_SC ciclo,
+                SUBSCRIPTION_ACCESS_NUMBER,
+                SUBSTR(SUBSCRIPTION_ACCESS_NUMBER,3,9) MSISDN,
+                AGREEMENT_STATUS 
+                FROM  DWA.DW_M_SUBSCRIPTION_HIST PARTITION(P_{$strMonthPartition})
+                WHERE SUBSCRIPTION_ACCESS_NUMBER IN (SELECT MSISDN FROM USRAES.REP_LINEAS_INPUT_{$this->userIdentifier})
+                AND AGREEMENT_STATUS NOT IN ('D');
+                COMMIT;
+            END;"
+        ];
+
+        $this->exec_sql($queries);
+
+        $lineas = DB::connection($this->connection)->table("USRAES.REPORTE_LINEAS_TEMP_{$this->userIdentifier}")->get();
+        $this->connection = "oracle_reptdm";
+        
+        $queries = [];
+        $queries[] = ["sql" => "BEGIN
+            EXECUTE IMMEDIATE 'DROP TABLE USRAES.REPORTE_LINEAS_TEMP_{$this->userIdentifier}';
+        EXCEPTION
+        WHEN OTHERS THEN
+            IF SQLCODE != -942 THEN RAISE; END IF;
+        END;"];
+        $queries[] = [
+            "sql" => "CREATE TABLE USRAES.REPORTE_LINEAS_TEMP_{$this->userIdentifier}(
+                NUMERO_CUENTA_LARGA VARCHAR2(255),
+                CICLO VARCHAR2(10),
+                SUBSCRIPTION_ACCESS_NUMBER VARCHAR2(20),
+                MSISDN VARCHAR2(20),
+                AGREEMENT_STATUS VARCHAR2(50)
+            )"
+        ];
+
+        $this->exec_sql($queries);
+
+        foreach($lineas as $row){
+            DB::connection($this->connection)
+            ->table("USRAES.REPORTE_LINEAS_TEMP_{$this->userIdentifier}")
+            ->insert([
+                "numero_cuenta_larga" => $row->numero_cuenta_larga,
+                "ciclo" => $row->ciclo,
+                "subscription_access_number" => $row->subscription_access_number,
+                "msisdn" => $row->msisdn,
+                "agreement_status" => $row->agreement_status,
+            ]);
+        }
+        $lineas = [];
+        return $this->generateReportFromTemp($fechaIni, $fechaFin);
+    }
+
+    public function generateReportFromTemp(DateTime $fechaIni, DateTime $fechaFin) {
+        $this->connection = "oracle_reptdm";
         $queries = [];
         $queries[] = ["sql" => "BEGIN
             EXECUTE IMMEDIATE 'DROP TABLE USRAES.REP_LLAM_SMS_TEMP_{$this->userIdentifier}';

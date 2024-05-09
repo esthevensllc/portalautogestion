@@ -3,6 +3,7 @@
 namespace AMovil\Reports\RepDetConsumoNF\Controllers;
 
 use AMovil\Reports\RepDetConsumoNF\Services\ExportConsumoDetalladoNF;
+use AMovil\Shared\Application\FileInput;
 use Illuminate\Http\Request;
 
 class RepDetConsumoNFController
@@ -27,7 +28,17 @@ class RepDetConsumoNFController
     {
         ini_set('max_execution_time', '7200');
         set_time_limit(7200);
+        
+        $excel = $request->file("excel");
+        if($excel !== null){
+            $excel = new FileInput(
+                $excel->getPathname(),
+                $excel->getClientOriginalName()
+            );
+        }
         $response = $this->exporter->__invoke(
+            $request->input("tipo_input"),
+            $excel,
             $request->input("num_cuenta"),
             $request->input("fecha_ini"),
             $request->input("fecha_fin")
