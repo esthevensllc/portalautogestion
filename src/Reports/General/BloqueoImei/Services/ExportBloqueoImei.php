@@ -66,6 +66,7 @@ class ExportBloqueoImei
 
         $headers = [
             "served_imeisv2" => ['label' => 'served_imeisv2'],
+            "served_imsi" => ['label' => 'served_imsi'],
             "served_msisdn" => ['label' => 'served_msisdn'],
             "serving_node_address1" => ['label' => 'serving_node_address1'],
             "serving_node_plmn_identifier" => ['label' => 'serving_node_plmn_identifier'],
