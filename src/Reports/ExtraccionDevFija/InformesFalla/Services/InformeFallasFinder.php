@@ -48,7 +48,7 @@ class InformeFallasFinder
 
     public function downloadInformeFalla($numReporte)
     {
-        $filters = ["trac_name.eq.{$numReporte}"];
+        $filters = ["numero_reporte.eq.{$numReporte}"];
         $result = $this->repo->getByCriteria($filters);
         if(count($result["data"]) < 1){
             throw new Exception("El informe de fallas no existe");
