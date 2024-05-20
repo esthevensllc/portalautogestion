@@ -25,6 +25,7 @@ class GeoMarketingController
             "bases" => [
                 ["id" => "1", "label" => "ESTADIO NACIONAL"],
                 ["id" => "2", "label" => "ESTADIO MONUMENTAL"],
+                ["id" => "3", "label" => "ESTADIO MONUMENTAL DE LA UNSA"],
             ],
             "maxDays" => ExportGeoMarketing::MAX_DAYS,
             "whiteBlackList" => $this->finder->getBlackAndWhiteListSummary()
@@ -56,6 +57,8 @@ class GeoMarketingController
             "bases" => [
                 ["id" => "1", "label" => "ESTADIO NACIONAL"],
                 ["id" => "2", "label" => "ESTADIO MONUMENTAL"],
+                ["id" => "3", "label" => "ESTADIO MONUMENTAL DE LA UNSA"],
+                
             ]
         ];
         return view("geomarketing.geomarketing_log", compact("config"));

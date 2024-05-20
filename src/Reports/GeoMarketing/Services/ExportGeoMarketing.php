@@ -13,9 +13,10 @@ class ExportGeoMarketing
     private $baseById = [
         "1" => ["name" => "ESTADIO_NACIONAL"],
         "2" => ["name" => "ESTADIO_MONUMENTAL"],
+        "3" => ["name" => "ESTADIO_MONUMENTAL_DE_LA_UNSA"],
     ];
     private $repository;
-    const MAX_DAYS = 7;
+    const MAX_DAYS = 30;
 
     public function __construct(GeoMarketingRepository $repo)
     {
