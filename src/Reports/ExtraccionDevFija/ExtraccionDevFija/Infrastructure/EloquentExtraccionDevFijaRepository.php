@@ -1062,6 +1062,7 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
                 SELECT TICKET FROM USRAES.INPUT_DEVO_FIJA_TMP_{$this->userIdentifier} GROUP BY TICKET, DEPARTAMENTO
             )
             AND MONTO_PRINCIPAL is not null
+            AND ESTADO_CONTRATO = 'A'
             AND (CASE FUENTE
                 WHEN 'BSCS' THEN (CASE WHEN ESTADO_CONTRATO != 'D' THEN 1 ELSE 0 END)
                 WHEN 'SGA' THEN (CASE WHEN CICFAC_DEVOL IS NOT NULL AND FCHFIN_INST IS NULL THEN 1 ELSE 0 END)
@@ -1239,6 +1240,7 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
         NOMCLI NOMBRES_APELLIDOS,FAMILIA SERVICIO_ANALIZADO,NUMERO SERVICIO,DPTO,MONTO_PRINCIPAL")
         ->where("ticket", $ticket)
         ->whereNotNull("MONTO_PRINCIPAL")
+        ->where("ESTADO_CONTRATO", "=", "A")
         //->whereRaw("TRIM(MONTO_PRINCIPAL) != ''")
         ->where(function($query) {
             $query->whereRaw("(CASE FUENTE
@@ -1275,6 +1277,7 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
         ->where("ticket", $ticket)
         ->where("fuente", $fuente)
         ->whereNotNull("MONTO_PRINCIPAL")
+        ->where("ESTADO_CONTRATO", "=", "A")
         //->where("MONTO_PRINCIPAL", '!=', '')
         ->where(function($query) {
             $query->whereRaw("(CASE FUENTE
