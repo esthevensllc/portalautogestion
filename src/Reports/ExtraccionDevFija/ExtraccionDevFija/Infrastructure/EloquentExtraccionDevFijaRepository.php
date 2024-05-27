@@ -1061,6 +1061,7 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
             WHERE (ticket) IN (
                 SELECT TICKET FROM USRAES.INPUT_DEVO_FIJA_TMP_{$this->userIdentifier} GROUP BY TICKET, DEPARTAMENTO
             )
+            AND MONTO_PRINCIPAL is not null
             AND (CASE FUENTE
                 WHEN 'BSCS' THEN (CASE WHEN ESTADO_CONTRATO != 'D' THEN 1 ELSE 0 END)
                 WHEN 'SGA' THEN (CASE WHEN CICFAC_DEVOL IS NOT NULL AND FCHFIN_INST IS NULL THEN 1 ELSE 0 END)
@@ -1228,9 +1229,17 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
     public function getReporteUsuariosAfectados($ticket)
     {
         return DB::connection($this->connection)->table("USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST")
-        ->selectRaw("rownum item,ticket,CODCLI CODIGO_CLIENTE,NRO_DOC NUMERO_DE_DOCUMENTO,
-        NOMCLI NOMBRES_APELLIDOS,FAMILIA SERVICIO_ANALIZADO,NUMERO SERVICIO,DPTO")
+        ->selectRaw("rownum item,ticket,CODCLI CODIGO_CLIENTE,
+        CASE 
+            WHEN LENGTH(NRO_DOC) < 8 THEN LPAD(NRO_DOC, 8, '0')
+            WHEN LENGTH(NRO_DOC) > 8 AND LENGTH(NRO_DOC) < 11 THEN LPAD(NRO_DOC, 12, '0')
+            WHEN LENGTH(NRO_DOC) > 12 THEN SUBSTR(NRO_DOC, -12)
+            ELSE NRO_DOC
+        END AS NUMERO_DE_DOCUMENTO,
+        NOMCLI NOMBRES_APELLIDOS,FAMILIA SERVICIO_ANALIZADO,NUMERO SERVICIO,DPTO,MONTO_PRINCIPAL")
         ->where("ticket", $ticket)
+        ->whereNotNull("MONTO_PRINCIPAL")
+        //->whereRaw("TRIM(MONTO_PRINCIPAL) != ''")
         ->where(function($query) {
             $query->whereRaw("(CASE FUENTE
             WHEN 'BSCS' THEN (CASE WHEN ESTADO_CONTRATO != 'D' THEN 1 ELSE 0 END)
@@ -1265,6 +1274,8 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
         'Dev. por interrupcion del ' || to_char(FEC_INI_INCIDENCIA, 'DD/MM/YYYY') || '. Tasa aplicada  0.01%' GLOSARIO")
         ->where("ticket", $ticket)
         ->where("fuente", $fuente)
+        ->whereNotNull("MONTO_PRINCIPAL")
+        //->where("MONTO_PRINCIPAL", '!=', '')
         ->where(function($query) {
             $query->whereRaw("(CASE FUENTE
             WHEN 'BSCS' THEN (CASE WHEN ESTADO_CONTRATO != 'D' THEN 1 ELSE 0 END)
