@@ -152,6 +152,11 @@ class ProcessExtraccion
                 'bryan.robles@claro.com.pe',
                 'cdiazb@claro.com.pe',
                 'C26670@claro.com.pe',
+                'rhurtado@claro.com.pe',
+                'angela.felix@claro.com.pe',
+                'luis.huatuco@claro.com.pe',
+                'david.granados@claro.com.pe',
+                'c26977@claro.com.pe',
             ])->send($correo);
 
             $this->sendFilePrepago->__invoke($ticketOsiptel, $depatamento);
