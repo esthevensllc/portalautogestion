@@ -8,6 +8,7 @@ use AMovil\Reports\RepDetConsumo\Services\ExportDetalleConsumoDetallado;
 use AMovil\Reports\RepDetConsumo\Services\RecordsValidator;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Storage;
 
 class DetalleConsumoController
 {
@@ -82,8 +83,12 @@ class DetalleConsumoController
     {
         ini_set('max_execution_time', '7200');
         set_time_limit(7200);
+
+        $cod_clie = $request->get('cod_cliente');
+        $current_date = now()->format('Ymd');
+
         $export = $this->exportConsolidado->__invoke(
-            $request->get('cod_cliente'),
+            $cod_clie,
             $request->get('periodo'),
             $request->get('unidad_trafico_id'),
             $request->get('unidad_consumo_id'),
@@ -93,10 +98,21 @@ class DetalleConsumoController
             $request->get('fecha2'),
         );
 
-        return response($export, 200, [
+        // Guardar el archivo en una ruta específica en el servidor
+        $fileName = "CONSOLIDADO_DE_CONSUMO_{$cod_clie}_{$current_date}.xlsx";
+        $filePath = 'rep_det_consumo/portalautogestion_Detalle_Consolidado/' . $fileName;
+
+        Storage::disk('local')->put($filePath, $export);
+
+        return response()->json([
+            'success' => true,
+            'path' => storage_path('app/' . $filePath)
+        ]);
+
+        /*return response($export, 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition' => 'attachment;filename="CONSOLIDADO_DE_CONSUMO.xlsx"'
-        ]);
+        ]);*/
     }
 
     public function validation(Request $request)
