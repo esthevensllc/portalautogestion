@@ -10,7 +10,7 @@
                 <div class="col-lg-2">
                     <div class="form-group">
                         <label for="" data-toggle="tooltip" data-placement="top" title="Tooltip on top">Número de cuenta</label>
-                        <input type="text" class="form-control form-control-sm" name="cod_cliente" required>
+                        <textarea type="text" class="form-control form-control-sm" name="cod_cliente" required></textarea>
                         <div class="invalid-feedback d-block text-dark">
                             Ej. 8.22104233.00.00.100000
                         </div>
@@ -123,7 +123,7 @@ $(function() {
         $(".btn_export").prop('disabled', true);
         $(".loader_component").show();
 
-        let cod_cliente = $("#form_export input[name=cod_cliente]").val();
+        let cod_cliente = $("#form_export textarea[name=cod_cliente]").val();
         const periodo = $("#form_export input[name=periodo]").val();
         const unidad_trafico_id = $("#form_export select[name=unidad_trafico_id]").val();
         const unidad_consumo_id = $("#form_export select[name=unidad_consumo_id]").val();
@@ -252,8 +252,8 @@ $(function() {
         $(".btn_export").prop('disabled', true);
     }
 
-    $("input[name=cod_cliente]").on('change', function(){
-        const cod_cliente = $("#form_export input[name=cod_cliente]").val();
+    $("textarea[name=cod_cliente]").on('change', function(){
+        const cod_cliente = $("#form_export textarea[name=cod_cliente]").val();
         if (!cod_cliente.includes(',')) {
             fetch("{{ $data['url_cliente_validator'] }}"+`?cliente=${cod_cliente}`, {
                 method: 'GET'
