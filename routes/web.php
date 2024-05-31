@@ -276,6 +276,7 @@ Route::group([
         Route::get('/', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\UsuarioMinutosController::class, 'view']);
         Route::get('departamentos', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\UsuarioMinutosController::class, 'getDepartamentosByNumReporte']);
         Route::get('usuarios-minutos', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\UsuarioMinutosController::class, 'getUsuariosByNumReporte']);
+        Route::get('usuarios-minutos-calculados', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\UsuarioMinutosController::class, 'getUsuariosByMinutos']);
         Route::post('process', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\UsuarioMinutosController::class, 'processExtraccion']);
     });
     Route::group(['prefix' => 'extraccion-devolucion/informe-fallas', 'trac_name' => 'extraccion-devolucion.informe-fallas'], function(){

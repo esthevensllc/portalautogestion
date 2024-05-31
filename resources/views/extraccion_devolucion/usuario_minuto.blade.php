@@ -114,8 +114,17 @@ $(function() {
         .then(response => {
             let html = response.usuarios.map(row => `<div class="form-check">
                 <input class="form-check-input" type="radio" name="num_minutos" id="radio-minutos${row.minutos}" value="${row.minutos}">
-                <label class="form-check-label" for="radio-minutos${row.minutos}">${row.minutos}min ${row.num_usuarios} Abonados</label>
+                <label class="form-check-label" for="radio-minutos${row.minutos}">${row.minutos}min ${row.num_usuarios} Abonados</label>                
             </div>`).join('');
+            html = html + `<div class="form-group form-inline">
+                    <label for="numberInput">Ingrese la cantidad de minutos a calcular: </label>
+                    <div class="input-group ml-2">
+                        <input type="number" class="form-control" id="numberInput" placeholder="Ingrese minutos" name="minutos_calc">
+                        <div class="input-group-append">
+                            <button type="button" class="btn btn-primary btn-calcular">Calcular</button>
+                        </div>
+                    </div>
+                </div>`;
             $(".list-minutos").html(html);
             $(".btn-process").show();
 
@@ -160,6 +169,49 @@ $(function() {
                     layout: 'topRight',
                     text: "Procesado correctamente"
                 }).show();
+                loader_component.style.display = 'none';
+            })
+            .catch(error => {
+                loader_component.style.display = 'none';
+                let jsonError = JSON.parse(error.message);
+                alert(jsonError.message);
+            });
+        }
+    });
+
+    $('body').on('click','.btn-calcular', function(e){
+        e.preventDefault();
+        let minutos_calc = $("input[name=minutos_calc]").val();
+        if(minutos_calc === undefined || minutos_calc == ''){
+            alert("Debe ingresar los minutos antes de volver a calcular");
+            return;
+        }else{
+            let num_reporte = $("select[name=num_reporte]").val();
+            let departamento = $("select[name=departamento]").val();
+            
+            const loader_component = document.querySelector('.loader_component');
+            loader_component.style.display = 'block';
+
+            utils.fetch(`${config.getUsuariosByMinutosApi}?num_reporte=${num_reporte}&departamento=${departamento}&minutos_calc=${minutos_calc}`)
+            .then(utils.fetchErrorMiddleware)
+            .then(response => response.json())
+            .then(response => {
+                let html = response.usuarios.map(row => `<div class="form-check">
+                    <input class="form-check-input" type="radio" name="num_minutos" id="radio-minutos${row.minutos}" value="${row.minutos}">
+                    <label class="form-check-label" for="radio-minutos${row.minutos}">${row.minutos}min ${row.num_usuarios} Abonados</label>                
+                </div>`).join('');
+                html = html + `<div class="form-group form-inline">
+                        <label for="numberInput">Ingrese la cantidad de minutos a calcular: </label>
+                        <div class="input-group ml-2">
+                            <input type="number" class="form-control" id="numberInput" placeholder="Ingrese minutos" name="minutos_calc">
+                            <div class="input-group-append">
+                                <button type="button" class="btn btn-primary btn-calcular">Calcular</button>
+                            </div>
+                        </div>
+                    </div>`;
+                $(".list-minutos").html(html);
+                $(".btn-process").show();
+
                 loader_component.style.display = 'none';
             })
             .catch(error => {

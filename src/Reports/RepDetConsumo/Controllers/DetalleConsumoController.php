@@ -117,13 +117,25 @@ class DetalleConsumoController
 
     public function validation(Request $request)
     {
+        $cod_clie = $request->get('cod_cliente');
+        $current_date = now()->format('Ymd');
+
         $response = $this->validator->__invoke(
-            $request->input('cod_cliente'),
+            $cod_clie,
             $request->get('periodo'),
             $request->get('tipo_input'),
             $request->get('fecha1'),
             $request->get('fecha2'),
         );
+
+        if(!$response['passes']){
+            $errorMessage = $response['errors']['message'];
+            // Guardar el archivo en una ruta específica en el servidor
+            $fileName = "ERROR_{$current_date}.txt";
+            $filePath = storage_path('app/rep_det_consumo/portalautogestion_Detalle_Consolidado/' . $fileName);
+            file_put_contents($filePath, $errorMessage . PHP_EOL, FILE_APPEND);
+        }
+
         return response()->json($response);
     }
 

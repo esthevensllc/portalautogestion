@@ -41,6 +41,23 @@ class GetUsuariosExtraccion
         return new Response([], $data);
     }
 
+    public function getUsuariosMinutos($num_reporte, $departamento, $minutos): Response
+    {
+        $input = $this->infoFallasRepo->getInputByNumReporte_Departamento($num_reporte, $departamento);
+        $numUsuariosAfectados = null;
+        if($input !== null){
+            $numUsuariosAfectados = $this->getNumUsuariosAfectados($input, $input->ticket, $minutos);
+        }
+        $data = [
+            "input" => $input,
+            "usuarios" => [
+                ["num_usuarios" => $numUsuariosAfectados, "minutos" => $minutos]
+            ]
+        ];
+        $data = json_decode(json_encode($data));
+        return new Response([], $data);
+    }
+
     public function getInputs($num_reporte, $departamento): Response
     {
         $input = $this->infoFallasRepo->getInputByNumReporte_Departamento($num_reporte, $departamento);
