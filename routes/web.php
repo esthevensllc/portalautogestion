@@ -195,6 +195,21 @@ Route::group([
         Route::get('/json', [\AMovil\Reports\DAPU\HistoricoBloqueos\Controllers\HistoricoBloqueoController::class, 'getData']);
         Route::post('/export', [\AMovil\Reports\DAPU\HistoricoBloqueos\Controllers\HistoricoBloqueoController::class, 'export']);
     });
+    Route::group(['prefix' => 'dapu/lista-eir', 'trac_name' => 'dapu.lista-eir'], function(){
+        Route::get('/', [\AMovil\Reports\DAPU\ListaEir\Controllers\ListaEirController::class, 'view']);
+        Route::get('/json', [\AMovil\Reports\DAPU\ListaEir\Controllers\ListaEirController::class, 'getData']);
+        Route::post('/export', [\AMovil\Reports\DAPU\ListaEir\Controllers\ListaEirController::class, 'export']);
+    });
+    Route::group(['prefix' => 'dapu/motivos-bloqueo-desbloqueo', 'trac_name' => 'dapu.motivos-bloqueo-desbloqueo'], function(){
+        Route::get('/', [\AMovil\Reports\DAPU\MotivosBloqueoDesbloqueo\Controllers\MotivosBloqueoDesbloqueoController::class, 'view']);
+        Route::get('/json', [\AMovil\Reports\DAPU\MotivosBloqueoDesbloqueo\Controllers\MotivosBloqueoDesbloqueoController::class, 'getData']);
+        Route::post('/export', [\AMovil\Reports\DAPU\MotivosBloqueoDesbloqueo\Controllers\MotivosBloqueoDesbloqueoController::class, 'export']);
+    });
+    Route::group(['prefix' => 'dapu/servicio-movil', 'trac_name' => 'dapu.servicio-movil'], function(){
+        Route::get('/', [\AMovil\Reports\DAPU\ServicioMovil\Controllers\ServicioMovilController::class, 'view']);
+        Route::get('/json', [\AMovil\Reports\DAPU\ServicioMovil\Controllers\ServicioMovilController::class, 'getData']);
+        Route::post('/export', [\AMovil\Reports\DAPU\ServicioMovil\Controllers\ServicioMovilController::class, 'export']);
+    });
 
     Route::group(['prefix' => 'rep-recargas/detalle', 'trac_name' => 'rep-recargas.detalle'], function(){
         Route::get('/', [\AMovil\Reports\RepRecargas\Controllers\ReporteRecargasController::class, 'detalle']);

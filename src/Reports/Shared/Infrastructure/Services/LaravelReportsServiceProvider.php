@@ -220,5 +220,17 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\ListaExcepcionesEliminar\Domain\ListaExcepcionesEliminarRepository::class,
             \AMovil\Reports\ListaExcepcionesEliminar\Infrastructure\EloquentListaExcepcionesEliminarRepository::class
         );
+        $this->app->bind(
+            \AMovil\Reports\DAPU\ListaEir\Domain\ListaEirRepository::class,
+            \AMovil\Reports\DAPU\ListaEir\Infrastructure\EloquentListaEirRepository::class
+        );
+        $this->app->bind(
+            \AMovil\Reports\DAPU\MotivosBloqueoDesbloqueo\Domain\MotivosBloqueoDesbloqueoRepository::class,
+            \AMovil\Reports\DAPU\MotivosBloqueoDesbloqueo\Infrastructure\EloquentMotivosBloqueoDesbloqueoRepository::class
+        );
+        $this->app->bind(
+            \AMovil\Reports\DAPU\ServicioMovil\Domain\ServicioMovilRepository::class,
+            \AMovil\Reports\DAPU\ServicioMovil\Infrastructure\EloquentServicioMovilRepository::class
+        );
     }
 }
