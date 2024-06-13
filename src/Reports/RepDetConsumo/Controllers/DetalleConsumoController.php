@@ -9,6 +9,7 @@ use AMovil\Reports\RepDetConsumo\Services\RecordsValidator;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 
 class DetalleConsumoController
 {
@@ -113,6 +114,33 @@ class DetalleConsumoController
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition' => 'attachment;filename="CONSOLIDADO_DE_CONSUMO.xlsx"'
         ]);*/
+    }
+
+    public function viewReportes(){
+        $data = [
+            'title' => 'Descarga de reportes',
+            'api' => url('rep-det-consumo/detalle-consumo/reportes/descarga-reportes'),
+            'storagePath' => '/portalautogestion_Detalle_Consolidado'
+        ];
+        return view('rep_det_consumo.det_consumo_reportes', compact('data'));
+    }
+
+    public function descargaReportes()
+    {
+        $filePath = 'rep_det_consumo/portalautogestion_Detalle_Consolidado';
+        $files = Storage::disk('local')->files($filePath);
+
+        $fileDetails = [];
+        foreach ($files as $file) {
+            $fileDetails[] = [
+                'filename' => basename($file),
+                'path' => $file,
+                'created_at' => Carbon::createFromTimestamp(Storage::disk('local')->lastModified($file))->toDateTimeString(),
+                'size' => Storage::disk('local')->size($file),
+            ];
+        }
+
+        return response()->json(["data" => $fileDetails]);
     }
 
     public function validation(Request $request)

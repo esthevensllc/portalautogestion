@@ -28,9 +28,9 @@ class ExportConsumoDetalladoNF
         $dtFechaIni = DateTime::createFromFormat("Y-m-d", $fechaIni);
         $dtFechaFin = DateTime::createFromFormat("Y-m-d", $fechaFin);
         $data = [];
-        if($tipoInput === 1){
+        if($tipoInput === 2){
             $data = $this->repo->getReporteDetallado($numCuenta, $dtFechaIni, $dtFechaFin);
-        }else if ($tipoInput === 2){
+        }else if ($tipoInput === 1){
             $lineas = $this->getDataFromExcel($excel);
             $data = $this->repo->getReporteDetalladoByLineas($lineas, $dtFechaIni, $dtFechaFin);
         }

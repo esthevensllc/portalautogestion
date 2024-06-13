@@ -94,7 +94,6 @@
             <div class="text-danger">
                 *Toda consulta que se realice se registrara en un log
                 <br>*Si el periodo a consultar no se entra en el rango mostrado comunicarse con el área de Facturación a Clientes
-                <br>Ingresar al siguiente link para ver los reportes <a href="http://172.19.192.170/portalautogestion_Detalle_Consolidado/" target="_blank">http://172.19.192.170/portalautogestion_Detalle_Consolidado/<a>
             </div>
         </form>
     </div>
@@ -191,6 +190,7 @@ $(function() {
         // Iniciar el procesamiento
         processAllClients().then(() => {
             console.log('Todos los clientes han sido procesados.');
+            alert('Puede descargar el archivo en el menú Descarga de reportes, al finalizar el día se eliminarán todos los archivos generados para este módulo');
         }).catch(error => {
             console.log(error);
         });

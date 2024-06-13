@@ -115,6 +115,10 @@ Route::group([
         Route::get('/', [\AMovil\Reports\RepDetConsumoNF\Controllers\RepDetConsumoNFController::class, 'view']);
         Route::post('/export', [\AMovil\Reports\RepDetConsumoNF\Controllers\RepDetConsumoNFController::class, 'export']);
     });
+    Route::group(['prefix' => 'rep-det-consumo/detalle-consumo/reportes', 'trac_name' => 'rep-det-consumo.detalle-consumo.reportes'], function(){
+        Route::get('/', [\AMovil\Reports\RepDetConsumo\Controllers\DetalleConsumoController::class, 'viewReportes']);
+        Route::get('/descarga-reportes', [\AMovil\Reports\RepDetConsumo\Controllers\DetalleConsumoController::class, 'descargaReportes']);
+    });
 
     // admin
     Route::group(['prefix' => 'admin', 'trac_name' => 'admin.usuarios'], function(){

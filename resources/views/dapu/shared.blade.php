@@ -1,5 +1,7 @@
 @extends(backpack_view('blank'))
 
+@include('includes.datatables_css')
+
 @section('content')
 
 <h4 style="">{{ $config["title"] }}</h4>
@@ -45,6 +47,7 @@
 @endsection
 
 @section('after_scripts')
+@include('includes.datatables_js')
 @include('includes.utils_js')
 <script>
 const config = @json($config);
@@ -81,6 +84,16 @@ document.getElementById('form_export')
             </tr>`).join('');
 
             document.querySelector('table tbody').innerHTML = html_body;
+            // Comprobar si DataTable ya está inicializado
+            if ($.fn.DataTable.isDataTable('.table')) {
+                // Destruir la instancia existente
+                $('.table').DataTable().destroy();
+            }
+            var table = new DataTable('.table', {
+                language: {
+                    url: "{{ asset('packages/datatables-language/spanish.json') }}",
+                },
+            });
         } catch (error) {
             console.log(error);
             alert(error);
