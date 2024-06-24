@@ -218,7 +218,7 @@ Route::group([
         Route::get('/', [\AMovil\Reports\DAPU\ListaExcepcionesImeiImsi\Controllers\ListaExcepcionesImeiImsiController::class, 'view']);
         Route::get('/json', [\AMovil\Reports\DAPU\ListaExcepcionesImeiImsi\Controllers\ListaExcepcionesImeiImsiController::class, 'getData']);
         Route::post('/export', [\AMovil\Reports\DAPU\ListaExcepcionesImeiImsi\Controllers\ListaExcepcionesImeiImsiController::class, 'export']);
-    });    
+    });
 
     Route::group(['prefix' => 'rep-recargas/detalle', 'trac_name' => 'rep-recargas.detalle'], function(){
         Route::get('/', [\AMovil\Reports\RepRecargas\Controllers\ReporteRecargasController::class, 'detalle']);
@@ -530,6 +530,15 @@ Route::group([
         Route::get('/', [\AMovil\Reports\ListaExcepcionesEliminar\Controllers\ListaExcepcionesEliminarController::class, 'view']);
         Route::get('search', [\AMovil\Reports\ListaExcepcionesEliminar\Controllers\ListaExcepcionesEliminarController::class, 'search']);
         Route::post('export', [\AMovil\Reports\ListaExcepcionesEliminar\Controllers\ListaExcepcionesEliminarController::class, 'export']);
+    });
+    Route::group(['prefix' => 'lista-excepciones-masivo', 'trac_name' => 'lista-excepciones-masivo'], function(){
+        Route::get('/', [\AMovil\Reports\ListaExcepcionesMasivo\Controllers\ListaExcepcionesMasivoController::class, 'view']);
+        Route::post('/import', [\AMovil\Reports\ListaExcepcionesMasivo\Controllers\ListaExcepcionesMasivoController::class, 'import']);
+    });
+    Route::group(['prefix' => 'lista-excepciones-masivo/logs', 'trac_name' => 'lista-excepciones-masivo.logs'], function(){
+        Route::get('/', [\AMovil\Reports\ListaExcepcionesMasivo\Controllers\ListaExcepcionesMasivoController::class, 'viewLog']);
+        Route::get('/search', [\AMovil\Reports\ListaExcepcionesMasivo\Controllers\ListaExcepcionesMasivoController::class, 'get']);
+        Route::get('/{id}/download-eir', [\AMovil\Reports\ListaExcepcionesMasivo\Controllers\ListaExcepcionesMasivoController::class, 'downloadEirResponse']);
     });
 
     Route::group(['prefix' => 'clientes-planos', 'trac_name' => 'clientes-planos'], function(){

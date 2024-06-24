@@ -236,5 +236,9 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\DAPU\ListaExcepcionesImeiImsi\Domain\ListaExcepcionesImeiImsiRepository::class,
             \AMovil\Reports\DAPU\ListaExcepcionesImeiImsi\Infrastructure\EloquentListaExcepcionesImeiImsiRepository::class
         );
+        $this->app->bind(
+            \AMovil\Reports\ListaExcepcionesMasivo\Domain\ListaExcepcionesMasivoRepository::class,
+            \AMovil\Reports\ListaExcepcionesMasivo\Infrastructure\EloquentListaExcepcionesMasivoRepository::class
+        );
     }
 }
