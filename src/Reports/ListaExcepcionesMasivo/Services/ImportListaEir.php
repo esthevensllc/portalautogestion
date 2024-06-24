@@ -51,7 +51,7 @@ class ImportListaEir
         $id = (new DateTime())->format("YmdHis");
         $strNow = (new DateTime())->format("YmdHis");
         // ILBATCH.dat.REQ000003202938_20240515000000.PROV_LISTA_EXCEPCION
-        $tempEIRFilename = "ILBATCH.dat.REQ000003202938_{$strNow}.PROV_LISTA_EXCEPCION";
+        $tempEIRFilename = "ILBATCH.dat.{$strNow}.PROV_LISTA_EXCEPCION";
         
         $response = $this->validateAndGetFileData($documento);
         if($response->fails()){
