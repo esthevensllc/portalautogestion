@@ -12,6 +12,7 @@
 >
     <thead class="bg-danger">
         <tr>
+            <th>Usuario</th>
             <th>Fecha</th>
             <th>Tipo Operación</th>
             <th>Documento</th>
@@ -50,6 +51,7 @@ $(function() {
             type: "GET",
         },
         columns: [
+            {data: 'username'},
             {data: 'fecha'},
             {render: function(data, type, row){
                 return tiposOperacionById[row['tipo_operacion_id']].label;

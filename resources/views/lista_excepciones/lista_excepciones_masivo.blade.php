@@ -41,6 +41,7 @@
 >
     <thead class="bg-danger">
         <tr>
+            <th>Usuario</th>
             <th>Fecha</th>
             <th>Tipo Operación</th>
             <th>Documento</th>
@@ -129,6 +130,7 @@ $(function() {
             type: "GET",
         },
         columns: [
+            {data: 'username'},
             {data: 'fecha'},
             {render: function(data, type, row){
                 return tiposOperacionById[row['tipo_operacion_id']].label;
@@ -158,7 +160,7 @@ $(function() {
         },
         lengthChange: false,
         searching: false,
-        order: [[0, 'desc']],
+        order: [[1, 'desc']],
         scrollX: true
         //serverSide: true
     });
