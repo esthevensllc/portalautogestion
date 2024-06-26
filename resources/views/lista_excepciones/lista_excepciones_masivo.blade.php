@@ -48,9 +48,6 @@
             <th>Peso</th>
             {{-- <th>EIR</th> --}}
             <th>Cantidad Registros</th>
-            <th>Imeis Unicos</th>
-            <th>Ejecuciones Exitosas</th>
-            <th>Ejecuciones Fallidas</th>
             <th>Log Response</th>
         </tr>
     </thead>
@@ -146,9 +143,9 @@ $(function() {
                 return html;
             }},
             {data: 'cant_registros'},
-            {data: 'cant_unicos'},
+            /*{data: 'cant_unicos'},
             {data: 'exec_ok'},
-            {data: 'exec_fail'},
+            {data: 'exec_fail'},*/
             {render: function(data, type, row){
                 let url = config.downloadEir.replace('[id]', row['eir_id']);
                 let html = `<a href="${url}" target="_blank">Descargar</a>`;
