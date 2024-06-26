@@ -21,7 +21,7 @@
             <th>Imeis Unicos</th>
             <th>Ejecuciones Exitosas</th>
             <th>Ejecuciones Fallidas</th>
-            <th>Log Imei</th>
+            <th>Log Response</th>
         </tr>
     </thead>
     <tbody>

@@ -35,6 +35,27 @@
         </form>
     </div>
 </div>
+
+<table
+    class="bg-white table table-striped table-hover nowrap rounded shadow-xs border-xs mt-2 w-100 tbl-documentlog" cellspacing="0"
+>
+    <thead class="bg-danger">
+        <tr>
+            <th>Fecha</th>
+            <th>Tipo Operación</th>
+            <th>Documento</th>
+            <th>Peso</th>
+            {{-- <th>EIR</th> --}}
+            <th>Cantidad Registros</th>
+            <th>Imeis Unicos</th>
+            <th>Ejecuciones Exitosas</th>
+            <th>Ejecuciones Fallidas</th>
+            <th>Log Response</th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
 @include('includes.spinner_loader')
 @endsection
 
@@ -44,6 +65,12 @@
 <script>
 $(function() {
     const config = @json($config);
+
+    const tiposOperacionById = {};
+
+    config.tipos_operacion.forEach(r => {
+        tiposOperacionById[r.id] = r;
+    });
 
     document.querySelector("#form_import")
     .addEventListener("submit", async function(e){
@@ -66,6 +93,7 @@ $(function() {
                     layout: 'topRight',
                     text: "Se importó correctamente"
                 }).show();
+                _datatable.ajax.reload();
             }else if(response.errors !== null){
                 new Noty({
                     type: 'error',
@@ -83,7 +111,7 @@ $(function() {
         loader_component.style.display = 'none';
     });
 
-    document.querySelector("#btn_export")
+    /*document.querySelector("#btn_export")
     .addEventListener("click", async function(e){
         await _datatable.ajax.reload();
         let event = {target: document.querySelector("#form_search")};
@@ -92,6 +120,47 @@ $(function() {
             requestOptions: {headers: {accept: "application/json"}},
         }, event);
         e.target.innerHTML = "Exportar";
+    });*/
+
+    let _datatable = $(".tbl-documentlog").DataTable({
+        language: {url: "{{ url('packages/datatables-language/spanish.json') }}"},
+        ajax: {
+            url: config.search,
+            type: "GET",
+        },
+        columns: [
+            {data: 'fecha'},
+            {render: function(data, type, row){
+                return tiposOperacionById[row['tipo_operacion_id']].label;
+            }},
+            {render: function(data, type, row){
+                let url = config.downloadFile.replace('[filename]', row['filename']);
+                let html = `<a href="${url}" target="_blank">${row['filename']}</a>`;
+                return html;
+            }},
+            {render: function(data, type, row){
+                let kb = (row['size_bytes']/1024).toFixed(1);
+                let html = `<span>${kb}K</span>`;
+                return html;
+            }},
+            {data: 'cant_registros'},
+            {data: 'cant_unicos'},
+            {data: 'exec_ok'},
+            {data: 'exec_fail'},
+            {render: function(data, type, row){
+                let url = config.downloadEir.replace('[id]', row['eir_id']);
+                let html = `<a href="${url}" target="_blank">Descargar</a>`;
+                return html;
+            }},
+        ],
+        "fnDrawCallback": function() {
+            // $(".btn-delete").on("click", deleteFilenameHandler);
+        },
+        lengthChange: false,
+        searching: false,
+        order: [[0, 'desc']],
+        scrollX: true
+        //serverSide: true
     });
 });
 </script>

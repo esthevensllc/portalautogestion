@@ -8,9 +8,9 @@ use Illuminate\Support\Facades\DB;
 
 class EloquentListaExcepcionesMasivoRepository implements ListaExcepcionesMasivoRepository
 {
-    public function saveLog($id, $tipoOperacionId, $filename, ?int $sizeBytes, $eirFilename, array $lista)
+    public function saveLog($id, $tipoOperacionId, $filename, ?int $sizeBytes, $eirFilename, $username, array $lista)
     {
-        DB::transaction(function() use ($id, $tipoOperacionId, $filename, $sizeBytes, $eirFilename, $lista){
+        DB::transaction(function() use ($id, $tipoOperacionId, $filename, $sizeBytes, $eirFilename, $username, $lista){
             $chunk = [];
             $lastIndex = count($lista)-1;
             foreach($lista as $index => $row){
@@ -37,7 +37,8 @@ class EloquentListaExcepcionesMasivoRepository implements ListaExcepcionesMasivo
                 "size_bytes" => $sizeBytes,
                 "cant_registros" => count($lista),
                 "cant_unicos" => $cantUnicos,
-                "processed" => 0
+                "processed" => 0,
+                "username" => $username,
             ]);
         });
     }

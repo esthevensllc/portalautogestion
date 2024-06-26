@@ -2,6 +2,7 @@
 
 namespace AMovil\Reports\ListaExcepcionesMasivo\Services;
 
+use AMovil\Auth\AccessControl\Domain\AuthService;
 use AMovil\Reports\ListaExcepcionesMasivo\Domain\ListaExcepcionesMasivoRepository;
 use AMovil\Reports\ListaExcepcionesMasivo\Domain\TipoOperacion;
 use AMovil\Shared\Application\FileInput;
@@ -18,21 +19,19 @@ class ImportListaEir
     private $repo;
     private $localStorage;
     private $eirStorage;
+    private $authService;
     private $localBaseStoragePath = "/space/reportes/lista_excepciones_masivo_control_regulatorio";
     private $baseStoragePath = "/comptel/BATCH/DWH/pre_input";
 
     public function __construct(
         ListaExcepcionesMasivoRepository $repo,
         StorageService $storageService,
-        // NotifyUsersOnInformeBloqDesbloqLoaded $notifyUsers,
-        // NotifyUsersOnInformeBloqDesbloqTipifi $notifyUsersTipifi
+        AuthService $authService
     ) {
-        // $this->repo = $repo;
         $this->repo = $repo;
         $this->localStorage = $storageService->getStorageSystemByName(StorageSystemName::LOCAL2);
         $this->eirStorage = $storageService->getStorageSystemByName(StorageSystemName::EIR);
-        // $this->notifyUsers = $notifyUsers;
-        // $this->notifyUsersTipifi = $notifyUsersTipifi;
+        $this->authService = $authService;
     }
 
     public function __invoke($tipoOperacionId, FileInput $documento): Response
@@ -66,12 +65,13 @@ class ImportListaEir
             $originalFilename,
             $sizeBytes,
             $tempEIRFilename,
+            $this->authService->getUserIdentifier(),
             $response->data()
         );
 
         $eirFileContent = file_get_contents($tempEIRFilePath);
 
-        $this->localStorage->put("{$this->localBaseStoragePath}/{$tempEIRFilename}", $eirFileContent);
+        $this->localStorage->put("{$this->localBaseStoragePath}/{$originalFilename}", $eirFileContent);
         $this->eirStorage->put("{$this->baseStoragePath}/{$tempEIRFilename}", $eirFileContent);
         unlink($tempEIRFilePath);
         $tempEIRFilePath = null;
