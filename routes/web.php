@@ -536,7 +536,6 @@ Route::group([
         Route::post('/import', [\AMovil\Reports\ListaExcepcionesMasivo\Controllers\ListaExcepcionesMasivoController::class, 'import']);
         Route::get('/search', [\AMovil\Reports\ListaExcepcionesMasivo\Controllers\ListaExcepcionesMasivoController::class, 'get']);
         Route::get('/{filename}/download', [\AMovil\Reports\ListaExcepcionesMasivo\Controllers\ListaExcepcionesMasivoController::class, 'downloadFile']);
-        Route::get('/{id}/download-eir', [\AMovil\Reports\ListaExcepcionesMasivo\Controllers\ListaExcepcionesMasivoController::class, 'downloadEirResponse']);
     });
     Route::group(['prefix' => 'lista-excepciones-masivo/logs', 'trac_name' => 'lista-excepciones-masivo.logs'], function(){
         Route::get('/', [\AMovil\Reports\ListaExcepcionesMasivo\Controllers\ListaExcepcionesMasivoController::class, 'viewLog']);

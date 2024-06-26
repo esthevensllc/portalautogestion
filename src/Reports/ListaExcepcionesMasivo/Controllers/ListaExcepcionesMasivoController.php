@@ -32,7 +32,6 @@ class ListaExcepcionesMasivoController
             'tipos_operacion' => $this->finder->getTiposOperacion(),
             "search" => url("lista-excepciones-masivo/search"),
             'downloadFile' => url("lista-excepciones-masivo/[filename]/download"),
-            "downloadEir" => url("lista-excepciones-masivo/[id]/download-eir"),
         ];
         return view("lista_excepciones.lista_excepciones_masivo", compact("config"));
     }
