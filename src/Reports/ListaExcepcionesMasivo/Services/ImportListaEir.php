@@ -71,7 +71,7 @@ class ImportListaEir
 
         $eirFileContent = file_get_contents($tempEIRFilePath);
 
-        $this->localStorage->put("{$this->localBaseStoragePath}/{$originalFilename}", $eirFileContent);
+        $this->localStorage->copy($documento->getFilePath(), "{$this->localBaseStoragePath}/{$originalFilename}");
         $this->eirStorage->put("{$this->baseStoragePath}/{$tempEIRFilename}", $eirFileContent);
         unlink($tempEIRFilePath);
         $tempEIRFilePath = null;
