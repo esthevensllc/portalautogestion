@@ -24,8 +24,9 @@ class EloquentListaExcepcionesMasivoRepository implements ListaExcepcionesMasivo
 
             $cantUnicos = DB::select("select count(*) counter from (
                 select imei, imsi, linea from usraes.lista_excepciones_masivo_log_detalle
+                where documento_id = :id
                 group by imei, imsi, linea
-            )");
+            )", ["id" => $id]);
             $cantUnicos = $cantUnicos[0]->counter;
 
             DB::table("usraes.lista_excepciones_masivo_log")->insert([
