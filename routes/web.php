@@ -568,4 +568,9 @@ Route::group([
         Route::post('export', [\AMovil\Reports\ClientesMacSn\Controllers\ClientesMacSnController::class, 'export']);
     });
 
+    Route::group(['prefix' => 'base-tipificaciones', 'trac_name' => 'base-tipificaciones.index'], function(){
+        Route::get('/', [\AMovil\Reports\BaseTipificaciones\Controllers\BaseTipificacionesController::class, 'view']);
+        Route::post('/import', [\AMovil\Reports\BaseTipificaciones\Controllers\BaseTipificacionesController::class, 'import']);
+    });
+
 });

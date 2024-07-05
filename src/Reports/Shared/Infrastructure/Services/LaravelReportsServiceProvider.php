@@ -240,5 +240,9 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\ListaExcepcionesMasivo\Domain\ListaExcepcionesMasivoRepository::class,
             \AMovil\Reports\ListaExcepcionesMasivo\Infrastructure\EloquentListaExcepcionesMasivoRepository::class
         );
+        $this->app->bind(
+            \AMovil\Reports\BaseTipificaciones\Domain\BaseTipificacionesRepository::class,
+            \AMovil\Reports\BaseTipificaciones\Infrastructure\EloquentBaseTipificacionesRepository::class
+        );
     }
 }
