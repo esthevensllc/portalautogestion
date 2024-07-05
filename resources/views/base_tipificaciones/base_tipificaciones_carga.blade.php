@@ -68,7 +68,7 @@ $(function() {
                     layout: 'topRight',
                     text: "Se ejecutó correctamente"
                 }).show();
-                window.location.href = '/portalautogestion_rel/storage/' + response.data.file;
+                window.location.href = '/portalautogestion/storage/' + response.data.file;
                 resultado = response.data.notFound;
                 if(resultado[0]['total'] == '0'){
                     $("#result").html('Se ubico el total de lineas');
