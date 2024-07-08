@@ -3,6 +3,7 @@
 namespace AMovil\Reports\ListaExcepcionesMasivo\Infrastructure;
 
 use AMovil\Reports\ListaExcepcionesMasivo\Domain\ListaExcepcionesMasivoRepository;
+use AMovil\Reports\ListaExcepcionesMasivo\Domain\TipoOperacion;
 use DateTime;
 use Illuminate\Support\Facades\DB;
 
@@ -29,6 +30,14 @@ class EloquentListaExcepcionesMasivoRepository implements ListaExcepcionesMasivo
             )", ["id" => $id]);
             $cantUnicos = $cantUnicos[0]->counter;
 
+            $sent = 1;
+            $fecha_envio = new DateTime();
+
+            if((int) $tipoOperacionId === TipoOperacion::RETIRAR_LISTA){
+                $sent = 0;
+                $fecha_envio = (new DateTime())->format("Y-m-d")." 10:00:00";
+            }
+
             DB::table("usraes.lista_excepciones_masivo_log")->insert([
                 "id" => $id,
                 "fecha" => new DateTime(),
@@ -40,6 +49,8 @@ class EloquentListaExcepcionesMasivoRepository implements ListaExcepcionesMasivo
                 "cant_unicos" => $cantUnicos,
                 "processed" => 0,
                 "username" => $username,
+                "sent" => $sent,
+                "send_date" => $fecha_envio,
             ]);
         });
     }
