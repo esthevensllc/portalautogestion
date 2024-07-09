@@ -542,6 +542,11 @@ Route::group([
         Route::get('/search', [\AMovil\Reports\ListaExcepcionesMasivo\Controllers\ListaExcepcionesMasivoController::class, 'get']);
         Route::get('/{id}/download-eir', [\AMovil\Reports\ListaExcepcionesMasivo\Controllers\ListaExcepcionesMasivoController::class, 'downloadEirResponse']);
     });
+    Route::group(['prefix' => 'lista-excepciones-art25', 'trac_name' => 'lista-excepciones-art25'], function(){
+        Route::get('/', [\AMovil\Reports\ListaExcepcionesArt25\Controllers\ListaExcepcionesArt25Controller::class, 'view']);
+        Route::get('search', [\AMovil\Reports\ListaExcepcionesArt25\Controllers\ListaExcepcionesArt25Controller::class, 'search']);
+        Route::post('export', [\AMovil\Reports\ListaExcepcionesArt25\Controllers\ListaExcepcionesArt25Controller::class, 'export']);
+    });
 
     Route::group(['prefix' => 'clientes-planos', 'trac_name' => 'clientes-planos'], function(){
         Route::get('/', [\AMovil\Reports\ClientesPlanos\Controllers\ClientesPlanosController::class, 'view']);
