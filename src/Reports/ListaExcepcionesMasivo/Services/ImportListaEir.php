@@ -21,6 +21,7 @@ class ImportListaEir
     private $eirStorage;
     private $authService;
     private $localBaseStoragePath = "/space/reportes/lista_excepciones_masivo_control_regulatorio";
+    private $localInputBaseStoragePath = "/space/reportes/lista_excepciones_masivo_input";
     private $baseStoragePath = "/comptel/BATCH/DWH/pre_input";
 
     public function __construct(
@@ -72,7 +73,10 @@ class ImportListaEir
         $eirFileContent = file_get_contents($tempEIRFilePath);
 
         $this->localStorage->copy($documento->getFilePath(), "{$this->localBaseStoragePath}/{$originalFilename}");
-        $this->eirStorage->put("{$this->baseStoragePath}/{$tempEIRFilename}", $eirFileContent);
+        $this->localStorage->copy($tempEIRFilePath, "{$this->localInputBaseStoragePath}/{$tempEIRFilename}");
+        if((int) $tipoOperacionId !== TipoOperacion::RETIRAR_LISTA){
+            $this->eirStorage->put("{$this->baseStoragePath}/{$tempEIRFilename}", $eirFileContent);
+        }
         unlink($tempEIRFilePath);
         $tempEIRFilePath = null;
 
