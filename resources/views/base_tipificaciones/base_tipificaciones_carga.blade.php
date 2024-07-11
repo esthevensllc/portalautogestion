@@ -68,13 +68,19 @@ $(function() {
                     layout: 'topRight',
                     text: "Se ejecutó correctamente"
                 }).show();
-                window.location.href = '/portalautogestion/storage/' + response.data.file;
-                resultado = response.data.notFound;
-                if(resultado[0]['total'] == '0'){
+                window.location.href = '/portalautogestion_rel/storage/' + response.data.file;
+                resultado = response.data.count;
+                lineas = response.data.result;
+                if(resultado == '0'){
                     $("#result").html('Se ubico el total de lineas');
                 }else{
-                    $("#result").html('No se ubico '+resultado[0]['total']+' lineas');
-                }                
+                    $("#result").html('<p>No se ubico '+resultado+' lineas</p>');
+                    $("#result").append('<ul>');
+                    $.each(lineas,function (index, item) {
+                        $("#result").append('<li>'+item.linea+'</li>');            
+                    })
+                    $("#result").append('</ul>');
+                }
             }else if(response.errors !== null){
                 new Noty({
                     type: 'error',

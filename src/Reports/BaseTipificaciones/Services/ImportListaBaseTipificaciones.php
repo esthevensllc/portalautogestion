@@ -62,11 +62,12 @@ class ImportListaBaseTipificaciones
         $writer->save($filePath);
 
         // Validar los datos no ubicados
-        $notFound = $this->repo->validarData();
+        $data = $this->repo->validarData();
 
         return new Response([], [
             'file' => $fileName,
-            'notFound' => $notFound
+            'result' => $data['result'],
+            'count' => $data['count']
         ]);
     }
 

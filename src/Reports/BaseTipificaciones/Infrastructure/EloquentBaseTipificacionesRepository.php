@@ -71,11 +71,13 @@ class EloquentBaseTipificacionesRepository implements BaseTipificacionesReposito
     public function validarData(){
 
         $result = DB::select('
-            SELECT count(*) as total FROM usraes.TMP_LIN_REN A
+            SELECT A.MSISDN linea FROM usraes.TMP_LIN_REN A
             LEFT JOIN usraes.TMP_LIN_STA B ON A.MSISDN = B.LINEA
             WHERE B.LINEA IS NULL
         ');
 
-        return $result;
+        $count = count($result);
+
+        return ['result' => $result, 'count' => $count];
     }
 }
