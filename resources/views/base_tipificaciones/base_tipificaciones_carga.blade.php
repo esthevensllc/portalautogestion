@@ -68,7 +68,7 @@ $(function() {
                     layout: 'topRight',
                     text: "Se ejecutó correctamente"
                 }).show();
-                window.location.href = '/portalautogestion_rel/storage/' + response.data.file;
+                window.location.href = '/portalautogestion/storage/' + response.data.file;
                 resultado = response.data.count;
                 lineas = response.data.result;
                 if(resultado == '0'){
