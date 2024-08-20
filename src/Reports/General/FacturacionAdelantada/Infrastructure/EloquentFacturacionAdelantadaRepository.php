@@ -128,7 +128,7 @@ class EloquentFacturacionAdelantadaRepository implements FacturacionAdelantadaRe
         }
         $customer_id = $results[0]->customer_account_sc;
         $ciclo = $results[0]->ciclo;
-        if($ciclo === null || $ciclo > 31 || $ciclo <= 0){
+        if(($ciclo === null || $ciclo > 31 || $ciclo <= 0 ) && $ciclo <97 ){
             throw new Exception("El ciclo '{$ciclo}' no es válido");
         }
         

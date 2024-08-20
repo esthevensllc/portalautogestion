@@ -128,6 +128,19 @@ return [
             ]
         ],
 
+        'ch-dn03' => [
+            'driver' => 'bavix::clickhouse',
+            'host' => env('DB11_HOST', 'localhost'),
+            'port' => env('DB11_PORT', '1433'),
+            'database' => env('DB11_DATABASE', 'default'),
+            'username' => env('DB11_USERNAME', 'default'),
+            'password' => env('DB11_PASSWORD', ''),
+            'options' => [
+                'timeout' => 30,
+                'protocol' => 'http'
+            ]
+        ],
+
         'ch-dn05' => [
             'driver' => 'bavix::clickhouse',
             'host' => env('DB7_HOST', 'localhost'),

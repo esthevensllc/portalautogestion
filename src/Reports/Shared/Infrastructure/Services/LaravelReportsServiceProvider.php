@@ -248,5 +248,9 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\ListaExcepcionesArt25\Domain\ListaExcepcionesArt25Repository::class,
             \AMovil\Reports\ListaExcepcionesArt25\Infrastructure\EloquentListaExcepcionesArt25Repository::class
         );
+        $this->app->bind(
+            \AMovil\Reports\ReporteLineasEnrutadas\Domain\ReporteLineasEnrutadasRepository::class,
+            \AMovil\Reports\ReporteLineasEnrutadas\Infrastructure\EloquentReporteLineasEnrutadasRepository::class
+        );
     }
 }

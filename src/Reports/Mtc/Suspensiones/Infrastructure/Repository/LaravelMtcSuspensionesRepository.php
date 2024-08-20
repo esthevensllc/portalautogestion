@@ -59,12 +59,12 @@ class LaravelMtcSuspensionesRepository implements MtcSuspensionesRepository
             ASND_FECHA_BAJA DATE,
             ASNC_TIPO_TITULAR VARCHAR2(10),
             ASNC_TIPO_CONTRATO VARCHAR2(10), 
-            ASNC_TIPO_DOCTITULAR  VARCHAR2(10),
-            ASNV_NUM_DOCTITULAR VARCHAR2(20),
-            ASNV_NOMBRETITULAR  VARCHAR2(50),
+            ASNC_TIPO_DOCTITULAR  VARCHAR2(100),
+            ASNV_NUM_DOCTITULAR VARCHAR2(40),
+            ASNV_NOMBRETITULAR  VARCHAR2(100),
             ASND_FEC_INICONTRATO  DATE,
             ASND_FEC_FINCONTRATO  DATE,
-            ASNV_DIRECCION  VARCHAR2(200),
+            ASNV_DIRECCION  VARCHAR2(400),
             ASNV_UBIGEO VARCHAR2(20)
             )"
         ];
@@ -430,11 +430,11 @@ class LaravelMtcSuspensionesRepository implements MtcSuspensionesRepository
             'sql' => "BEGIN
                 UPDATE USRAES.TMP_SUSPENSIONES_1_{$this->userIdentifier}
                 SET ESTADO='N' , MOTIVO_NO_SUSPENSION='02' ,INICIO_SUSPENSION =NULL,TERMINO_SUSPENSION=NULL
-                WHERE AGREEMENT_REASON_STATUS_DESC LIKE '%PORT OUT%';
+                WHERE ESTADO_SUBS='D' AND AGREEMENT_REASON_STATUS_DESC LIKE '%PORT OUT%';
         
                 UPDATE USRAES.TMP_SUSPENSIONES_1_{$this->userIdentifier}
                 SET ESTADO='N' , MOTIVO_NO_SUSPENSION='03' ,INICIO_SUSPENSION =NULL,TERMINO_SUSPENSION=NULL
-                WHERE ESTADO_SUBS='D' AND AGREEMENT_REASON_STATUS_DESC NOT LIKE '%PORT OUT%';
+                WHERE ESTADO_SUBS='D' AND (AGREEMENT_REASON_STATUS_DESC NOT LIKE '%PORT OUT%' OR AGREEMENT_REASON_STATUS_DESC IS NULL);
         
                 COMMIT;
             END;"
