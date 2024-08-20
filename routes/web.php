@@ -577,5 +577,10 @@ Route::group([
         Route::get('/', [\AMovil\Reports\BaseTipificaciones\Controllers\BaseTipificacionesController::class, 'view']);
         Route::post('/import', [\AMovil\Reports\BaseTipificaciones\Controllers\BaseTipificacionesController::class, 'import']);
     });
+    
+    Route::group(['prefix' => 'reporte-lineas-enrutadas', 'trac_name' => 'reporte-lineas-enrutadas'], function(){
+        Route::get('/', [\AMovil\Reports\ReporteLineasEnrutadas\Controllers\ReporteLineasEnrutadasController::class, 'view']);
+        Route::post('export', [\AMovil\Reports\ReporteLineasEnrutadas\Controllers\ReporteLineasEnrutadasController::class, 'export']);
+    });
 
 });
