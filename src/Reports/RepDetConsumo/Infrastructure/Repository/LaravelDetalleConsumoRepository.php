@@ -56,7 +56,7 @@ class LaravelDetalleConsumoRepository
 
         $sqls = [];
         $sqls[] = ['sql' => "BEGIN
-            EXECUTE IMMEDIATE 'DROP TABLE USRAES.T21_T_TAG_11_{$this->userIdentifier} PURGe';
+            EXECUTE IMMEDIATE 'DROP TABLE USRAES.T21_T_TAG_11_{$this->userIdentifier} PURGE';
         EXCEPTION
             WHEN OTHERS THEN
                 IF SQLCODE != -942 THEN
@@ -506,7 +506,7 @@ class LaravelDetalleConsumoRepository
 
         $sqls = [];
         $sqls[] = ['sql' => "BEGIN
-            EXECUTE IMMEDIATE 'DROP TABLE USRAES.T21_T_TAG_11_{$this->userIdentifier} PURGe';
+            EXECUTE IMMEDIATE 'DROP TABLE USRAES.T21_T_TAG_11_{$this->userIdentifier} PURGE';
         EXCEPTION
             WHEN OTHERS THEN
                 IF SQLCODE != -942 THEN
