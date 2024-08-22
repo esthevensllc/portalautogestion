@@ -30,6 +30,8 @@ class ReporteLineasEnrutadasController
     {
         $file = null;
 
+        $operador = $request->input('operador');
+
         $file = new FileInput(
             $request->file("excel")->getPathname(),
             $request->file("excel")->getClientOriginalName()
@@ -37,6 +39,7 @@ class ReporteLineasEnrutadasController
         
         $response = $this->exporter->__invoke(
             $file,
+            $operador
         )->data();
 
         return response($response["content"], 200, [
