@@ -6,5 +6,5 @@ use DateTime;
 
 interface ReporteLineasEnrutadasRepository
 {
-    public function getReporte(array $macs);
+    public function getReporte(array $macs, $operador);
 }

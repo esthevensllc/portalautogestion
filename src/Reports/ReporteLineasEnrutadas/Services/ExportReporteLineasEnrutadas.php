@@ -22,7 +22,7 @@ class ExportReporteLineasEnrutadas
         $this->exportService = $exportService;
     }
 
-    public function __invoke(?FileInput $file): Response
+    public function __invoke(?FileInput $file, $operador): Response
     {
         $dataRows = [];
 
@@ -30,7 +30,7 @@ class ExportReporteLineasEnrutadas
         
         $dtEnd = new DateTime();
         $strNow = $dtEnd->format("Ymd");
-        $data = $this->repo->getReporte($dataRows);
+        $data = $this->repo->getReporte($dataRows,$operador);
         $tempfile = $this->export($data);
         $content = file_get_contents($tempfile);
         unlink($tempfile);

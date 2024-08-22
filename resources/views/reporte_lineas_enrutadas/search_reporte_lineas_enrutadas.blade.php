@@ -20,6 +20,16 @@
                         </select>
                     </div>
                 </div>
+                <div class="col-lg-3 col-md-4">
+                    <div class="form-group">
+                        <label for="">Operador</label>
+                        <select id="operador" class="form-control form-control-sm" name="operador">
+                            <option value="bitel" selected>Bitel</option>
+                            <option value="entel">Entel</option>
+                            <option value="movistar">Movistar</option>
+                        </select>
+                    </div>
+                </div>
                 <div class="col-lg-3 col-md-4 tabs">
                     <div class="form-group tab-item tab_excel">
                         <label for="">Excel</label>

@@ -19,7 +19,7 @@ class EloquentReporteLineasEnrutadasRepository implements ReporteLineasEnrutadas
         $this->authService = $authService;
     }
 
-    public function getReporte(array $macs)
+    public function getReporte(array $macs, $operador)
     {
         $this->userIdentifier = $this->authService->getUserIdentifier();
         
@@ -47,7 +47,7 @@ class EloquentReporteLineasEnrutadasRepository implements ReporteLineasEnrutadas
                     SELECT day, calledno, IF(d > 0, 1, 0) AS flag 
                     FROM xdrs.voice_mtdetail_subscriber_1day 
                     WHERE day >= (SELECT MIN(dia) FROM reportes.lineas_enrutadas_1) 
-                        AND operador2 = 'movistar' 
+                        AND operador2 = '{$operador}' 
                         AND toString(calledno) IN (SELECT toString(msisdn) 
                                                 FROM reportes.lineas_enrutadas_1 
                                                 GROUP BY 1) 
