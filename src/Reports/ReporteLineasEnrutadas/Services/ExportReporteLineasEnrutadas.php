@@ -78,7 +78,7 @@ class ExportReporteLineasEnrutadas
     private function export($data)
     {
         $headers = [
-            "day" => ['label' => 'FECHA'],
+            "dia" => ['label' => 'FECHA'],
             "fono1" => ['label' => 'FONO'],
             "flag" => ['label' => 'FLAG']
         ];
