@@ -563,7 +563,8 @@ class EloquentExtraccionRepository implements ExtraccionRepository
                 AND B.MODO_CONTRATACION = 'POSTPAGO'
                 AND A.CONTRATO = B.CONTRATO)
             AND SNCODE=27
-            AND CF<>0) TMP
+            AND CF<>0
+            GROUP BY CONTRATO,CF) TMP
             ON (MP.CONTRATO=TMP.CONTRATO)
             WHEN MATCHED THEN
             UPDATE SET MP.CARGO_ACCESO_NORMAL=TMP.CF
