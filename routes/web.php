@@ -583,4 +583,9 @@ Route::group([
         Route::post('export', [\AMovil\Reports\ReporteLineasEnrutadas\Controllers\ReporteLineasEnrutadasController::class, 'export']);
     });
 
+    Route::group(['prefix' => 'retenciones', 'trac_name' => 'retenciones.index'], function(){
+        Route::get('/', [\AMovil\Reports\Retenciones\Controllers\ListadoController::class, 'view']);
+        Route::post('/store', [\AMovil\Reports\Retenciones\Controllers\ListadoController::class, 'store'])->name("retenciones-store");
+    });
+
 });

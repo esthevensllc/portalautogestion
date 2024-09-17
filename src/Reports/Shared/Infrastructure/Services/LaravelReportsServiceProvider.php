@@ -252,5 +252,9 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\ReporteLineasEnrutadas\Domain\ReporteLineasEnrutadasRepository::class,
             \AMovil\Reports\ReporteLineasEnrutadas\Infrastructure\EloquentReporteLineasEnrutadasRepository::class
         );
+        $this->app->bind(
+            \AMovil\Reports\Retenciones\Domain\RetencionesRepository::class,
+            \AMovil\Reports\Retenciones\Infrastructure\EloquentRetencionesRepository::class
+        );
     }
 }
