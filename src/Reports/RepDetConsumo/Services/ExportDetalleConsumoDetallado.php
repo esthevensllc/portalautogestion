@@ -64,7 +64,7 @@ class ExportDetalleConsumoDetallado
 
             $this->repo->generateReporteDetallado($cliente, $periodos_ok);
             $data = [];
-            if($tipo_input === '1'){
+            /*if($tipo_input === '1'){
                 $data = $this->repo->getReporteDetallado($periodos_ok, null, null, ["add_sin_cargo" => $consumo_sin_cargo === "1"]);
             }else{
                 $data = $this->repo->getReporteDetalladoByFechas(
@@ -74,7 +74,7 @@ class ExportDetalleConsumoDetallado
                     null,
                     ["add_sin_cargo" => $consumo_sin_cargo === "1"]
                 );
-            }
+            }*/
 
             $title = $periodos[0];
             if($title !== $periodos[count($periodos)-1]){
