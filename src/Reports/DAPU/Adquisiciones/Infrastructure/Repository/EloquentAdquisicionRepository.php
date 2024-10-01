@@ -9,40 +9,104 @@ class EloquentAdquisicionRepository implements AdquisicionRepository
 {
     public function getByImei(string $imei)
     {
-        $sql = "SELECT XX.FECHA_ADQUISICION,XX.IMEI,XX.MSISDN,XX.TIPO_DOC,XX.NUM_DOC,XX.CLIENTE,XX.SEGMENTO,XX.DESCRIP_RAZON_VENTA,XX.PLAN_ADQUIRIDO,XX.MARCA,XX.MODELO  
-                    FROM
-                    (
-                        SELECT X.FECHA_ADQUISICION,X.IMEI,X.MSISDN,X.TIPO_DOC,X.NUM_DOC,X.CLIENTE,X.SEGMENTO,X.DESCRIP_RAZON_VENTA,
-                                    X.PLAN_ADQUIRIDO,X.MARCA,X.MODELO,
-                                row_number() OVER (PARTITION BY X.msisdn ORDER BY X.plan_adquirido) AS NROW  
-                                FROM
-                            (
-                                SELECT /*+PARALLEL(10)*/ sale_date AS FECHA_ADQUISICION,serial_number AS IMEI,product_number AS MSISDN,customer_document_type_desc AS TIPO_DOC,id_card_value AS NUM_DOC,
-                                customer_given_name||' '||customer_name CLIENTE,
-                                sales_type_desc AS SEGMENTO,sales_reason_desc AS DESCRIP_RAZON_VENTA,prod_offer_plan_desc AS PLAN_ADQUIRIDO,
-                                prod_offer_item_brand_desc AS MARCA,prod_offer_item_model_desc AS MODELO
-                                FROM dwa.dw_t_customer_sale  WHERE
-                                serial_number LIKE '%'||? 
-                                UNION ALL
-                                --SI NO SE ENCUENTRA INFORMACIÓN, VALIDAR LA SIGUIENTE CONSULTA(VALIDACIÓN EN LA TABLE DW_T_SALES:
-                                SELECT /*+PARALLEL(10)*/ sale_date AS FECHA_ADQUISICION,serial_number AS IMEI,product_number AS MSISDN,customer_document_type_desc AS TIPO_DOC,id_card_value AS NUM_DOC,
-                                customer_given_name||' '||customer_name AS CLIENTE,
-                                sales_type_desc AS SEGMENTO,sales_reason_desc AS DESCRIP_RAZON_VENTA,prod_offer_plan_desc AS PLAN_ADQUIRIDO,
-                                prod_offer_item_brand_desc AS MARCA,prod_offer_item_model_desc AS MODELO  
-                                FROM dwa.dw_t_sales  
-                                WHERE serial_number LIKE '%'||?
-                            ) X
-                    ) XX WHERE XX.NROW=1";
+        $sql = "SELECT /*+ PARALLEL(4)*/ DISTINCT
+            VEPR_FECHA_REG FECHA_ADQUISICION,
+            DVPR_SERIE IMEI,
+            SUBSTR(TRIM(V.DVPR_LINEA),-9) MSISDN,
+            M.TDOCV_DESCRIPCION TIPO_DOC,
+            P.VEPR_NUM_DOC NUM_DOC,
+            NVL(TRIM(P.VEPR_NOM_CLIE||' '||P.VEPR_APE_CLIE), P.VEPR_RAZ_SOCI) CLIENTE,
+            'PREPAGO' SEGMENTO,
+            DECODE(P.VEPR_TIPO_DOCU,'ALT','ALTA','POR','PORTABILIDAD',P.VEPR_TIPO_DOCU) DESCRIP_RAZON_VENTA,
+            DVPR_DES_PLAN PLAN_ADQUIRIDO,
+            V.DVPR_DESC_MATERIAL MARCA
+        FROM DWS.SA_SISACT_VENTA_PREPAGO P
+        INNER JOIN DWS.SA_SISACT_DETALLE_VENTA_PREPAGO V ON V.DVPR_ID = P.VEPR_ID
+        LEFT JOIN DWS.SA_SECT_TIPO_DOCUMENTO M ON P.VEPR_TIPO_DOC = M.TDOCC_CODIGO -- TIPO DE DOC CLI 
+        WHERE VEPR_ESTADO <> 'B'
+            AND P.VEPR_ESTADO = 'P' -- Que la Cabecera de la Venta sea Pagado
+            AND V.DVPR_ESTADO = 'P' -- Que su Detalle del item sea Pagado
+            AND V.DVPR_SERIE LIKE '%'||?||'%' -- --CAMBIAR IMEI 
+        UNION ALL
+        SELECT FECHA_REGISTRO FECHA_ADQUISICION,
+            EQUIPO_SERIE IMEI,
+            TELEFONO MSISDN,
+            TD.TDOCV_DESCRIPCION TIPO_DOC, 
+            DOC_CLIE_NUMERO NUM_DOC, 
+            NVL(TRIM(TITULAR_NOMBRE||' '||TITULAR_APELLIDO), TITULAR_RAZON_SOCIAL) CLIENTE, 
+            'PREPAGO' SEGMENTO,
+            TIPO_REPOSICION_DES DESCRIP_RAZON_VENTA,
+            PLAN_TARIFARIO_DES PLAN_ADQUIRIDO,
+            EQUIPO_MATERIAL_DES MARCA
+        FROM DWS.SA_SISACT_VENTA_REPO_PRE A
+        INNER JOIN DWS.SA_SSAPT_PEDIDO B ON A.DOCUMENTO_SAP = TO_CHAR(B.PEDIN_NROPEDIDO)
+        LEFT JOIN DWS.SA_SECT_TIPO_DOCUMENTO TD ON TD.TDOCC_CODIGO = A.DOC_CLIE_TIPO
+        WHERE EQUIPO_SERIE LIKE '%'||?||'%' -- --CAMBIAR IMEI 
+            AND A.ESTADO_REGISTRO IN ('PAGADO')
+            AND B.PEDIC_ESTADO = 'PAG'
+            AND A.TIPO_REPOSICION_COD = '33'
+        UNION ALL
+        SELECT C.CONTD_FECHA_CONTRATO FECHA_ADQUISICION,SERIE_EQUIPO IMEI,TELEFONO MSISDN, 
+            TD.TDOCV_DESCRIPCION TIPO_DOC,CONTV_NRO_DOC_CLIENTE NUM_DOC,
+            NVL(TRIM(CONTV_NOMBRE||' '||CONTV_APE_PAT||' '||CONTV_APE_MAT),CONTV_RAZONSOCIAL)
+            AS CLIENTE,'POSTPAGO' SEGMENTO,TOP.TOPEV_DESCRIPCION DESCRIP_RAZON_VENTA,
+            D.PLAN_TARIFAR_DESC PLAN_ADQUIRIDO,DES_EQUIPO MARCA
+        FROM DWS.SA_SISACT_AP_CONTRATO_DET D
+        INNER JOIN DWS.SA_SISACT_AP_CONTRATO C ON C.CONTN_NUMERO_CONTRATO = D.ID_CONTRATO
+        INNER JOIN DWS.SA_SISACT_INFO_VENTA_SAP S ON C.CONTN_NUMERO_CONTRATO = S.ID_CONTRATO 
+            AND S.TIPO_DOCUMENTO = 'F'
+            AND S.RECIBO = D.RECIBO
+        INNER JOIN DWS.SA_SSAPT_PEDIDO P ON P.PEDIN_NROPEDIDO = S.NRO_DOCUMENTO
+        LEFT JOIN DWS.SA_SISACT_AP_PRODUCTO PR ON PR.PRDC_CODIGO = C.CONTC_TIPO_PRODUCTO
+        LEFT JOIN DWS.SA_SISACT_AP_TIPO_OPERACION TOP ON TOP.TOPEN_CODIGO = C.CONTC_TIPO_OPERACION 
+            AND TOP.TPROC_CODIGO = C.CONTC_TIPO_PRODUCTO
+        LEFT JOIN DWS.SA_SECT_TIPO_DOCUMENTO TD ON TD.TDOCC_CODIGO = C.CONTC_TIPO_DOC_CLIENTE
+        WHERE D.SERIE_EQUIPO  LIKE '%'||?||'%' --CAMBIAR IMEI 
+            AND P.PEDIC_ESTADO = 'PAG' 
+            AND C.CONTC_TIPO_PRODUCTO IN ('01') 
+            AND ((C.CONTC_TIPO_OPERACION IN ('01','02')
+                    AND C.CONTC_ESTADO = '8')
+                OR (C.CONTC_TIPO_OPERACION IN ('04') 
+                    AND C.CONTC_ESTADO = '7')) 
+        UNION ALL
+        SELECT V.FECHA_VENTA FECHA_ADQUISICION, DP.SERIC_CODSERIE IMEI, ' ' MSISDN,
+            TD.TDOCV_DESCRIPCION TIPO_DOC, 
+            PED.PEDIV_NRODOCCLIENTE NUM_DOC,
+            NVL(TRIM(CL.CLIEV_NOMBRECLIENTE||' '||CLIEV_PATERNOCLIENTE||' ' ||CLIEV_MATERNOCLIENTE), 
+                CLIEV_RAZONSOCIAL) AS CLIENTE,
+                '  ' SEGMENTO,
+            'EQUIPOS LIBERADOS' DESCRIP_RAZON_VENTA,
+            ' ' PLAN_ADQUIRIDO,
+            DP.DEPEV_DESCMATERIAL MARCA
+        FROM DWS.SA_SSAPT_PEDIDO PED
+        JOIN DWS.SA_SSAPT_DETALLEPEDIDO DP ON DP.PEDIN_NROPEDIDO = PED.PEDIN_NROPEDIDO
+        JOIN DWS.SA_SSAPT_MATERIAL M ON M.MATEC_CODMATERIAL = DP.DEPEC_CODMATERIAL
+        LEFT JOIN DWS.SA_SSAPT_CLIENTE CL ON CL.CLIEC_TIPODOCCLIENTE = PED.PEDIC_TIPODOCCLIENTE
+            AND CL.CLIEV_NRODOCCLIENTE = PED.PEDIV_NRODOCCLIENTE
+        LEFT JOIN DWS.SA_SSAPT_PAGO PAG ON PAG.PEDIN_NROPEDIDO = PED.PEDIN_NROPEDIDO
+            AND PAG.PAGOC_ESTADO = 'PAG' -- Por casos donde un Pedido tiene varios pagos. Ejm: 108339676
+        LEFT JOIN DWS.SA_SSAPT_TIPODOCUMENTO TD ON TD.TDOCC_CODIGO = PED.PEDIC_TIPODOCCLIENTE
+        LEFT JOIN DWS.SA_SISACT_INFO_VENTA_SAP SAP ON SAP.NRO_DOCUMENTO = TO_CHAR(PED.PEDIN_NROPEDIDO) 
+            AND SAP.TIPO_DOCUMENTO = 'F'
+        LEFT JOIN DWS.SA_SISACT_AP_VENTA V ON V.ID_DOCUMENTO = SAP.ID_VENTA
+        LEFT JOIN DWS.SA_SISACT_AP_VENTA_DETALLE VD ON VD.ID_DOCUMENTO = V.ID_DOCUMENTO
+        --LEFT JOIN DWS.SA_SECT_TIPO_DOCUMENTO TD ON TD.TDOCC_CODIGO = V.TIPO_DOC_CLIENTE
+        WHERE DP.SERIC_CODSERIE like '%'||?||'%' --CAMBIAR IMEI 
+            AND PED.PEDIC_ESTADO = 'PAG'
+            AND PED.PEDIC_CODTIPOOPERACION = '25'
+            AND M.MATEC_TIPOMATERIAL = 'TV0003'";
 
-        $data = DB::select(DB::raw($sql), [$imei,$imei]);
+        $data = DB::select(DB::raw($sql), [$imei,$imei,$imei,$imei]);
 
         if (count($data) === 0) {
-            $sql = "SELECT /*+PARALLEL(10)*/ sale_date AS FECHA_ADQUISICION,serial_number AS IMEI,product_number AS MSISDN,customer_document_type_desc AS TIPO_DOC,id_card_value AS NUM_DOC,
-                customer_given_name||' '||customer_name AS CLIENTE,
-                sales_type_desc AS SEGMENTO,sales_reason_desc AS DESCRIP_RAZON_VENTA,prod_offer_plan_desc AS PLAN_ADQUIRIDO,
-                prod_offer_item_brand_desc AS MARCA,prod_offer_item_model_desc AS MODELO  
-                FROM dwa.dw_t_sales  
-                WHERE serial_number LIKE '%'||?";
+            $sql = "SELECT 
+            s.FECHA_VENTA FECHA_ADQUISICION, 
+            IMEI, s.NRO_TELEFONO MSISDN,s.DESC_TIPO_DOC_CLIENTE TIPO_DOC,
+            s.CLIENTE NUM_DOC, s.NOMBRE_CLIENTE CLIENTE,
+            s.DESC_TIPO_VENTA SEGMENTO,s.DESC_CLASE_VENTA DESCRIP_RAZON_VENTA,
+            s.PT PLAN_ADQUIRIDO, DES_EQUIPO MARCA
+            from dm.dw_sellout s
+            where imei like '%'||?||'%'";
             $data = DB::select(DB::raw($sql), [$imei]);
         }
         return $data;

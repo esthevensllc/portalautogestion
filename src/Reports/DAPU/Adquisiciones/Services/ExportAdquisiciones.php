@@ -34,14 +34,17 @@ class ExportAdquisiciones
             "descrip_razon_venta" => ["label" => "Descripción razón venta"],
             "plan_adquirido" => ["label" => "Plan adquirido"],
             "marca" => ["label" => "Marca"],
-            "modelo" => ["label" => "Modelo"],
+            // "modelo" => ["label" => "Modelo"],
         ];
         $options = [
             'styles' => [
                 'header' => ['font' => ['bold' => true]]
             ]
         ];
-        $data = $this->repo->getByImei($imei);
+        $data = [];
+        if($imei !==null && strlen($imei) >= 14){
+            $data = $this->repo->getByImei($imei);
+        }
         $this->exportService->loadData($headers, $data, $options);
         $content = $this->exportService->getWriter($type)->getOutput();
         $dt = new DateTime();
