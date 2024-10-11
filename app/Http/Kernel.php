@@ -64,6 +64,28 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'auth.cas' => \AMovil\Auth\AccessControl\Services\AuthCentralMiddleware::class,
-        'check.permission' => \AMovil\Auth\User\Services\CheckPermissionMiddleware::class,
+        'amovil.auth' => \AMovil\Auth\Shared\Infrastructure\Laravel\Middleware\AuthenticationMiddleware::class,
+        'check.permission' => \AMovil\Auth\Shared\Infrastructure\Laravel\Middleware\CheckPermissionMiddleware::class,
+        'check.admin' => \AMovil\Auth\Shared\Infrastructure\Laravel\Middleware\AdminMiddleware::class,
+        'amovil.access_log' => \AMovil\Auth\Shared\Infrastructure\Laravel\Middleware\AccessLogMiddleware::class,
+        'amovil.limit_sessions' => \AMovil\Auth\Shared\Infrastructure\Laravel\Middleware\LimitSessionsMiddleware::class,
+    ];
+
+    protected $middlewarePriority = [
+        \Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests::class,
+        \Illuminate\Cookie\Middleware\EncryptCookies::class,
+        \Illuminate\Session\Middleware\StartSession::class,
+        \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+        \Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests::class,
+        \Illuminate\Routing\Middleware\ThrottleRequests::class,
+        \Illuminate\Routing\Middleware\ThrottleRequestsWithRedis::class,
+        \Illuminate\Contracts\Session\Middleware\AuthenticatesSessions::class,
+        \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        \Illuminate\Auth\Middleware\Authorize::class,
+        \AMovil\Auth\Shared\Infrastructure\Laravel\Middleware\AccessLogMiddleware::class,
+        \AMovil\Auth\Shared\Infrastructure\Laravel\Middleware\AuthenticationMiddleware::class,
+        \AMovil\Auth\Shared\Infrastructure\Laravel\Middleware\LimitSessionsMiddleware::class,
+        \AMovil\Auth\Shared\Infrastructure\Laravel\Middleware\CheckPermissionMiddleware::class,
+        \AMovil\Auth\Shared\Infrastructure\Laravel\Middleware\AdminMiddleware::class,
     ];
 }

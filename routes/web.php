@@ -19,7 +19,7 @@ Route::get('/', function () {
 });
 
 Route::group([
-    'middleware' => 'auth.cas',
+    'middleware' => ['auth.cas'],
 ], function () {
     Route::get('/', function(){
         return redirect('dashboard');
@@ -31,7 +31,7 @@ Route::group([
 });
 
 Route::group([
-    'middleware' => ['web','auth.cas'],
+    'middleware' => ['web','auth.cas', 'amovil.limit_sessions', 'check.permission', 'amovil.access_log'],
     'namespace'  => 'App\Http\Controllers',
 ], function () {
     Route::get('lineas-mtc-osiptel/logs/tickets/{tipo_plan}/{tipo_solicitud}', [\AMovil\Reports\General\LineasMTCOsiptel\Controllers\LineasMTCOsiptelController::class, 'getTickets']);
@@ -44,7 +44,7 @@ Route::group([
         (array) config('backpack.base.web_middleware', 'web'),
         (array) config('backpack.base.middleware_key', 'admin')
     ),*/
-    'middleware' => ['web', 'auth.cas', 'check.permission'],
+    'middleware' => ['web','auth.cas', 'amovil.limit_sessions', 'check.permission', 'amovil.access_log'],
     'namespace'  => 'App\Http\Controllers',
 ], function () {
     // SIGREI
@@ -586,6 +586,19 @@ Route::group([
     Route::group(['prefix' => 'retenciones', 'trac_name' => 'retenciones.index'], function(){
         Route::get('/', [\AMovil\Reports\Retenciones\Controllers\ListadoController::class, 'view']);
         Route::post('/store', [\AMovil\Reports\Retenciones\Controllers\ListadoController::class, 'store'])->name("retenciones-store");
+        Route::post('/store-rutas', [\AMovil\Reports\Retenciones\Controllers\ListadoController::class, 'rutas'])->name("retenciones-store-rutas");
+        Route::get('/historico-combinaciones', [\AMovil\Reports\Retenciones\Controllers\ListadoController::class, 'historicoCombinaciones'])->name("retenciones-historico-combinaciones");
+        Route::get('/historico-rutas', [\AMovil\Reports\Retenciones\Controllers\ListadoController::class, 'historicoRutas'])->name("retenciones-historico-rutas");
+        Route::get('/historico/combinaciones', [\AMovil\Reports\Retenciones\Controllers\ListadoController::class, 'getCombinaciones']);
+        Route::get('/historico/rutas', [\AMovil\Reports\Retenciones\Controllers\ListadoController::class, 'getRutas']);
+        Route::get('/historico/descargar-plantilla/{filename}', function ($filename) {
+            $file = public_path('resources/' . $filename);
+            if (file_exists($file)) {
+                return Response::download($file);
+            } else {
+                abort(404); // Error si el archivo no existe
+            }
+        });
     });
 
 });
