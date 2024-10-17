@@ -24,14 +24,16 @@
     <thead class="bg-danger">
         <tr>
             <th>dia_load</th>
-            <th>pk</th>
             <th>operador</th>
-            <th>flag_dpto</th>
+            <th>departamento</th>
+            <th>zic</th>
             <th>flag</th>
             <th>target</th>
             <th>decil</th>
             <th>callcenter</th>
             <th>final</th>
+            <th>actividad_de_carga</th>
+            <th>ruta</th>
         </tr>
     </thead>
     <tbody>
@@ -61,14 +63,16 @@
         },
         columns: [
             {data: 'dia_load', name: 'dia_load'},
-            {data: 'pk', name: 'pk'},
             {data: 'operador', name: 'operador'},
-            {data: 'flag_dpto', name: 'flag_dpto'},
+            {data: 'departamento', name: 'departamento'},
+            {data: 'zic', name: 'zic'},
             {data: 'flag', name: 'flag'},
             {data: 'target', name: 'target'},
             {data: 'decil', name: 'decil'},
             {data: 'callcenter', name: 'callcenter'},
-            {data: 'final', name: 'final'}
+            {data: 'final', name: 'final'},
+            {data: 'actividad_de_carga', name: 'actividad_de_carga'},
+            {data: 'ruta', name: 'ruta'}
         ],
         paging: true,
         pageLength: 50,

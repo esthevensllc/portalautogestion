@@ -54,16 +54,18 @@ class ListadoController
 
     public function getCombinaciones()
     {
-        $data = DB::connection('mysql')->table("retenciones_red.filtros_postpago_final")
+        $data = DB::connection('mysql')->table("retenciones_red.cargas_eventos_red_post_final")
         ->select("dia_load",
-                "pk",
                 "operador",
-                "flag_dpto",
+                "departamento",
+                "zic",
                 "flag",
                 "target",
                 "decil",
                 "callcenter",
-                "final")
+                "final",
+                "actividad_de_carga",
+                "ruta")
         ->get();
 
         return response()->json(["data" => $data]);

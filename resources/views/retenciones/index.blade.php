@@ -45,7 +45,7 @@
                 </div>
             </div>
         </form>
-        <hr>
+       <!--  <hr>
         <form id="form_export_r">
             @csrf
             <div class="row">
@@ -60,7 +60,7 @@
                     <button type="submit" id="btn-submit-r" class="btn btn-danger btn-sm btn_export">Importar</button>
                 </div>
             </div>
-        </form>
+        </form> -->
     </div>
 </div>
 
@@ -211,14 +211,16 @@ $(function() {
                 }).show();
                 $('#form_export_c')[0].reset();
                 $('#file-c').val("");
-                $('#form_export_r')[0].reset();
-                $('#file-r').val("");
+                //$('#form_export_r')[0].reset();
+                //$('#file-r').val("");
             }else{
                 let json_response = await response.json();
+                console.log(json_response);
                 throw new Error(json_response.message);
             }            
         })
         .catch(error => {
+            console.log(error);
             new Noty({
                 text: 'Hubo un error al guardar los datos, por favor intente nuevamente.',
                 type: 'error',
@@ -229,7 +231,7 @@ $(function() {
     });    
     $('#descargaCombinaciones').on('click', function() {
         // Aquí se especifica el nombre del archivo que quieres descargar
-        const filename = 'combinaciones.xlsx'; // Cambia esto por el nombre del archivo que quieres descargar
+        const filename = 'PLANTILLA AUTOMATIZACION CARGAS_EVENTOS RED POST.xlsx'; // Cambia esto por el nombre del archivo que quieres descargar
 
         // Redirige al usuario para descargar el archivo
         window.location.href = `retenciones/historico/descargar-plantilla/${filename}`;

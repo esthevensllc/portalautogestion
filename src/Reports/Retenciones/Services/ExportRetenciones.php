@@ -36,18 +36,20 @@ class ExportRetenciones
             $spreedsheet = $reader->load($excel->getPathname());
             $sheet = $spreedsheet->getSheet(0);
             $highestRow = $sheet->getHighestRow();
+            $dia_actual = now();
             for ($i=2; $i <= $highestRow; $i++) {
                 $row = [];
-                $row['dia_load'] = now();
-                $row['pk'] = $sheet->getCellByColumnAndRow(1, $i)->getValue();
-                $row['operador'] = $sheet->getCellByColumnAndRow(2, $i)->getValue();
-                $row['flag_dpto'] = $sheet->getCellByColumnAndRow(3, $i)->getValue();
-                $row['flag'] = $sheet->getCellByColumnAndRow(4, $i)->getValue();
-                $row['target'] = $sheet->getCellByColumnAndRow(5, $i)->getValue();
-                $row['decil'] = $sheet->getCellByColumnAndRow(6, $i)->getValue();
-                $row['callcenter'] = $sheet->getCellByColumnAndRow(7, $i)->getValue();
-                $row['final'] = $sheet->getCellByColumnAndRow(8, $i)->getValue();
-                $row['key_hash'] = "SHA2(CONCAT('".$row['pk']."','".$row['operador']."','".$row['flag_dpto']."',if('".$row['flag']."' is null,'NULL','".$row['flag']."'),'".$row['target']."','".$row['decil']."','".$row['callcenter']."','".$row['final']."'), 256)";
+                $row['dia_load'] = $dia_actual;
+                $row['operador'] = $sheet->getCellByColumnAndRow(1, $i)->getValue() == '\N' ? '' : $sheet->getCellByColumnAndRow(1, $i)->getValue();
+                $row['departamento'] = $sheet->getCellByColumnAndRow(2, $i)->getValue() == '\N' ? '' : $sheet->getCellByColumnAndRow(2, $i)->getValue();
+                $row['zic'] = $sheet->getCellByColumnAndRow(3, $i)->getValue() == '\N' ? '' : $sheet->getCellByColumnAndRow(3, $i)->getValue();
+                $row['flag'] = $sheet->getCellByColumnAndRow(4, $i)->getValue() == '\N' ? '' : $sheet->getCellByColumnAndRow(4, $i)->getValue();
+                $row['target'] = $sheet->getCellByColumnAndRow(5, $i)->getValue() == '\N' ? '' : $sheet->getCellByColumnAndRow(5, $i)->getValue();
+                $row['decil'] = $sheet->getCellByColumnAndRow(6, $i)->getValue() == '\N' ? '' : $sheet->getCellByColumnAndRow(6, $i)->getValue();
+                $row['callcenter'] = $sheet->getCellByColumnAndRow(7, $i)->getValue() == '\N' ? '' : $sheet->getCellByColumnAndRow(7, $i)->getValue();
+                $row['final'] = $sheet->getCellByColumnAndRow(8, $i)->getValue() == '\N' ? '' : $sheet->getCellByColumnAndRow(8, $i)->getValue();
+                $row['actividad_de_carga'] = $sheet->getCellByColumnAndRow(9, $i)->getValue() == '\N' ? '' : $sheet->getCellByColumnAndRow(9, $i)->getValue();
+                $row['ruta'] = $sheet->getCellByColumnAndRow(10, $i)->getValue() == '\N' ? '' : $sheet->getCellByColumnAndRow(10, $i)->getValue();
                 $values[] = $row;
             }
         }

@@ -24,18 +24,19 @@ class EloquentRetencionesRepository implements RetencionesRepository
         try {       
             foreach ($data as $row) {
                 DB::connection("mysql")
-                ->table("retenciones_red.filtros_postpago_final")
+                ->table("retenciones_red.cargas_eventos_red_post_final")
                 ->insert([
                     "dia_load" => $row['dia_load'],
-                    "key_hash" => DB::connection('mysql')->raw($row['key_hash']),
-                    "pk" => $row['pk'],
                     "operador" => $row['operador'],
-                    "flag_dpto" => $row['flag_dpto'],
+                    "departamento" => $row['departamento'],
+                    "zic" => $row['zic'],
                     "flag" => $row['flag'],
                     "target" => $row['target'],
                     "decil" => $row['decil'],
                     "callcenter" => $row['callcenter'],
-                    "final" => $row['final']
+                    "final" => $row['final'],
+                    "actividad_de_carga" => $row['actividad_de_carga'],
+                    "ruta" => $row['ruta']
                 ]);
             }
             DB::connection('mysql')->commit(); // Confirmar transacción
