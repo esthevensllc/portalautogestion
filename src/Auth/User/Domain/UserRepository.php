@@ -10,4 +10,5 @@ interface UserRepository
     public function create($data);
     public function update($data);
     public function changeStatus($id, $status);
+    public function deleteUser($id);
 }

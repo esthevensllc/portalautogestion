@@ -132,6 +132,7 @@ Route::group([
         Route::post('usuarios/create', [\AMovil\Auth\User\Controllers\CreateUserController::class, 'create']);
         Route::post('usuarios/{id}/status/{status}', [\AMovil\Auth\User\Controllers\ChangeUserStatusController::class, '__invoke']);
         Route::get('usuarios/{id}', [\AMovil\Auth\User\Controllers\FindUserController::class, 'view']);
+        Route::post('usuarios/{id}/eliminar', [\AMovil\Auth\User\Controllers\DeleteUserController::class, '__invoke']);
     });
     Route::group(['prefix' => 'admin/roles', 'trac_name' => 'admin.roles'], function(){
         Route::get('/', [\AMovil\Auth\Roles\Controllers\GetRolesController::class, 'view']);

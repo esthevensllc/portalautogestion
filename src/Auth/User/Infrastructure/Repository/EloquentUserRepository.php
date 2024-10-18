@@ -124,4 +124,13 @@ class EloquentUserRepository implements UserRepository
         ->where('id', $id)
         ->update(['status' => $status]);
     }
+
+    public function deleteUser($id)
+    {
+        $this->rolBuilder()->where('user_id', $id)->delete();
+
+        $this->builder()
+        ->where('id', $id)
+        ->delete();
+    }
 }
