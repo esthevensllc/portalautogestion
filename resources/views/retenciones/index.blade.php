@@ -214,7 +214,7 @@ $(function() {
                 //$('#form_export_r')[0].reset();
                 //$('#file-r').val("");
             }else{
-                let statusCode = response.statusCode;
+                let statusCode = response.status;
                 let json_response = await response.json();
                 let message = 'Hubo un error al guardar los datos, por favor intente nuevamente.';
                 if(statusCode < 500){
