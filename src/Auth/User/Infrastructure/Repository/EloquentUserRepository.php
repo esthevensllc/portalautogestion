@@ -79,7 +79,9 @@ class EloquentUserRepository implements UserRepository
 
     public function create($data)
     {
-        $id = $this->builder()->count() + 1;
+        // $id = $this->builder()->count() + 1;
+        $id = $this->builder()->select(DB::raw("max(id) + 1 as next_id"))->first()->next_id;
+
         $this->builder()->insert([
             'id' => $id,
             'username' => $data['username'],
