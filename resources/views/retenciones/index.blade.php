@@ -214,15 +214,19 @@ $(function() {
                 //$('#form_export_r')[0].reset();
                 //$('#file-r').val("");
             }else{
+                let statusCode = response.statusCode;
                 let json_response = await response.json();
-                console.log(json_response);
-                throw new Error(json_response.message);
+                let message = 'Hubo un error al guardar los datos, por favor intente nuevamente.';
+                if(statusCode < 500){
+                    message = json_response.message;
+                }
+                throw new Error(message);
             }            
         })
         .catch(error => {
             console.log(error);
             new Noty({
-                text: 'Hubo un error al guardar los datos, por favor intente nuevamente.',
+                text: error.message,
                 type: 'error',
                 timeout: 3000,
                 layout: 'topRight'

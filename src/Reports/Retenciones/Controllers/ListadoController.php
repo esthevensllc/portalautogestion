@@ -4,8 +4,10 @@ namespace AMovil\Reports\Retenciones\Controllers;
 
 use AMovil\Reports\Retenciones\Services\ExportRetenciones;
 use AMovil\Shared\Exports\Domain\WriterType;
+use DateTime;
 use Illuminate\Http\Request;
 use DB;
+use Exception;
 
 class ListadoController
 {
@@ -26,12 +28,22 @@ class ListadoController
 
     public function store(Request $request)
     {
+        $now = new DateTime();
+        $minuto = (int) $now->format('i');
+        if(45 < $minuto && $minuto <= 59){
+            return response()->json(['message' => 'Solo es posible cargar en el rango de minutos de 00 hasta el minuto 45'], 400);
+        }
         $result = $this->service->__invoke($request->file("excel_c"));
         return $result;
     }
 
     public function rutas(Request $request)
     {
+        $now = new DateTime();
+        $minuto = (int) $now->format('i');
+        if(45 < $minuto && $minuto <= 59){
+            return response()->json(['message' => 'Solo es posible cargar en el rango de minutos de 00 hasta el minuto 45'], 400);
+        }
         $result = $this->service->__invokeRutas($request->file("excel_r"));
         return $result;
     }
