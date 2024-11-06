@@ -7,6 +7,7 @@ use DateTime;
 interface ExtraccionRepository
 {
     public function getReporte(array $celdas, array $provincias, DateTime $fechaIni, DateTime $fechaFin, $ticketOsiptel, DateTime $fechaInteres, DateTime $corteFechaIni, Datetime $corteFechaFin);
+    public function getReporteWithoutValidation(array $celdas, array $provincias, DateTime $fechaIni, DateTime $fechaFin, $ticketOsiptel, DateTime $fechaInteres, DateTime $corteFechaIni, Datetime $corteFechaFin);
     public function getReporte2(array $celdas, array $provincias, DateTime $fechaIni, DateTime $fechaFin, $ticketOsiptel, DateTime $fechaInteres, DateTime $corteFechaIni, Datetime $corteFechaFin);
     public function getReporteMontoDevolver(Datetime $fechaInteres, Datetime $corteFechaIni);
     public function ticketAndDepartamentoExistsInConsolidado($ticket, $departamento);

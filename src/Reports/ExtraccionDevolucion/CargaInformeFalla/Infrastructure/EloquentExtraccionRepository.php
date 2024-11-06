@@ -1603,6 +1603,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
 
     public function saveReportInputs(
         $num_reporte,
+        $tipoReporte,
         array $celdas,
         array $distritos,
         DateTime $fechaIni,
@@ -1636,6 +1637,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
         ->table("usraes.base_ext_dev_input")
         ->insert([
             "num_reporte" => $num_reporte,
+            "tipo_reporte" => $tipoReporte,
             "departamento" => $departamento,
             "codigo_c" => $codigo_c,
             "fecha_ini" => $fechaIni->format("Y-m-d H:i:s"),
@@ -1666,6 +1668,31 @@ class EloquentExtraccionRepository implements ExtraccionRepository
                 "distrito" => $row[2],
             ]);
         }
+    }
+
+    public function saveInputMsisdn($num_reporte, $data){
+        foreach($data as $row){
+            DB::connection("oracle_reptdm")
+            ->table("usraes.base_ext_dev_msisdn")
+            ->insert([
+                "num_reporte" => $num_reporte,
+                "ticket" => $row["ticket"],
+                "msisdn" => $row["msisdn"],
+                "fecha_carga" => $row["fecha_carga"],
+                "celda" => $row["celda"],
+                "fecha_corte" => $row["fecha_corte"],
+                "departamento" => $row["departamento"],
+                "provincia" => $row["provincia"],
+                "distrito" => $row["distrito"],
+            ]);
+        }
+    }
+
+    public function getInputByTicket($ticket) {
+        $informe = DB::table("usraes.noc_informe_de_fallas")->where('ticket', $ticket)->first();
+        $informeInput = DB::connection("oracle_reptdm")->table("usraes.base_ext_dev_input")
+        ->where('num_reporte', $informe !== null ? $informe->numero_de_reporte : null)->first();
+        return $informeInput;
     }
 
     public function getInputByNumReporte_Departamento($num_reporte, $departamento)

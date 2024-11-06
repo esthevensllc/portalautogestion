@@ -3,6 +3,7 @@
 namespace AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Infrastructure;
 
 use AMovil\Auth\AccessControl\Domain\AuthService;
+use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Domain\InformeTipoReporte;
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Domain\ExtraccionRepository;
 use DateTime;
 use Exception;
@@ -195,6 +196,182 @@ class EloquentExtraccionRepository implements ExtraccionRepository
         return $result[0]->counter;
     }
 
+    public function getReporteWithoutValidation(array $celdas, array $provincias, DateTime $fechaIni, DateTime $fechaFin, $ticketOsiptel, DateTime $fechaInteres, DateTime $corteFechaIni, Datetime $corteFechaFin)
+    {
+        $this->userIdentifier = $this->authService->getUserIdentifier();
+        $fechaActual = new DateTime();
+        $fechaActual->modify("-1 day");
+
+        $strFechaIniF1 = $fechaIni->format("Ymd");
+        $strFechaIniF3 = $fechaIni->format("YmdHis");
+        // $strPeriodo = $fechaActual->format("Ym");
+        $strFechaFinF3 = $fechaFin->format("YmdHis");
+
+        //$corteDiffMinutos = $corteFechaIni->format("YmdHis") - $corteFechaFin->format("YmdHis");
+        $corteDiffMinutos = $corteFechaFin->getTimestamp() - $corteFechaIni->getTimestamp();
+        $corteDiffMinutos = floor($corteDiffMinutos/60);
+
+        // $strCorteFechaIniF1 = $corteFechaIni->format("YmdHis");
+        // $strCorteFechaFinF2 = $corteFechaFin->modify("+3 minute")->format("YmdHis");
+
+        $allQueries = [];
+        $queries = [];
+        $queries[] = ["sql" => "BEGIN
+            EXECUTE IMMEDIATE 'DROP TABLE USRAES.TABLE_CELDAS_{$this->userIdentifier}';
+        EXCEPTION
+            WHEN OTHERS THEN
+                IF SQLCODE != -942 THEN
+                    RAISE;
+                END IF;
+        END;"];
+        $queries[] = ["sql" => "BEGIN
+            EXECUTE IMMEDIATE 'DROP TABLE USRAES.DEP_PRO_DIS_TMP_{$this->userIdentifier}';
+        EXCEPTION
+            WHEN OTHERS THEN
+                IF SQLCODE != -942 THEN
+                    RAISE;
+                END IF;
+        END;"];
+        $queries[] = ["sql" => "CREATE TABLE USRAES.TABLE_CELDAS_{$this->userIdentifier} (CELDA VARCHAR2(25)) tablespace WORKAREA"];
+        $queries[] = ["sql" => "CREATE TABLE USRAES.DEP_PRO_DIS_TMP_{$this->userIdentifier} (
+            DEPARTAMENTO VARCHAR2(25),
+            PROVINCIA VARCHAR2(25),
+            DISTRITO VARCHAR2(25)
+        ) tablespace WORKAREA"];
+
+        $this->exec_sql($queries);
+
+        foreach ($celdas as $value) {
+            DB::connection($this->connection)->table("USRAES.TABLE_CELDAS_{$this->userIdentifier}")->insert(["celda" => $value]);
+        }
+        foreach ($provincias as $row) {
+            DB::connection($this->connection)->table("USRAES.DEP_PRO_DIS_TMP_{$this->userIdentifier}")->insert([
+                "departamento" => $row[0],
+                "provincia" => $row[1],
+                "distrito" => $row[2],
+            ]);
+        }
+        $allQueries = array_merge($allQueries, $queries);
+        $queries = [];
+
+        $dwh_validation = DB::connection($this->connection)
+        ->select(DB::raw("SELECT
+        count(*) as counter
+        FROM all_tab_partitions
+        WHERE table_name = 'CDR_DWH'
+        and segment_created = 'YES'
+        AND NUM_ROWS IS NOT NULL
+        AND NUM_ROWS<>0
+        AND replace(PARTITION_name, 'CDR_DWH_') = :p_fecha_ini"), ["p_fecha_ini" => $strFechaIniF1])[0];
+
+        if($dwh_validation->counter > 0){
+            $queries[] = ["sql" => "BEGIN
+                EXECUTE IMMEDIATE 'DROP TABLE USRAES.T_USER_VOZ_{$this->userIdentifier}';
+            EXCEPTION
+                WHEN OTHERS THEN
+                    IF SQLCODE != -942 THEN
+                        RAISE;
+                    END IF;
+            END;"];
+            $queries[] = ["sql" => "BEGIN
+                EXECUTE IMMEDIATE 'DROP TABLE USRAES.T_U_VOZ_{$this->userIdentifier}';
+            EXCEPTION
+                WHEN OTHERS THEN
+                    IF SQLCODE != -942 THEN
+                        RAISE;
+                    END IF;
+            END;"];
+            $queries[] = ["sql" => "CREATE TABLE USRAES.T_U_VOZ_{$this->userIdentifier} tablespace WORKAREA AS
+            SELECT /*+ PARALLEL(16)*/
+            'VOZ' SERVICIO,
+            cdr.tim_number MSISDN
+            ,cdr.tim_number_subs_firts_ci CELDA
+            ,cdr.charging_start_time FECHA
+            ,cdr.record_type TIPO
+            ,cdr.number_b NUMBER_B
+            FROM dm.cdr_dwh PARTITION(CDR_DWH_{$strFechaIniF1}) cdr -- <--FECHA_INI O FECHA_FIN
+            WHERE
+            cdr.tim_number_subs_firts_ci in (SELECT CELDA FROM USRAES.TABLE_CELDAS_{$this->userIdentifier} GROUP BY CELDA)
+            AND cdr.charging_start_time BETWEEN '{$strFechaIniF3}' -- < COLOCAR CONCAT FECHA_INI + (HORA_INI - 00:10:00) 
+            AND '{$strFechaFinF3}' -- < COLOCAR CONCAT FECHA_FIN + (HORA_FIN + 00:03:00)
+            AND cdr.record_type IN ('01','03','08')"];
+            $queries[] = ["sql" => "CREATE TABLE USRAES.T_USER_VOZ_{$this->userIdentifier} tablespace WORKAREA AS
+            SELECT SERVICIO,MSISDN,CELDA,FECHA FROM USRAES.T_U_VOZ_{$this->userIdentifier}
+            WHERE
+            SUBSTR(MSISDN,1,3)='519'
+            AND LENGTH(MSISDN)>10
+            AND LENGTH(number_b)>=10"];
+        }else{
+            // throw new Exception("No existe o no hay datos para la partición 'CDR_DWH_{$strFechaIniF1}' de la tabla dm.cdr_dwh en REPTDM");
+        }
+        
+        $table_validation = DB::connection($this->connection)
+        ->select(DB::raw("SELECT
+        count(*) as counter
+        FROM all_tab_partitions
+        WHERE table_name = 'CDR_GPRS'
+        and segment_created = 'YES'
+        AND NUM_ROWS IS NOT NULL
+        AND NUM_ROWS<>0
+        AND replace(PARTITION_name, 'P_') = :p_fecha_ini"), ["p_fecha_ini" => $strFechaIniF1])[0];
+
+        if($table_validation->counter > 0){
+            $queries[] = ["sql" => "BEGIN
+                EXECUTE IMMEDIATE 'DROP TABLE USRAES.TMP_USER_DATOS_{$this->userIdentifier}';
+            EXCEPTION
+                WHEN OTHERS THEN
+                    IF SQLCODE != -942 THEN
+                        RAISE;
+                    END IF;
+            END;"];
+            $queries[] = ["sql" => "CREATE TABLE USRAES.TMP_USER_DATOS_{$this->userIdentifier} tablespace WORKAREA AS
+            SELECT SERVICIO,MSISDN,CELDA,FECHA FROM (
+            SELECT 
+            'DATOS' SERVICIO,
+            gp.served_msisdn MSISDN
+            ,gp.cell_identity CELDA
+            ,gp.s_uplink UPLINK
+            ,gp.s_downlink DOWNLINK
+            ,TO_CHAR(gp.s_rec_opening_time,'YYYYMMDDHH24MISS') FECHA
+            FROM dm.cdr_gprs PARTITION(P_{$strFechaIniF1}) gp
+            WHERE
+            gp.cell_identity in (SELECT CELDA FROM USRAES.TABLE_CELDAS_{$this->userIdentifier} GROUP BY CELDA)
+            AND TO_CHAR(gp.s_rec_opening_time,'YYYYMMDDHH24MISS') BETWEEN '{$strFechaIniF3}' -- < COLOCAR CONCAT FECHA_INI + (HORA_INI - 00:10:00) 
+            AND '{$strFechaFinF3}' -- < COLOCAR CONCAT FECHA_FIN + (HORA_FIN + 00:03:00)
+            and (gp.s_uplink + gp.s_downlink)>0)"];
+        }else{
+            // throw new Exception("No existe o no hay datos para la partición 'P_{$strFechaIniF1}' de la tabla dm.cdr_gprs en REPTDM");
+        }
+
+        $queries[] = ["sql" => "BEGIN
+            EXECUTE IMMEDIATE 'DROP TABLE USRAES.TMP_USER_BASE_{$this->userIdentifier}';
+        EXCEPTION
+            WHEN OTHERS THEN
+                IF SQLCODE != -942 THEN RAISE; END IF;
+        END;"];
+        $queries[] = ["sql" => "CREATE TABLE USRAES.TMP_USER_BASE_{$this->userIdentifier} tablespace WORKAREA AS
+        SELECT SERVICIO,MSISDN,TO_CHAR(CELDA) CELDA,FECHA FROM USRAES.TMP_USER_DATOS_{$this->userIdentifier}
+        UNION ALL
+        SELECT * FROM USRAES.T_USER_VOZ_{$this->userIdentifier}"];
+
+        $queries[] = ["sql" => "BEGIN
+            EXECUTE IMMEDIATE 'DROP TABLE USRAES.TMP_USER_UNICOS_{$this->userIdentifier}';
+        EXCEPTION
+            WHEN OTHERS THEN
+                IF SQLCODE != -942 THEN RAISE; END IF;
+        END;"];
+        $queries[] = ["sql" => "CREATE TABLE USRAES.TMP_USER_UNICOS_{$this->userIdentifier} tablespace WORKAREA AS
+        SELECT '{$ticketOsiptel}' TICKET, -- <---- Ticket_osiptel
+        MSISDN,SYSDATE FECHA_CARGA,MAX(CELDA) CELDA 
+        FROM USRAES.TMP_USER_BASE_{$this->userIdentifier} group BY MSISDN"];
+
+        $this->exec_sql($queries);
+
+        $result = DB::connection($this->connection)
+        ->select(DB::raw("select count(distinct MSISDN) counter from USRAES.TMP_USER_UNICOS_{$this->userIdentifier}"));
+        return $result[0]->counter;
+    }
+
     public function getReporte2(array $celdas, array $provincias, DateTime $fechaIni, DateTime $fechaFin, $ticketOsiptel, DateTime $fechaInteres, DateTime $corteFechaIni, Datetime $corteFechaFin)
     {
         $this->userIdentifier = $this->authService->getUserIdentifier();
@@ -261,18 +438,51 @@ class EloquentExtraccionRepository implements ExtraccionRepository
         WHEN OTHERS THEN
             IF SQLCODE != -942 THEN RAISE; END IF;
         END;"];
-        $queries[] = ["sql" => "CREATE TABLE USRAES.TMP_USER_DEP_PRO_DIS_{$this->userIdentifier} tablespace WORKAREA AS
-        SELECT DISTINCT 
-               TK.*,
-               TO_DATE('{$strFechaFinF3}','YYYYMMDDHH24MISS') FECHA_CORTE, -- (FECHA_FIN + HORA_FIN)
-               cr.departamento,
-               cr.provincia,
-               cr.distrito
-        FROM USRAES.TMP_USER_UNICOS_{$this->userIdentifier} TK
-        ,dm.cdr_celdas_red cr
-        WHERE TK.celda=cr.cell_id
-        AND translate(UPPER(cr.departamento), 'áéíóúÁÉÍÓÚ', 'aeiouAEIOU') IN 
-        (SELECT DEPARTAMENTO FROM USRAES.DEP_PRO_DIS_TMP_{$this->userIdentifier} GROUP BY DEPARTAMENTO)"];
+
+        $informInput = $this->getInputByTicket($ticketOsiptel);
+
+        if($informInput !== null && (int) $informInput->tipo_reporte === InformeTipoReporte::BY_MSISDN){
+            $queries[] = ["sql" => "CREATE TABLE USRAES.TMP_USER_DEP_PRO_DIS_{$this->userIdentifier}(
+            TICKET VARCHAR2(20),
+            MSISDN VARCHAR2(25),
+            FECHA_CARGA DATE,
+            CELDA VARCHAR2(40),
+            FECHA_CORTE DATE,
+            DEPARTAMENTO VARCHAR2(100),
+            PROVINCIA VARCHAR2(100),
+            DISTRITO VARCHAR2(100)
+            ) tablespace WORKAREA"];
+
+            $queries[] = ["sql" => "BEGIN
+                INSERT INTO USRAES.TMP_USER_DEP_PRO_DIS_{$this->userIdentifier}(
+                    ticket, msisdn, fecha_carga, celda, fecha_corte, departamento, provincia, distrito
+                )
+                SELECT
+                DISTINCT ticket, msisdn, fecha_carga, celda, fecha_corte, b.departamento, b.provincia, b.distrito
+                FROM usraes.base_ext_dev_msisdn a
+                left join (
+                    select distinct departamento, provincia, distrito from usraes.base_ext_dev_dist
+                    where num_reporte = :p_num_reporte2
+                    fetch first '1' rows only
+                ) b on 1=1
+                WHERE num_reporte = :p_num_reporte;
+                COMMIT;
+            END;",
+            "params" => ["p_num_reporte" => $informInput->num_reporte, "p_num_reporte2" => $informInput->num_reporte]];
+        } else {
+            $queries[] = ["sql" => "CREATE TABLE USRAES.TMP_USER_DEP_PRO_DIS_{$this->userIdentifier} tablespace WORKAREA AS
+            SELECT DISTINCT
+                TK.*,
+                TO_DATE('{$strFechaFinF3}','YYYYMMDDHH24MISS') FECHA_CORTE, -- (FECHA_FIN + HORA_FIN)
+                cr.departamento,
+                cr.provincia,
+                cr.distrito
+            FROM USRAES.TMP_USER_UNICOS_{$this->userIdentifier} TK
+            ,dm.cdr_celdas_red cr
+            WHERE TK.celda=cr.cell_id
+            AND translate(UPPER(cr.departamento), 'áéíóúÁÉÍÓÚ', 'aeiouAEIOU') IN 
+            (SELECT DEPARTAMENTO FROM USRAES.DEP_PRO_DIS_TMP_{$this->userIdentifier} GROUP BY DEPARTAMENTO)"];
+        }
 
         $this->exec_sql($queries);
 
@@ -1524,6 +1734,13 @@ class EloquentExtraccionRepository implements ExtraccionRepository
 
             DB::table("USRAES.ACREDITACION_PREPAGO_TEMP")->insert($values);
         }
+    }
+
+    private function getInputByTicket($ticket) {
+        $informe = DB::table("usraes.noc_informe_de_fallas")->where('ticket', $ticket)->first();
+        $informeInput = DB::connection("oracle_reptdm")->table("usraes.base_ext_dev_input")
+        ->where('num_reporte', $informe !== null ? $informe->numero_de_reporte : null)->first();
+        return $informeInput;
     }
 
     private function exec_sql(array $plsql)
