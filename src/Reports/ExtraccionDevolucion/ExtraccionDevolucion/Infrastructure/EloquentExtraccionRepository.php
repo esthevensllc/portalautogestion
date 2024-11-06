@@ -931,7 +931,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
             ----LINEAS PREPAGO -- ARPU PREPAGO
             UPDATE USRAES.USER_BASE_PREV_{$this->userIdentifier} A
             SET CARGO_LINEA=(
-                select MAX(ARPU) ARPU FROM (
+                select (MAX(ARPU)+ 2) as ARPU FROM (
                 SELECT * from (
                 select * 
                 from usraes.dwh_arpu 
