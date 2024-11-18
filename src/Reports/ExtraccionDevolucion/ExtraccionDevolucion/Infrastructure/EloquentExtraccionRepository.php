@@ -458,7 +458,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
                     ticket, msisdn, fecha_carga, celda, fecha_corte, departamento, provincia, distrito
                 )
                 SELECT
-                DISTINCT ticket, msisdn, fecha_carga, celda, fecha_corte, b.departamento, b.provincia, b.distrito
+                DISTINCT :p_ticket ticket, msisdn, fecha_carga, celda, fecha_corte, b.departamento, b.provincia, b.distrito
                 FROM usraes.base_ext_dev_msisdn a
                 left join (
                     select distinct departamento, provincia, distrito from usraes.base_ext_dev_dist
@@ -468,7 +468,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
                 WHERE num_reporte = :p_num_reporte;
                 COMMIT;
             END;",
-            "params" => ["p_num_reporte" => $informInput->num_reporte, "p_num_reporte2" => $informInput->num_reporte]];
+            "params" => ["p_num_reporte" => $informInput->num_reporte, "p_num_reporte2" => $informInput->num_reporte, "p_ticket" => $ticketOsiptel]];
         } else {
             $queries[] = ["sql" => "CREATE TABLE USRAES.TMP_USER_DEP_PRO_DIS_{$this->userIdentifier} tablespace WORKAREA AS
             SELECT DISTINCT
@@ -1485,6 +1485,180 @@ class EloquentExtraccionRepository implements ExtraccionRepository
         END;"];
 
         $this->exec_sql($queries);
+
+        $ticket = DB::connection($this->connection)->select("SELECT max(TICKET) TICKET FROM USRAES.BASE_PREV_BASEDEV_{$this->userIdentifier}")[0];
+        $ticket = $ticket->ticket;
+
+        $informInput = $this->getInputByTicket($ticket);
+        if($informInput !== null && (int) $informInput->tipo_reporte === InformeTipoReporte::BY_MSISDN){
+            $this->connection = "oracle";
+
+            $queries = [];
+            $queries[] = ["sql" => "BEGIN
+                EXECUTE IMMEDIATE 'DROP TABLE usraes.base_ext_dev_msisdn_{$this->userIdentifier}';
+            EXCEPTION
+            WHEN OTHERS THEN
+                IF SQLCODE != -942 THEN RAISE; END IF;
+            END;"];
+            $queries[] = ["sql" => "CREATE TABLE usraes.base_ext_dev_msisdn_{$this->userIdentifier}(
+            NUM_REPORTE VARCHAR2(100),
+            TICKET VARCHAR2(20),
+            MSISDN VARCHAR2(25),
+            FECHA_CARGA DATE,
+            CELDA VARCHAR2(40),
+            FECHA_CORTE DATE,
+            DEPARTAMENTO VARCHAR2(100),
+            PROVINCIA VARCHAR2(100),
+            DISTRITO VARCHAR2(100)
+            )"];
+
+            $this->exec_sql($queries);
+
+            DB::connection("oracle_reptdm")->table("usraes.base_ext_dev_msisdn")
+            ->select("num_reporte", "ticket", "msisdn", "fecha_carga", "celda", "fecha_corte", "departamento", "provincia", "distrito")
+            ->where("num_reporte", $informInput->num_reporte)
+            ->orderBy("msisdn")
+            ->lazy(10)
+            ->each(function($input_msisdn){
+                DB::connection("oracle")->table("usraes.base_ext_dev_msisdn_{$this->userIdentifier}")
+                ->insert([
+                    "num_reporte" => $input_msisdn->num_reporte,
+                    "ticket" => $input_msisdn->ticket,
+                    "msisdn" => $input_msisdn->msisdn,
+                    "fecha_carga" => $input_msisdn->fecha_carga,
+                    "celda" => $input_msisdn->celda,
+                    "fecha_corte" => $input_msisdn->fecha_corte,
+                    "departamento" => $input_msisdn->departamento,
+                    "provincia" => $input_msisdn->provincia,
+                    "distrito" => $input_msisdn->distrito,
+                ]);
+            });
+            
+            $queries = [];
+            $queries[] = ["sql" => "BEGIN
+                EXECUTE IMMEDIATE 'DROP TABLE USRAES.base_devolver_borrame_RESULTADO_{$this->userIdentifier}';
+            EXCEPTION
+            WHEN OTHERS THEN
+                IF SQLCODE != -942 THEN RAISE; END IF;
+            END;"];
+            $queries[] = ["sql" => "CREATE TABLE USRAES.base_devolver_borrame_RESULTADO_{$this->userIdentifier} AS 
+            SELECT XX.* FROM (
+            select  /*+ PARALLEL(4)*/ 
+            AA.msisdn,
+            AA.fecha_corte,
+            AA.fecha_corte_2,
+            BB.SUBSCRIPTION_ACCESS_NUMBER,
+            BB.agreement_start_date FECHA_ALTA,
+            BB.agreement_end_date FECHA_BAJA,
+            BB.ID_CARD_TYPE_VALUE,
+            BB.ID_CARD_VALUE,
+            ROW_NUMBER() OVER(PARTITION BY AA.TICKET,AA.MSISDN,AA.FECHA_CORTE ORDER BY BB.AGREEMENT_STATUS_DATE DESC) FLAG_UNICO
+            FROM 
+            (
+                select  /*+ PARALLEL(4)*/ ticket,msisdn,fecha_corte, 
+                TO_CHAR(fecha_corte,'YYYY-MM-DD') fecha_corte_2 
+                from usraes.base_ext_dev_msisdn_{$this->userIdentifier} -- <--- LA TABLA TEMPORAL DONDE SE CARGO EL FILE DEL INFORME DE FALLAS
+            ) AA 
+            LEFT JOIN DWA.DW_M_SUBSCRIPTION_HIST PARTITION(P_{$strPeriodo}) BB -- SE AGREGA LA PARTITION MAS ACTUAL
+            ON AA.msisdn=BB.SUBSCRIPTION_ACCESS_NUMBER 
+            WHERE to_char(BB.agreement_start_date,'YYYY-MM-DD') < AA.fecha_corte_2
+            AND (to_char(BB.agreement_end_date,'YYYY-MM-DD') >= AA.fecha_corte_2 OR 
+                    BB.agreement_end_date IS NULL)
+            ) XX WHERE XX.FLAG_UNICO=1"];
+
+            $queries[] = ["sql" => "BEGIN
+                EXECUTE IMMEDIATE 'DROP TABLE USRAES.BASE_USUARIOS_VALIDACION_DOC_{$this->userIdentifier}';
+            EXCEPTION
+            WHEN OTHERS THEN
+                IF SQLCODE != -942 THEN RAISE; END IF;
+            END;"];
+            $queries[] = ["sql" => "CREATE TABLE USRAES.BASE_USUARIOS_VALIDACION_DOC_{$this->userIdentifier} AS
+            SELECT /*+ PARALLEL(4)*/ 
+            AA.*,
+            CASE WHEN BB.ID_CARD_VALUE IS NULL OR BB.ID_CARD_TYPE_VALUE IS NULL OR BB.ID_CARD_TYPE_VALUE='NO_DEFINIDO' THEN 'ERROR_DE_DOCUMENTACION'
+                WHEN BB.ID_CARD_VALUE IS NOT NULL AND BB.ID_CARD_TYPE_VALUE IS NOT NULL THEN 'CORRECTO'
+                END OBSERVACION
+            FROM usraes.base_ext_dev_msisdn_{$this->userIdentifier} AA -- <--- LA TABLA TEMPORAL DONDE SE CARGO EL FILE DEL INFORME DE FALLAS
+            LEFT JOIN USRAES.base_devolver_borrame_RESULTADO_{$this->userIdentifier} BB 
+            ON AA.msisdn=BB.MSISDN
+            AND AA.fecha_corte=BB.fecha_corte"];
+
+            $this->exec_sql($queries);
+
+            $this->connection = "oracle_reptdm";
+
+            $queries = [];
+            $queries[] = ["sql" => "BEGIN
+                EXECUTE IMMEDIATE 'DROP TABLE USRAES.BASE_USUARIOS_VALIDACION_DOC_{$this->userIdentifier}';
+            EXCEPTION
+            WHEN OTHERS THEN
+                IF SQLCODE != -942 THEN RAISE; END IF;
+            END;"];
+            $queries[] = ["sql" => "CREATE TABLE USRAES.BASE_USUARIOS_VALIDACION_DOC_{$this->userIdentifier}(
+            NUM_REPORTE VARCHAR2(100),
+            TICKET VARCHAR2(20),
+            MSISDN VARCHAR2(25),
+            FECHA_CARGA DATE,
+            CELDA VARCHAR2(40),
+            FECHA_CORTE DATE,
+            DEPARTAMENTO VARCHAR2(100),
+            PROVINCIA VARCHAR2(100),
+            DISTRITO VARCHAR2(100),
+            OBSERVACION VARCHAR2(250)
+            )"];
+
+            $this->exec_sql($queries);
+
+            DB::connection("oracle")->table("USRAES.BASE_USUARIOS_VALIDACION_DOC_{$this->userIdentifier}")
+            ->select("num_reporte", "ticket", "msisdn", "fecha_carga", "celda", "fecha_corte", "departamento", "provincia", "distrito", "observacion")
+            ->where("num_reporte", $informInput->num_reporte)
+            ->orderBy("msisdn")
+            ->lazy(20)
+            ->each(function($input_msisdn){
+                DB::connection("oracle_reptdm")->table("USRAES.BASE_USUARIOS_VALIDACION_DOC_{$this->userIdentifier}")
+                ->insert([
+                    "num_reporte" => $input_msisdn->num_reporte,
+                    "ticket" => $input_msisdn->ticket,
+                    "msisdn" => $input_msisdn->msisdn,
+                    "fecha_carga" => $input_msisdn->fecha_carga,
+                    "celda" => $input_msisdn->celda,
+                    "fecha_corte" => $input_msisdn->fecha_corte,
+                    "departamento" => $input_msisdn->departamento,
+                    "provincia" => $input_msisdn->provincia,
+                    "distrito" => $input_msisdn->distrito,
+                    "observacion" => $input_msisdn->observacion,
+                ]);
+            });
+
+            $queries = [];
+            $queries[] = ["sql" => "BEGIN
+                MERGE INTO USRAES.BASE_USUARIOS_VALIDACION_DOC_{$this->userIdentifier} AA 
+                USING USRAES.USER_BASE_PREV_{$this->userIdentifier} BB 
+                ON (AA.TICKET=BB.TICKET AND AA.MSISDN=BB.MSISDN)
+                WHEN MATCHED THEN 
+                UPDATE SET AA.OBSERVACION='CARGO_FIJO_CERO' 
+                WHERE BB.CARGO_LINEA_IGV=0;
+                COMMIT;
+
+                MERGE INTO USRAES.BASE_USUARIOS_VALIDACION_DOC_{$this->userIdentifier} AA 
+                USING USRAES.BASE_PREV_BASEDEV_{$this->userIdentifier} BB 
+                ON (AA.TICKET=BB.TICKET AND AA.MSISDN=BB.MSISDN)
+                WHEN MATCHED THEN 
+                UPDATE SET AA.OBSERVACION=BB.MODALIDAD_DEV;
+                COMMIT;
+
+                -- SE GUARGA COMO HISTORICO
+                INSERT INTO USRAES.BASE_USUARIOS_VALIDACION_DOC_HIST(
+                num_reporte, ticket, msisdn, fecha_carga, celda, fecha_corte, departamento, provincia, distrito, observacion, fecha_generacion
+                )
+                SELECT
+                num_reporte, ticket, msisdn, fecha_carga, celda, fecha_corte, departamento, provincia, distrito, observacion, sysdate fecha_generacion
+                FROM USRAES.BASE_USUARIOS_VALIDACION_DOC_{$this->userIdentifier};
+                commit;
+            END;"];
+
+            $this->exec_sql($queries);
+        }
     }
 
     public function ticketAndDepartamentoExistsInConsolidado($ticket, $departamento)
@@ -1616,6 +1790,11 @@ class EloquentExtraccionRepository implements ExtraccionRepository
         WHERE TICKET= :p_ticket
         AND MODALIDAD_DEV LIKE '%PREPAGO%'
         and DEPARTAMENTO= :p_departamento"), ["p_ticket" => $ticket, "p_departamento" => $departamento]);
+    }
+
+    public function getReporteMsisdn($ticket){
+        $this->userIdentifier = $this->authService->getUserIdentifier();
+        return DB::connection("oracle_reptdm")->table("USRAES.BASE_USUARIOS_VALIDACION_DOC_{$this->userIdentifier}")->get();
     }
 
     public function updateReporte($ticket, $departamento, $data)

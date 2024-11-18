@@ -52,6 +52,7 @@
 <script>
     const config = @json($config);
 $(function() {
+    let departamentosFinded = [];
 
     let tickets = {};
     config.reports.forEach(row => {
@@ -87,6 +88,7 @@ $(function() {
             .then(utils.fetchErrorMiddleware)
             .then(response => response.json())
             .then(response => {
+                departamentosFinded = response;
                 let _html = response.map(r => `<option data-num_reporte="${r.num_reporte}">${r.departamento}</option>`)
                 .join("");
                 document.querySelector("select[name=departamento]").innerHTML = `<option value="">Seleccione</option>` + _html;
@@ -170,6 +172,24 @@ $(function() {
                     text: "Procesado correctamente"
                 }).show();
                 loader_component.style.display = 'none';
+
+                let informeInput = departamentosFinded[0];
+                if(informeInput !== undefined && Number(informeInput.tipo_reporte) === 2){
+                    utils.downloadHandler({
+                        url: config.exportRepMsisdnApi,
+                        btn_export: '.btn-process',
+                        requestOptions: {
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Accept": "application/json"
+                            },
+                            body: JSON.stringify({
+                                _token: document.querySelector("input[name=_token]").value,
+                                ticket: $("select[name=ticket]").val()
+                            })
+                        }
+                    }, {});
+                }
             })
             .catch(error => {
                 loader_component.style.display = 'none';
