@@ -94,6 +94,7 @@
             <div class="text-danger">
                 *Toda consulta que se realice se registrara en un log
                 <br>*Si el periodo a consultar no se entra en el rango mostrado comunicarse con el área de Facturación a Clientes
+                <br>*El equipo de facturación cuenta con 5 dias de plazo luego del ciclo de cierre para cargar información del recibo
             </div>
         </form>
     </div>

@@ -47,7 +47,7 @@
                         <th>Descripción razón venta</th>
                         <th>Plan adquirido</th>
                         <th>Marca</th>
-                        <th>Modelo</th>
+                        {{-- <th>Modelo</th> --}}
                     </tr>
                 </thead>
                 <tbody>
@@ -93,7 +93,6 @@
                 <td>${row.descrip_razon_venta??''}</td>
                 <td>${row.plan_adquirido??''}</td>
                 <td>${row.marca??''}</td>
-                <td>${row.modelo??''}</td>
             </tr>`).join('');
 
             if(data.length === 0){

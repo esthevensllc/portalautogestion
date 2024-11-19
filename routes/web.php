@@ -19,7 +19,7 @@ Route::get('/', function () {
 });
 
 Route::group([
-    'middleware' => 'auth.cas',
+    'middleware' => ['auth.cas'],
 ], function () {
     Route::get('/', function(){
         return redirect('dashboard');
@@ -31,7 +31,7 @@ Route::group([
 });
 
 Route::group([
-    'middleware' => ['web','auth.cas'],
+    'middleware' => ['web','auth.cas', 'amovil.limit_sessions', 'check.permission', 'amovil.access_log'],
     'namespace'  => 'App\Http\Controllers',
 ], function () {
     Route::get('lineas-mtc-osiptel/logs/tickets/{tipo_plan}/{tipo_solicitud}', [\AMovil\Reports\General\LineasMTCOsiptel\Controllers\LineasMTCOsiptelController::class, 'getTickets']);
@@ -44,7 +44,7 @@ Route::group([
         (array) config('backpack.base.web_middleware', 'web'),
         (array) config('backpack.base.middleware_key', 'admin')
     ),*/
-    'middleware' => ['web', 'auth.cas', 'check.permission'],
+    'middleware' => ['web','auth.cas', 'amovil.limit_sessions', 'check.permission', 'amovil.access_log'],
     'namespace'  => 'App\Http\Controllers',
 ], function () {
     // SIGREI
@@ -132,6 +132,7 @@ Route::group([
         Route::post('usuarios/create', [\AMovil\Auth\User\Controllers\CreateUserController::class, 'create']);
         Route::post('usuarios/{id}/status/{status}', [\AMovil\Auth\User\Controllers\ChangeUserStatusController::class, '__invoke']);
         Route::get('usuarios/{id}', [\AMovil\Auth\User\Controllers\FindUserController::class, 'view']);
+        Route::post('usuarios/{id}/eliminar', [\AMovil\Auth\User\Controllers\DeleteUserController::class, '__invoke']);
     });
     Route::group(['prefix' => 'admin/roles', 'trac_name' => 'admin.roles'], function(){
         Route::get('/', [\AMovil\Auth\Roles\Controllers\GetRolesController::class, 'view']);
@@ -296,12 +297,25 @@ Route::group([
         Route::post('/en-espera', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'enEspera']);
         Route::post('/revisado', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'revisado']);
     });
+    Route::group(['prefix' => 'extraccion-devolucion/carga-informe-fallas-msisdn', 'trac_name' => 'extraccion-devolucion.carga-info-fallas-msisdn'], function(){
+        Route::get('/', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaMsisdnController::class, 'view']);
+        Route::post('/import', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaMsisdnController::class, 'import']);
+        Route::get('/search', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'get']);
+        Route::get('/search/{id}', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'findInput']);
+        Route::get('/{id}', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'reportView']);
+        Route::post('/delete/{id}', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'delete']);
+        Route::post('/aprobar', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'aprobar']);
+        Route::post('/desaprobar', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'desaprobar']);
+        Route::post('/en-espera', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'enEspera']);
+        Route::post('/revisado', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'revisado']);
+    });
     Route::group(['prefix' => 'extraccion-devolucion/usuario-minuto', 'trac_name' => 'extraccion-devolucion.usuario-minuto'], function(){
         Route::get('/', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\UsuarioMinutosController::class, 'view']);
         Route::get('departamentos', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\UsuarioMinutosController::class, 'getDepartamentosByNumReporte']);
         Route::get('usuarios-minutos', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\UsuarioMinutosController::class, 'getUsuariosByNumReporte']);
         Route::get('usuarios-minutos-calculados', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\UsuarioMinutosController::class, 'getUsuariosByMinutos']);
         Route::post('process', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\UsuarioMinutosController::class, 'processExtraccion']);
+        Route::post('reporte-msisdn/export', [\AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Controllers\ExtraccionDevolucionController::class, 'exportReporteMsisdn']);
     });
     Route::group(['prefix' => 'extraccion-devolucion/informe-fallas', 'trac_name' => 'extraccion-devolucion.informe-fallas'], function(){
         Route::get('/', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\InformeFallasController::class, 'view']);
@@ -581,6 +595,24 @@ Route::group([
     Route::group(['prefix' => 'reporte-lineas-enrutadas', 'trac_name' => 'reporte-lineas-enrutadas'], function(){
         Route::get('/', [\AMovil\Reports\ReporteLineasEnrutadas\Controllers\ReporteLineasEnrutadasController::class, 'view']);
         Route::post('export', [\AMovil\Reports\ReporteLineasEnrutadas\Controllers\ReporteLineasEnrutadasController::class, 'export']);
+    });
+
+    Route::group(['prefix' => 'retenciones', 'trac_name' => 'retenciones.index'], function(){
+        Route::get('/', [\AMovil\Reports\Retenciones\Controllers\ListadoController::class, 'view']);
+        Route::post('/store', [\AMovil\Reports\Retenciones\Controllers\ListadoController::class, 'store'])->name("retenciones-store");
+        Route::post('/store-rutas', [\AMovil\Reports\Retenciones\Controllers\ListadoController::class, 'rutas'])->name("retenciones-store-rutas");
+        Route::get('/historico-combinaciones', [\AMovil\Reports\Retenciones\Controllers\ListadoController::class, 'historicoCombinaciones'])->name("retenciones-historico-combinaciones");
+        Route::get('/historico-rutas', [\AMovil\Reports\Retenciones\Controllers\ListadoController::class, 'historicoRutas'])->name("retenciones-historico-rutas");
+        Route::get('/historico/combinaciones', [\AMovil\Reports\Retenciones\Controllers\ListadoController::class, 'getCombinaciones']);
+        Route::get('/historico/rutas', [\AMovil\Reports\Retenciones\Controllers\ListadoController::class, 'getRutas']);
+        Route::get('/historico/descargar-plantilla/{filename}', function ($filename) {
+            $file = public_path('resources/' . $filename);
+            if (file_exists($file)) {
+                return Response::download($file);
+            } else {
+                abort(404); // Error si el archivo no existe
+            }
+        });
     });
 
 });

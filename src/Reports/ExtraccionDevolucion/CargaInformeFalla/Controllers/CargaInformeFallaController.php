@@ -2,6 +2,7 @@
 
 namespace AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers;
 
+use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Domain\InformeTipoReporte;
 use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Services\CargarReporte;
 use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Services\GetReports;
 use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Services\FindReportInput;
@@ -158,6 +159,7 @@ class CargaInformeFallaController
 
         $reporte = $this->cargarReporte->__invoke(
             $request->input('numero_reporte'),
+            InformeTipoReporte::DEFAULT,
             $request->file('excel'),
             $detalleExtraccion
             /*implode(",", $strCeldas),

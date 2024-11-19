@@ -41,6 +41,7 @@ class UsuarioMinutosController
             "getDepartamentosApi" => url("extraccion-devolucion/usuario-minuto/departamentos"),
             "getUsuariosByMinutosApi" => url("extraccion-devolucion/usuario-minuto/usuarios-minutos-calculados"),
             "processApi" => url("extraccion-devolucion/usuario-minuto/process"),
+            "exportRepMsisdnApi" => url("extraccion-devolucion/usuario-minuto/reporte-msisdn/export"),
             "reports" => $reports
         ];
         return view("extraccion_devolucion.usuario_minuto", compact("config"));

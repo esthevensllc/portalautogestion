@@ -16,7 +16,10 @@ class GetAdquisiciones
 
     public function __invoke($imei): Response
     {
-        $data = $this->repo->getByImei($imei);
+        $data = [];
+        if($imei !==null && strlen($imei) >= 14){
+            $data = $this->repo->getByImei($imei);
+        }
         return new Response([], $data);
     }
 }
