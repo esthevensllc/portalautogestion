@@ -26,6 +26,8 @@ class GeoMarketingController
                 ["id" => "1", "label" => "ESTADIO NACIONAL"],
                 ["id" => "2", "label" => "ESTADIO MONUMENTAL"],
                 ["id" => "3", "label" => "ESTADIO MONUMENTAL DE LA UNSA"],
+                ["id" => "4", "label" => "ESTACION LOS JARDINES"],
+                ["id" => "5", "label" => "ESTACION VILLA EL SALVADOR"],
             ],
             "maxDays" => ExportGeoMarketing::MAX_DAYS,
             "whiteBlackList" => $this->finder->getBlackAndWhiteListSummary()
@@ -58,7 +60,8 @@ class GeoMarketingController
                 ["id" => "1", "label" => "ESTADIO NACIONAL"],
                 ["id" => "2", "label" => "ESTADIO MONUMENTAL"],
                 ["id" => "3", "label" => "ESTADIO MONUMENTAL DE LA UNSA"],
-                
+                ["id" => "4", "label" => "ESTACION LOS JARDINES"],
+                ["id" => "5", "label" => "ESTACION VILLA EL SALVADOR"],                
             ]
         ];
         return view("geomarketing.geomarketing_log", compact("config"));
