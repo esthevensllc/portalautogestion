@@ -8,12 +8,35 @@
         <form id="form_export">
             @csrf
             <div class="mb-3 row">
-                <div class="col-lg-3 col-md-4">
+                <div class="col-lg-2">
                     <div class="form-group">
-                        <label for="">IMEI</label>
-                        <input type="text" name="imei" class="form-control form-control-sm" required>
-                        <div class="invalid-feedback d-block text-dark">
-                            Ej. 353000562059108
+                        <label for="">Tipo input</label>
+                        <select class="form-control form-control-sm" name="tipo_input" id="tabs_select">
+                            {{-- <option value="1">Periodos</option> --}}
+                            <option value="1">IMEI</option>
+                            <option value="2">Excel, Csv</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-lg-8 tabs" data-tab-target="tabs_select">
+                    <div class="row">
+                        <div class="col-lg-3 tab-item" data-tab-target="1">
+                            <div class="form-group">
+                                <label for="">IMEI</label>
+                                <input type="text" name="imei" class="form-control form-control-sm" required>
+                                <div class="invalid-feedback d-block text-dark">
+                                    Ej. 353000562059108
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 form-group tab-item" data-tab-target="2">
+                            <label for="">Archivo</label>
+                            <input type="file" class="d-block" name="file" accept=".csv,.xlsx" required disabled>
+                            <div class="invalid-feedback d-block text-dark">
+                                Subir en archivo con formato xlsx o csv sin cabeceras
+                                <br>Ingresar los imeis en la primera columna
+                                <br>Ej. 51947123456
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -73,12 +96,12 @@
         loader_component.style.display = 'block';
         try {
             const formData = new FormData(e.target);
-            const string_params = new URLSearchParams(formData).toString();
-            const response = await fetch(`${config.url}?${string_params}`, {
-                method: 'GET',
+            const response = await fetch(`${config.url}`, {
+                method: 'POST',
                 headers: {
                     'Accept': 'application/json'
-                }
+                },
+                body: formData
             });
             await utils.fetchAuthMiddleware(response);
             const data = await response.json();
@@ -117,10 +140,16 @@
             button.innerHTML = 'Cargando ...';
             button.disabled = true;
 
-            const imei = document.querySelector("input[name=imei]").value;
             const type = e.target.attributes['data-type'].value;
-            fetch("{{ asset('dapu/adquisicion/export') }}"+`?imei=${imei}&type=${type}`, {
-                method: 'GET',
+            const formData = new FormData(document.getElementById('form_export'));
+            formData.append('type', type);
+
+            fetch("{{ asset('dapu/adquisicion/export') }}", {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json'
+                },
+                body: formData
             })
             .then(utils.fetchAuthMiddleware)
             .then(async (response) => {
@@ -152,5 +181,20 @@
             })
         }
     });
+
+    let tabSelect = document.querySelector('#tabs_select');
+    utils.tabs.createTabSelectController(tabSelect);
+
+    tabSelect.addEventListener('change', function(e){
+        document.querySelectorAll('.tabs[data-tab-target=tabs_select] .tab-item input')
+        .forEach(panelInput => {
+            panelInput.disabled = true;
+        });
+        let input = document.querySelector('.tabs[data-tab-target=tabs_select] .tab-item-active input');
+        if(input){
+            input.disabled = false;
+        }
+    });
+
 </script>
 @endsection

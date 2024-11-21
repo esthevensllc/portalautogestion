@@ -4,6 +4,7 @@ namespace AMovil\Reports\DAPU\Adquisiciones\Controllers;
 
 use AMovil\Reports\DAPU\Adquisiciones\Services\ExportAdquisiciones;
 use AMovil\Reports\DAPU\Adquisiciones\Services\GetAdquisiciones;
+use AMovil\Shared\Application\FileInput;
 use Illuminate\Http\Request;
 
 class AdquisicionEquipoController
@@ -24,15 +25,35 @@ class AdquisicionEquipoController
     }
 
     public function getData(Request $request){
-        $data = $this->service->__invoke($request->input('imei'))->data();
+        $data = [];
+        if($request->input('tipo_input') === '1'){
+            $imeis = explode(",", str_replace(" ", "", $request->input('imei')));
+            $data = $this->service->__invoke($imeis)->data();
+        } else {
+            $file = new FileInput(
+                $request->file("file")->getPathname(),
+                $request->file("file")->getClientOriginalName()
+            );
+            $data = $this->service->fromFile($file)->data();
+        }
         return response()->json($data);
     }
 
     public function export(Request $request){
-        $response = $this->exportAdquisiciones->__invoke(
-            $request->input('imei'),
-            $request->input('type'),
-        )->data();
+        $response = null;
+        if($request->input('tipo_input') === '1'){
+            $imeis = explode(",", str_replace(" ", "", $request->input('imei')));
+            $response = $this->exportAdquisiciones->__invoke($imeis, $request->input('type'))->data();
+        } else {
+            $file = new FileInput(
+                $request->file("file")->getPathname(),
+                $request->file("file")->getClientOriginalName()
+            );
+            $response = $this->exportAdquisiciones->fromFile(
+                $file,
+                $request->input('type'),
+            )->data();
+        }
 
         $headers_type = [
             'csv' => [

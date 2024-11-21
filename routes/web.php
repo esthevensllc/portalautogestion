@@ -167,8 +167,8 @@ Route::group([
     });
     Route::group(['prefix' => 'dapu/adquisicion', 'trac_name' => 'dapu.adquisicion'], function(){
         Route::get('/', [\AMovil\Reports\DAPU\Adquisiciones\Controllers\AdquisicionEquipoController::class, 'view']);
-        Route::get('json', [\AMovil\Reports\DAPU\Adquisiciones\Controllers\AdquisicionEquipoController::class, 'getData']);
-        Route::get('export', [\AMovil\Reports\DAPU\Adquisiciones\Controllers\AdquisicionEquipoController::class, 'export']);
+        Route::post('json', [\AMovil\Reports\DAPU\Adquisiciones\Controllers\AdquisicionEquipoController::class, 'getData']);
+        Route::post('export', [\AMovil\Reports\DAPU\Adquisiciones\Controllers\AdquisicionEquipoController::class, 'export']);
     });
     Route::group(['prefix' => 'dapu/consulta-linea', 'trac_name' => 'dapu.consulta-linea'], function(){
         Route::get('/', [\AMovil\Reports\DAPU\Lineas\Controllers\LineaController::class, 'view']);
