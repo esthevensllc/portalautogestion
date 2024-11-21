@@ -43,21 +43,21 @@
                         <label for="">Número de documento</label>
                         <input type="text" class="form-control form-control-sm" name="numero_documento" required>
                         <div class="invalid-feedback d-block text-dark">
-                            Ej. 33000111,33111222
+                            Ej. 33000111
                         </div>
                     </div>
                     <div class="form-group tab-item tab_numero_cuenta">
                         <label for="">Número de cuenta</label>
                         <input type="text" class="form-control form-control-sm" name="numero_cuenta" required>
                         <div class="invalid-feedback d-block text-dark">
-                            Ej. 8.22104233.00.00.100000, 8.21527968.00.00.100000
+                            Ej. 8.22104233.00.00.100000
                         </div>
                     </div>
                     <div class="form-group tab-item tab_cod_cliente">
                         <label for="">Codigo de cliente</label>
                         <input type="text" class="form-control form-control-sm" name="cod_cliente" required>
                         <div class="invalid-feedback d-block text-dark">
-                            Ej. 3848,1333261
+                            Quitar los ceros de la izquierda, Ej.3848
                         </div>
                     </div>
                     <div class="form-group tab-item tab_numeros_primarios">
