@@ -14,9 +14,9 @@ class GetLogBiometria
         $this->repo = $repo;
     }
 
-    public function __invoke($dni, $periodo)
+    public function __invoke($dni, $msisdn)
     {    
-        $data = $this->repo->getByDni_Periodo($dni, $periodo);
+        $data = $this->repo->getByDniAndMsisdn($dni, $msisdn);
         return new Response([], $data);
     }
 }
