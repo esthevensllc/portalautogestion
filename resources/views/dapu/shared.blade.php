@@ -61,13 +61,19 @@ document.getElementById('form_export')
         button.innerHTML = 'Cargando ...';
         loader_component.style.display = 'block';
         try {
+            const method = @if(array_key_exists('form_method', $config)) "{{$config['form_method']}}" @else 'GET' @endif;
             const formData = new FormData(e.target);
-            const string_params = new URLSearchParams(formData).toString();
-            const response = await fetch(`${config.url}?${string_params}`, {
-                method: 'GET',
+            let apiUrl = config.url;
+            if(method === "GET"){
+                const string_params = new URLSearchParams(formData).toString();
+                apiUrl = `${config.url}?${string_params}`;
+            }
+            const response = await fetch(apiUrl, {
+                method: method,
                 headers: {
                     'Accept': 'application/json'
-                }
+                },
+                body: method === "GET" ? undefined : formData
             });
 
             await utils.fetchAuthMiddleware(response);
@@ -82,13 +88,12 @@ document.getElementById('form_export')
             let html_body = data.map(row => `<tr>
                 ${Object.keys(config.fields).map(f => `<td>${row[f]??''}</td>`).join('')}
             </tr>`).join('');
-
-            document.querySelector('table tbody').innerHTML = html_body;
             // Comprobar si DataTable ya está inicializado
             if ($.fn.DataTable.isDataTable('.table')) {
                 // Destruir la instancia existente
                 $('.table').DataTable().destroy();
             }
+            document.querySelector('table tbody').innerHTML = html_body;
             var table = new DataTable('.table', {
                 language: {
                     url: "{{ asset('packages/datatables-language/spanish.json') }}",
@@ -114,5 +119,20 @@ document.querySelector('.btn-download .btn-download-options')
         utils.downloadHandler(handlerOptions, customEvent);
     }
 });
+
+let tabSelect = document.querySelector('#tabs_select');
+if(tabSelect){
+    utils.tabs.createTabSelectController(tabSelect);
+    tabSelect.addEventListener('change', function(e){
+        document.querySelectorAll('.tabs[data-tab-target=tabs_select] .tab-item input')
+        .forEach(panelInput => {
+            panelInput.disabled = true;
+        });
+        let input = document.querySelector('.tabs[data-tab-target=tabs_select] .tab-item-active input');
+        if(input){
+            input.disabled = false;
+        }
+    });
+}
 </script>
 @endsection
