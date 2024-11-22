@@ -45,7 +45,7 @@
                                 <label for="">Archivo MSISDN</label>
                                 <input type="file" class="d-block" name="file_msisdn" accept=".csv" required disabled>
                                 <div class="invalid-feedback d-block text-dark">
-                                    Subir eL archivo con formato csv sin cabeceras
+                                    Subir el archivo con formato csv sin cabeceras
                                     <br>Ingresar los msisdn en la primera columna, anteponer el codigo 51
                                     <br>Ej. 51965251434
                                 </div>
