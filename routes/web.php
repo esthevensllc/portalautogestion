@@ -197,7 +197,7 @@ Route::group([
     });
     Route::group(['prefix' => 'dapu/historico-bloqueos', 'trac_name' => 'dapu.historico-bloqueos'], function(){
         Route::get('/', [\AMovil\Reports\DAPU\HistoricoBloqueos\Controllers\HistoricoBloqueoController::class, 'view']);
-        Route::get('/json', [\AMovil\Reports\DAPU\HistoricoBloqueos\Controllers\HistoricoBloqueoController::class, 'getData']);
+        Route::post('/json', [\AMovil\Reports\DAPU\HistoricoBloqueos\Controllers\HistoricoBloqueoController::class, 'getData']);
         Route::post('/export', [\AMovil\Reports\DAPU\HistoricoBloqueos\Controllers\HistoricoBloqueoController::class, 'export']);
     });
     Route::group(['prefix' => 'dapu/lista-eir', 'trac_name' => 'dapu.lista-eir'], function(){

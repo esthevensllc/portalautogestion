@@ -4,6 +4,7 @@ namespace AMovil\Reports\DAPU\HistoricoBloqueos\Controllers;
 
 use AMovil\Reports\DAPU\HistoricoBloqueos\Services\ExportHistoricoBloqueo;
 use AMovil\Reports\DAPU\HistoricoBloqueos\Services\GetHistoricoBloqueo;
+use AMovil\Shared\Application\FileInput;
 use Illuminate\Http\Request;
 
 class HistoricoBloqueoController
@@ -24,12 +25,19 @@ class HistoricoBloqueoController
             "url" => asset("dapu/historico-bloqueos/json"),
             "url_export" => asset("dapu/historico-bloqueos/export"),
             "fields" => [
+                "histd_fecha_mensaje" => ["label" => "HISTD_FECHA_MENSAJE"],
                 "imei" => ["label" => "IMEI"],
-                "fecha_registro" => ["label" => "FECHA_REGISTRO"],
-                "linea" => ["label" => "LINEA"],
-                "ter_estado" => ["label" => "TER_ESTADO"],
-                "ter_des_motivo" => ["label" => "TER_DES_MOTIVO"],
+                "histn_num_servici" => ["label" => "HISTN_NUM_SERVICI"],
+                "histv_imei" => ["label" => "HISTV_IMEI"],
+                "histd_fecha_reporte" => ["label" => "HISTD_FECHA_REPORTE"],
+                "nombre_apellidos" => ["label" => "NOMBRE_APELLIDOS"],
+                "histn_tipo_documento" => ["label" => "HISTN_TIPO_DOCUMENTO"],
+                "histv_numero_documento" => ["label" => "HISTV_NUMERO_DOCUMENTO"],
+                "histv_tipo_solicitud" => ["label" => "HISTV_TIPO_SOLICITUD"],
+                "histv_estado" => ["label" => "HISTV_ESTADO"],
+                "histv_accion_realizar" => ["label" => "HISTV_ACCION_REALIZAR"],
             ],
+            "form_method" => "POST",
             "form_view" => "dapu.historico_bloqueos_form",
         ];
         return view("dapu.shared", compact("config"));
@@ -37,18 +45,33 @@ class HistoricoBloqueoController
 
     public function getData(Request $request)
     {
-        $response = $this->get->__invoke(
-            $request->input('imei')
-        )->data();
+        $response = [];
+        if((int) $request->input('tipo_input') === 1){
+            $imeis = explode(",", str_replace(" ", "", $request->input('imei')));
+            $response = $this->get->__invoke($imeis)->data();
+        } else {
+            $file = new FileInput(
+                $request->file("file")->getPathname(),
+                $request->file("file")->getClientOriginalName()
+            );
+            $response = $this->get->fromFile($file)->data();
+        }
         return response()->json($response);
     }
 
     public function export(Request $request)
     {
-        $response = $this->export->__invoke(
-            $request->input('type'),
-            $request->input('imei')
-        )->data();
+        $response = [];
+        if((int) $request->input('tipo_input') === 1){
+            $imeis = explode(",", str_replace(" ", "", $request->input('imei')));
+            $response = $this->export->__invoke($request->input('type'), $imeis)->data();
+        } else {
+            $file = new FileInput(
+                $request->file("file")->getPathname(),
+                $request->file("file")->getClientOriginalName()
+            );
+            $response = $this->export->fromFile($request->input('type'), $file)->data();
+        }
 
         $headers_type = [
             'csv' => [
