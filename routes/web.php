@@ -202,7 +202,7 @@ Route::group([
     });
     Route::group(['prefix' => 'dapu/lista-eir', 'trac_name' => 'dapu.lista-eir'], function(){
         Route::get('/', [\AMovil\Reports\DAPU\ListaEir\Controllers\ListaEirController::class, 'view']);
-        Route::get('/json', [\AMovil\Reports\DAPU\ListaEir\Controllers\ListaEirController::class, 'getData']);
+        Route::post('/json', [\AMovil\Reports\DAPU\ListaEir\Controllers\ListaEirController::class, 'getData']);
         Route::post('/export', [\AMovil\Reports\DAPU\ListaEir\Controllers\ListaEirController::class, 'export']);
     });
     Route::group(['prefix' => 'dapu/motivos-bloqueo-desbloqueo', 'trac_name' => 'dapu.motivos-bloqueo-desbloqueo'], function(){
