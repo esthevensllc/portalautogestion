@@ -225,6 +225,11 @@ Route::group([
         Route::get('/json', [\AMovil\Reports\DAPU\ConsultaImei\Controllers\ConsultaImeiController::class, 'getData']);
         Route::post('/export', [\AMovil\Reports\DAPU\ConsultaImei\Controllers\ConsultaImeiController::class, 'export']);
     });
+    Route::group(['prefix' => 'dapu/consulta-sot', 'trac_name' => 'dapu.consulta-sot'], function(){
+        Route::get('/', [\AMovil\Reports\DAPU\Sots\Controllers\DapuSotController::class, 'view']);
+        Route::get('/json', [\AMovil\Reports\DAPU\Sots\Controllers\DapuSotController::class, 'getData']);
+        Route::post('/export', [\AMovil\Reports\DAPU\Sots\Controllers\DapuSotController::class, 'export']);
+    });
 
     Route::group(['prefix' => 'rep-recargas/detalle', 'trac_name' => 'rep-recargas.detalle'], function(){
         Route::get('/', [\AMovil\Reports\RepRecargas\Controllers\ReporteRecargasController::class, 'detalle']);
