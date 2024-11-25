@@ -220,6 +220,11 @@ Route::group([
         Route::get('/json', [\AMovil\Reports\DAPU\ListaExcepcionesImeiImsi\Controllers\ListaExcepcionesImeiImsiController::class, 'getData']);
         Route::post('/export', [\AMovil\Reports\DAPU\ListaExcepcionesImeiImsi\Controllers\ListaExcepcionesImeiImsiController::class, 'export']);
     });
+    Route::group(['prefix' => 'dapu/consulta-imei', 'trac_name' => 'dapu.consulta-imei'], function(){
+        Route::get('/', [\AMovil\Reports\DAPU\ConsultaImei\Controllers\ConsultaImeiController::class, 'view']);
+        Route::get('/json', [\AMovil\Reports\DAPU\ConsultaImei\Controllers\ConsultaImeiController::class, 'getData']);
+        Route::post('/export', [\AMovil\Reports\DAPU\ConsultaImei\Controllers\ConsultaImeiController::class, 'export']);
+    });
 
     Route::group(['prefix' => 'rep-recargas/detalle', 'trac_name' => 'rep-recargas.detalle'], function(){
         Route::get('/', [\AMovil\Reports\RepRecargas\Controllers\ReporteRecargasController::class, 'detalle']);
