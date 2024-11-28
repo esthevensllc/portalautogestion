@@ -1231,12 +1231,12 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
     {
         return DB::connection($this->connection)->table("USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST")
         ->selectRaw("rownum item,ticket,CODCLI CODIGO_CLIENTE,
-        CASE 
+        CASE
+            WHEN LENGTH(NRO_DOC) <= 8 AND regexp_replace(NRO_DOC, '[0-9]*') IS NOT NULL THEN LPAD(NRO_DOC, 12, '0')
             WHEN LENGTH(NRO_DOC) < 8 THEN LPAD(NRO_DOC, 8, '0')
-            WHEN LENGTH(NRO_DOC) > 8 AND LENGTH(NRO_DOC) < 11 THEN LPAD(NRO_DOC, 12, '0')
-            WHEN LENGTH(NRO_DOC) > 12 THEN SUBSTR(NRO_DOC, -12)
+            WHEN 8 < LENGTH(NRO_DOC) AND LENGTH(NRO_DOC) < 11 THEN LPAD(NRO_DOC, 12, '0')
             ELSE NRO_DOC
-        END AS NUMERO_DE_DOCUMENTO,
+            END AS NUMERO_DE_DOCUMENTO,
         NOMCLI NOMBRES_APELLIDOS,FAMILIA SERVICIO_ANALIZADO,NUMERO SERVICIO,DPTO,MONTO_PRINCIPAL")
         ->where("ticket", $ticket)
         ->whereNotNull("MONTO_PRINCIPAL")
