@@ -2,20 +2,83 @@
 
 namespace AMovil\Reports\DAPU\ListaEir\Infrastructure;
 
+use AMovil\Auth\AccessControl\Domain\AuthService;
 use AMovil\Reports\DAPU\ListaEir\Domain\ListaEirRepository;
-use DateTime;
 use Illuminate\Support\Facades\DB;
 
 class EloquentListaEirRepository implements ListaEirRepository
 {
-    public function getByImei($imei)
+    private $authService;
+    private $userIdentifier;
+
+    public function __construct(AuthService $authService)
     {
-        $now = (new DateTime())->format('Ymd');
-        $query = "SELECT to_char(transact_date,'dd/mm/yyyy hh24:mi:ss') transact_date,
-        SUBSTR(imei,0,14) imei,
-		to_char(reg_time,'dd/mm/yyyy hh12:mi:ss AM') FECHA_INGRESO_BLO
-		from DWS.SA_EIR partition (P_{$now})
-		where SUBSTR(imei,0,14) = :imei";
-        return DB::select($query, ["imei" => $imei]);
+        $this->authService = $authService;
+    }
+    
+    public function getByImeis($imeis)
+    {
+        $this->userIdentifier = $this->authService->getUserIdentifier();
+        DB::statement("BEGIN
+            EXECUTE IMMEDIATE 'DROP TABLE USRAES.DAPU_IMEI_INPUT_{$this->userIdentifier}';
+        EXCEPTION
+        WHEN OTHERS THEN
+            IF SQLCODE != -942 THEN RAISE; END IF;
+        END;");
+        DB::statement("CREATE TABLE USRAES.DAPU_IMEI_INPUT_{$this->userIdentifier}(imei varchar2(100))");
+
+        foreach($imeis as $value){
+            DB::table("USRAES.DAPU_IMEI_INPUT_{$this->userIdentifier}")->insert(["imei" => $value]);
+        }
+
+        $query = "SELECT
+        BB.TRANSACT_DATE,
+        BB.TASK_ID,
+        BB.HLRSN,
+        BB.OPERATOR,
+        BB.DATE_TIME,
+        BB.COMMAND,
+        BB.COD_CMD,
+        BB.CMD_RESULT,
+        AA.IMEI
+        FROM USRAES.DAPU_IMEI_INPUT_{$this->userIdentifier} AA 
+        LEFT JOIN (
+            SELECT /*+ PARALLEL(20) */
+            L.TRANSACT_DATE,
+            L.TASK_ID,
+            L.HLRSN,
+            L.OPERATOR,
+            L.DATE_TIME,
+            L.COMMAND,
+            L.INTERNAL_PARAMETER_5 COD_CMD,
+            CASE L.INTERNAL_PARAMETER_5
+                WHEN '1004' THEN 'Invalid parameter value'
+                WHEN '100000001' THEN 'Operation is successful'
+                WHEN '3007' THEN 'Record not defined'
+                WHEN '3006' THEN 'Record already exist'
+                WHEN '3257' THEN 'Number of IMSIs associated with the IMEI exceeds the maximum'
+            END CMD_RESULT,
+            SUBSTR(L.COMMAND, 20, 14) IMEI
+            FROM DWS.SA_EIR_LOG L
+            WHERE SUBSTR(L.COMMAND, 0, 3) = 'MOD'
+            AND SUBSTR(L.COMMAND, 20, 14) 
+            IN (
+                select SUBSTR(REGEXP_REPLACE(imei, '^0+', ''),1,14) imei 
+                from USRAES.DAPU_IMEI_INPUT_{$this->userIdentifier}
+            ) --INPUT 14 PRIMEROS DIGITOS
+            ORDER BY L.DATE_TIME ASC
+        ) BB 
+        ON SUBSTR(REGEXP_REPLACE(AA.IMEI, '^0+', ''),1,14)=SUBSTR(BB.COMMAND, 20, 14)";
+        
+        $data = DB::select($query);
+
+        DB::statement("BEGIN
+            EXECUTE IMMEDIATE 'DROP TABLE USRAES.DAPU_IMEI_INPUT_{$this->userIdentifier}';
+        EXCEPTION
+        WHEN OTHERS THEN
+            IF SQLCODE != -942 THEN RAISE; END IF;
+        END;");
+
+        return $data;
     }
 }

@@ -3,28 +3,53 @@
 namespace AMovil\Reports\DAPU\ListaEir\Services;
 
 use AMovil\Reports\DAPU\ListaEir\Domain\ListaEirRepository;
+use AMovil\Shared\Application\FileInput;
 use AMovil\Shared\Application\Response;
 use AMovil\Shared\Exports\Domain\ExportService;
 use DateTime;
 
 class ExportListaEir
 {
-    private $repo;
+    private $finder;
     private $exportService;
 
-    public function __construct(ListaEirRepository $repo, ExportService $exportService)
+    public function __construct(ListaEirFinder $finder, ExportService $exportService)
     {
-        $this->repo = $repo;
+        $this->finder = $finder;
         $this->exportService = $exportService;
     }
 
-    public function __invoke($type, $imei)
+    public function __invoke(array $values, $exportType): Response
     {
-        $data = $this->repo->getByImei($imei);
+        $response = $this->finder->__invoke($values);
+        if($response->fails()){
+            return $response;
+        }
+        $data = $response->data();
+        return $this->export($data, $exportType);
+    }
+
+    public function fromFile(FileInput $file, $exportType){
+        $response= $this->finder->fromFile($file);
+        if($response->fails()){
+            return $response;
+        }
+        $data = $response->data();
+        return $this->export($data, $exportType);
+    }
+
+    public function export($data, $type)
+    {
         $headers = [
             "transact_date" => ["label" => "FECHA"],
+            "task_id" => ["label" => "TASK_ID"],
+            "hlrsn" => ["label" => "HLRSN"],
+            "operator" => ["label" => "OPERATOR"],
+            "date_time" => ["label" => "DATE_TIME"],
+            "command" => ["label" => "COMMAND"],
+            "cod_cmd" => ["label" => "COD_CMD"],
+            "cmd_result" => ["label" => "CMD_RESULT"],
             "imei" => ["label" => "IMEI"],
-            "fecha_ingreso_blo" => ["label" => "FECHA_INGRESO_BLO"],
         ];
 
         $options = [
