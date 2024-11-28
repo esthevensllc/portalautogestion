@@ -3,30 +3,49 @@
 namespace AMovil\Reports\DAPU\Lineas\Services;
 
 use AMovil\Reports\DAPU\Lineas\Domain\LineaRepository;
+use AMovil\Shared\Application\FileInput;
 use AMovil\Shared\Application\Response;
 use AMovil\Shared\Exports\Domain\ExportService;
 use DateTime;
+use Exception;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class ExportDataLinea
 {
     private $repo;
+    private $finderService;
     private $exportService;
 
-    public function __construct(LineaRepository $repo, ExportService $exportService)
+    public function __construct(LineaRepository $repo, GetDataLinea $finderService, ExportService $exportService)
     {
         $this->repo = $repo;
+        $this->finderService = $finderService;
         $this->exportService = $exportService;
     }
 
-    public function __invoke($linea, $type): Response
+    public function __invoke(int $tipoInput, array $values, $exportType): Response
     {
-        $data = $this->repo->getUsuariosByLinea($linea);
+        $data = $this->finderService->__invoke($tipoInput, $values)->data();
+        return $this->export($data, $exportType);
+    }
 
+    public function fromFile($tipoInput, FileInput $file, $exportType){
+        $data = $this->finderService->fromFile($tipoInput, $file)->data();
+        return $this->export($data, $exportType);
+    }
+
+    private function export($data, $exportType): Response {
         $headers = [
             "linea" => ["label" => "LINEA"],
-            "cliente" => ["label" => "CLIENTE"],
+            "producto" => ["label" => "PRODUCTO"],
             "tipo_doc" => ["label" => "TIPO_DOC"],
             "num_doc" => ["label" => "NUM_DOC"],
+            "nombre" => ["label" => "NOMBRE"],
+            "agreement_mode" => ["label" => "AGREEMENT_MODE"],
+            "agreement_service_group" => ["label" => "AGREEMENT_SERVICE_GROUP"],
+            "status" => ["label" => "STATUS"],
+            "f_inicio" => ["label" => "F_INICIO"],
+            "f_fin" => ["label" => "F_FIN"],
             "direccion" => ["label" => "DIRECCIÓN"],
             "departamento" => ["label" => "DEPARTAMENTO"],
             "provincia" => ["label" => "PROVINCIA"],
@@ -40,12 +59,12 @@ class ExportDataLinea
         ];
 
         $this->exportService->loadData($headers, $data, $options);
-        $content = $this->exportService->getWriter($type)->getOutput();
+        $content = $this->exportService->getWriter($exportType)->getOutput();
         $dt = new DateTime();
         
         return new Response([], [
-            'filename' => "CONSULTA_LINEA_".$dt->format("Ymd").".".strtolower($type),
-            'type' => strtolower($type),
+            'filename' => "CONSULTA_LINEA_".$dt->format("Ymd").".".strtolower($exportType),
+            'type' => strtolower($exportType),
             'content' => $content
         ]);
     }

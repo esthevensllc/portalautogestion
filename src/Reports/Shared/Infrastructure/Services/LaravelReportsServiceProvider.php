@@ -256,5 +256,13 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\Retenciones\Domain\RetencionesRepository::class,
             \AMovil\Reports\Retenciones\Infrastructure\EloquentRetencionesRepository::class
         );
+        $this->app->bind(
+            \AMovil\Reports\DAPU\ConsultaImei\Domain\ConsultaImeiRepository::class,
+            \AMovil\Reports\DAPU\ConsultaImei\Infrastructure\EloquentConsultaImeiRepository::class
+        );
+        $this->app->bind(
+            \AMovil\Reports\DAPU\Sots\Domain\DapuSotRepository::class,
+            \AMovil\Reports\DAPU\Sots\Infrastructure\EloquentDapuSotRepository::class
+        );
     }
 }

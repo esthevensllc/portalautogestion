@@ -37,4 +37,10 @@ class SpreedSheetWriter implements Writer
         $this->writer->save($filename);
         return $filename;
     }
+
+    public function stream(): callable {
+        return function(){
+            $this->writer->save("php://output");
+        };
+    }
 }

@@ -2,24 +2,75 @@
 
 namespace AMovil\Reports\DAPU\Lineas\Infrastructure;
 
+use AMovil\Auth\AccessControl\Domain\AuthService;
 use AMovil\Reports\DAPU\Lineas\Domain\LineaRepository;
 use Illuminate\Support\Facades\DB;
 
 class EloquentLineaRepository implements LineaRepository
 {
-    public function getUsuariosByLinea($linea)
+    private $authService;
+    private $userIdentifier;
+
+    public function __construct(AuthService $authService)
     {
-        $data = DB::select(DB::raw("select
-        s.subscription_access_number LINEA,
-        s.CUSTOMER_FULL_NAME CLIENTE,
-        s.ID_CARD_TYPE_VALUE TIPO_DOC,
-        s.ID_CARD_VALUE NUM_DOC,
-        s.CUSTOMER_ADDRESS DIRECCION,
-        s.CUSTOMER_ACCOUNT_BILLING_DEPARTMENT DEPARTAMENTO,
-        s.CUSTOMER_ACCOUNT_BILLING_PROVINCE PROVINCIA,
-        s.CUSTOMER_ACCOUNT_BILLING_DISTRICT DISTRITO
-        FROM DWA.DW_M_SUBSCRIPTION S 
-        WHERE S.subscription_access_number = to_char(?)"), [$linea]);
+        $this->authService = $authService;
+    }
+
+    public function getUsuariosByLinea(array $values){
+        return $this->getUsuariosBy("msisdn", $values);
+    }
+
+    public function getUsuariosByDni(array $values){
+        return $this->getUsuariosBy("dni", $values);
+    }
+    
+    public function getUsuariosBy(string $field, array $values)
+    {
+        $this->userIdentifier = $this->authService->getUserIdentifier();
+        DB::statement("BEGIN
+            EXECUTE IMMEDIATE 'DROP TABLE USRAES.DAPU_LINEA_DNI_INPUT_{$this->userIdentifier}';
+        EXCEPTION
+        WHEN OTHERS THEN
+            IF SQLCODE != -942 THEN RAISE; END IF;
+        END;");
+        DB::statement("CREATE TABLE USRAES.DAPU_LINEA_DNI_INPUT_{$this->userIdentifier}(value varchar2(100))");
+
+        foreach($values as $value){
+            DB::table("USRAES.DAPU_LINEA_DNI_INPUT_{$this->userIdentifier}")->insert(["value" => $value]);
+        }
+
+        $queryFilter = null;
+        if($field === "msisdn"){
+            $queryFilter = "S.SUBSCRIPTION_ACCESS_NUMBER IN (SELECT value FROM USRAES.DAPU_LINEA_DNI_INPUT_{$this->userIdentifier})";
+        } else {
+            // $queryFilter = "REGEXP_REPLACE(S.ID_CARD_VALUE, '^0+', '') IN (SELECT REGEXP_REPLACE(value, '^0+', '') FROM USRAES.DAPU_LINEA_DNI_INPUT_{$this->userIdentifier})";
+            $queryFilter = "S.ID_CARD_VALUE IN (SELECT value FROM USRAES.DAPU_LINEA_DNI_INPUT_{$this->userIdentifier})";
+        }
+
+        $data = DB::select(DB::raw("SELECT S.SUBSCRIPTION_ACCESS_NUMBER AS LINEA,
+            S.AGREEMENT_PRODUCT_OFFERING_DESC PRODUCTO,
+            S.ID_CARD_TYPE_VALUE AS TIPO_DOC,
+            S.ID_CARD_VALUE AS NUM_DOC,
+            S.CUSTOMER_FULL_NAME AS NOMBRE,
+            S.AGREEMENT_MODE,
+            S.AGREEMENT_SERVICE_GROUP,
+            S.SUBSCRIPTION_STATUS AS STATUS,
+            S.SUBSCRIPTION_START_DATE F_INICIO,
+            S.SUBSCRIPTION_END_DATE F_FIN,
+            S.CUSTOMER_ACCOUNT_BILLING_ADDRESS DIRECCION,
+            S.CUSTOMER_ACCOUNT_BILLING_DEPARTMENT DEPARTAMENTO,
+            S.CUSTOMER_ACCOUNT_BILLING_PROVINCE PROVINCIA,
+            S.CUSTOMER_ACCOUNT_BILLING_DISTRICT DISTRITO
+        FROM DWA.DW_M_SUBSCRIPTION S
+        WHERE {$queryFilter}"));
+
+        DB::statement("BEGIN
+            EXECUTE IMMEDIATE 'DROP TABLE USRAES.DAPU_LINEA_DNI_INPUT_{$this->userIdentifier}';
+        EXCEPTION
+        WHEN OTHERS THEN
+            IF SQLCODE != -942 THEN RAISE; END IF;
+        END;");
+
         return $data;
     }
 }
