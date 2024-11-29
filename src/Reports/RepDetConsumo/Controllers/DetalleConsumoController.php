@@ -6,7 +6,9 @@ use AMovil\Reports\RepDetConsumo\Services\ClienteValidator;
 use AMovil\Reports\RepDetConsumo\Services\ExportDetalleConsumoConsolidado;
 use AMovil\Reports\RepDetConsumo\Services\ExportDetalleConsumoDetallado;
 use AMovil\Reports\RepDetConsumo\Services\RecordsValidator;
+use AMovil\Auth\AccessControl\Domain\AuthService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
@@ -17,18 +19,22 @@ class DetalleConsumoController
     private $exportDetallado;
     private $validator;
     private $clienteValidator;
+    private $userIdentifier;
+    private $authService;
 
     public function __construct(
         ExportDetalleConsumoConsolidado $exportConsolidado,
         ExportDetalleConsumoDetallado $exportDetallado,
         RecordsValidator $validator,
-        ClienteValidator $clienteValidator
+        ClienteValidator $clienteValidator,
+        AuthService $authService
     )
     {
         $this->exportConsolidado = $exportConsolidado;
         $this->exportDetallado = $exportDetallado;
         $this->validator = $validator;
         $this->clienteValidator = $clienteValidator;
+        $this->authService = $authService;
     }
 
     public function detallado(){
@@ -99,8 +105,10 @@ class DetalleConsumoController
             $request->get('fecha2'),
         );
 
+        $this->userIdentifier = $this->authService->getUserIdentifier();
+
         // Guardar el archivo en una ruta específica en el servidor
-        $fileName = "CONSOLIDADO_DE_CONSUMO_{$cod_clie}_{$current_date}.xlsx";
+        $fileName = "CONSOLIDADO_DE_CONSUMO_{$cod_clie}_{$this->userIdentifier}_{$current_date}.xlsx";
         $filePath = 'rep_det_consumo/portalautogestion_Detalle_Consolidado/' . $fileName;
 
         Storage::disk('local')->put($filePath, $export);
@@ -129,15 +137,18 @@ class DetalleConsumoController
     {
         $filePath = 'rep_det_consumo/portalautogestion_Detalle_Consolidado';
         $files = Storage::disk('local')->files($filePath);
+        $this->userIdentifier = $this->authService->getUserIdentifier();
 
         $fileDetails = [];
         foreach ($files as $file) {
-            $fileDetails[] = [
-                'filename' => basename($file),
-                'path' => $file,
-                'created_at' => Carbon::createFromTimestamp(Storage::disk('local')->lastModified($file))->toDateTimeString(),
-                'size' => Storage::disk('local')->size($file),
-            ];
+            if(str_contains(basename($file), $this->userIdentifier)){
+                $fileDetails[] = [
+                    'filename' => basename($file),
+                    'path' => $file,
+                    'created_at' => Carbon::createFromTimestamp(Storage::disk('local')->lastModified($file))->toDateTimeString(),
+                    'size' => Storage::disk('local')->size($file),
+                ];
+            }
         }
 
         return response()->json(["data" => $fileDetails]);
@@ -156,10 +167,12 @@ class DetalleConsumoController
             $request->get('fecha2'),
         );
 
+        $this->userIdentifier = $this->authService->getUserIdentifier();
+
         if(!$response['passes']){
             $errorMessage = $response['errors']['message'];
             // Guardar el archivo en una ruta específica en el servidor
-            $fileName = "ERROR_{$current_date}.txt";
+            $fileName = "ERROR_{$this->userIdentifier}_{$current_date}.txt";
             $filePath = storage_path('app/rep_det_consumo/portalautogestion_Detalle_Consolidado/' . $fileName);
             file_put_contents($filePath, $errorMessage . PHP_EOL, FILE_APPEND);
         }
