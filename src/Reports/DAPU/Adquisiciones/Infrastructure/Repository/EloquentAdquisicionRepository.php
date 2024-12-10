@@ -167,16 +167,51 @@ class EloquentAdquisicionRepository implements AdquisicionRepository
         END;");
 
         DB::statement("CREATE TABLE USRAES.DAPU_IMEI_2_TEMP_{$this->userIdentifier} AS
-        select 
+        SELECT DISTINCT
+                TRUNC(A.SALE_DATE) FECHA_ADQUISICION,
+                A.SERIAL_NUMBER IMEI,
+                A.PRODUCT_NUMBER MSISDN,
+                A.CUSTOMER_DOCUMENT_TYPE_DESC TIPO_DOC,
+                A.ID_CARD_VALUE NUM_DOC,
+                A.CUSTOMER_NAME CLIENTE,
+                A.SALES_TYPE_DESC SEGMENTO,
+                A.SALES_REASON_DESC DESCRIP_RAZON_VENTA,
+                'NA' PLAN_ADQUIRIDO,
+                A.PROD_OFFER_ITEM_NAME MARCA
+        FROM DWA.DW_T_SALES A
+        WHERE SUBSTR(TRIM(LEADING '0' FROM SERIAL_NUMBER),1,14) IN (select SUBSTR(REGEXP_REPLACE(imei, '^0+', ''),1,14) imei from USRAES.DAPU_IMEI_INPUT_{$this->userIdentifier})
+        AND SALES_REASON_DESC <>'PREACTIVACION'
+        AND SALES_STATUS_DESC = 'PAGADO'
+        UNION ALL 
+        SELECT TRUNC(S.FECHA_VENTA) FECHA_ADQUISICION,
+            S.IMEI IMEI,
+            S.NRO_TELEFONO MSISDN,
+            S.DESC_TIPO_DOC_CLIENTE TIPO_DOC,
+            S.CLIENTE NUM_DOC,
+            S.NOMBRE_CLIENTE CLIENTE,
+            S.DESC_TIPO_VENTA SEGMENTO,
+            UPPER(S.DESC_CLASE_VENTA) DESCRIP_RAZON_VENTA,
+            s.PT PLAN_ADQUIRIDO,
+            S.DES_EQUIPO MARCA
+        FROM DM.DW_SELLOUT S
+        WHERE 
+        SUBSTR(TRIM(LEADING '0' FROM imei),1,14) IN (select SUBSTR(REGEXP_REPLACE(imei, '^0+', ''),1,14) imei from USRAES.DAPU_IMEI_INPUT_{$this->userIdentifier})");
+
+        /*select 
         s.FECHA_VENTA FECHA_ADQUISICION, 
-        IMEI, s.NRO_TELEFONO msisdn,s.DESC_TIPO_DOC_CLIENTE tipo_doc,
-        s.CLIENTE num_doc, s.NOMBRE_CLIENTE CLIENTE,
-        s.DESC_TIPO_VENTA SEGMENTO,s.DESC_CLASE_VENTA descrip_razon_venta,
-        s.PT PLAN_ADQUIRIDO, DES_EQUIPO MARCA
+        IMEI,
+        s.NRO_TELEFONO msisdn,
+        s.DESC_TIPO_DOC_CLIENTE tipo_doc,
+        s.CLIENTE num_doc,
+        s.NOMBRE_CLIENTE CLIENTE,
+        s.DESC_TIPO_VENTA SEGMENTO,
+        s.DESC_CLASE_VENTA descrip_razon_venta,
+        s.PT PLAN_ADQUIRIDO,
+        DES_EQUIPO MARCA
         from dm.dw_sellout s
         where 
         SUBSTR(TRIM(LEADING '0' FROM imei),1,14) IN (select SUBSTR(REGEXP_REPLACE(imei, '^0+', ''),1,14) imei from USRAES.DAPU_IMEI_INPUT_{$this->userIdentifier}) 
-        AND s.TIPO_PRODUCTO = 'MOVIL'");
+        AND s.TIPO_PRODUCTO = 'MOVIL'");*/
 
         DB::statement("BEGIN
             insert into USRAES.DAPU_IMEI_1_TEMP_{$this->userIdentifier}

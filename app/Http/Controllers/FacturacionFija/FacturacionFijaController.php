@@ -6,11 +6,13 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use DB;
 use App\Models\Log\logReport;
-use Carbon\Carbon;
 use App\Exports\facturacionFija\FacturacionFijaExport;
 use App\Exports\facturacionFija\FacturacionFijaSFExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use ZipArchive;
+use Carbon\Carbon;
 
 class FacturacionFijaController extends Controller {
     private $authService;
@@ -65,17 +67,19 @@ class FacturacionFijaController extends Controller {
 
     }
 
-    public function generar_reporte(Request $request){
+    public function generar_reporte(Request $request)
+    {
+        ini_set('max_execution_time', 1800); // Aumentar el tiempo de ejecución si es necesario
+        ini_set('memory_limit', '2048M');
         $this->userIdentifier = $this->authService->getUserIdentifier();
-        //$now = Carbon::now();
-        //$v_log_id = (int) $now->format('YmdHis');
         $v_cod_clie = $request->get('cod_cliente');
         $v_fecha_ini = $request->get('f_ini');
         $v_fecha_fin = $request->get('f_fin');
 
-        while(strlen($v_cod_clie)<8){
-            $v_cod_clie = '0'.$v_cod_clie;
-        }     
+        // Formatear código cliente
+        while (strlen($v_cod_clie) < 8) {
+            $v_cod_clie = '0' . $v_cod_clie;
+        }
 
         $resp = [];
         $plsql = [];
@@ -107,8 +111,8 @@ class FacturacionFijaController extends Controller {
                 and d.idclaisdest=b.idclaisdest(+)
                 and e.idgrpdes=b.idgrpdes(+)
                 and a.codcli='{$v_cod_clie}'
-                and trunc(horaini)>=to_date('{$v_fecha_ini}','dd/mm/yyyy')
-                and trunc(horaini)<=to_date('{$v_fecha_fin}','dd/mm/yyyy')
+                and trunc(horaini)>=to_date('{$v_fecha_ini}','dd-mm-yyyy')
+                and trunc(horaini)<=to_date('{$v_fecha_fin}','dd-mm-yyyy')
                 )";
 
         $resp = [];
@@ -116,31 +120,68 @@ class FacturacionFijaController extends Controller {
             $resp[] = DB::statement(DB::Raw($sql));
         }
 
-        $result = DB::select(DB::RAW("select telefono_origen from USRAES.TB_FIJA_FACTURADA_{$this->userIdentifier} where rownum = 1"));
-        if(isset($result[0])){
-            $tel_fijo = $result[0]->telefono_origen;
-        }else{
-            $tel_fijo = '';
+        // Directorio temporal para archivos Excel
+        $directory = storage_path("app/facturacion-fija/{$this->userIdentifier}");
+        if (!is_dir($directory)) {
+            mkdir($directory, 0777, true);
         }
 
-        $now = Carbon::now(); 
+        $batchSize = 50000; // Tamaño de cada lote (ajusta según tu servidor)
+        $totalRecords = DB::table("USRAES.TB_FIJA_FACTURADA_{$this->userIdentifier}")->count();
+        $batches = ceil($totalRecords / $batchSize);
 
-        /*logReport::insert([
-            'hostname' => 'limnwkdaswfv01',
-            'name' => 'FACTURACION FIJA',
-            'direccion' => '',
-            'area' => 'Control Regulatorio',
-            'contacto' => \Auth::guard(backpack_guard_name())->user()->name,
-            'responsable' => 'DIEGO MORENO',
-            'file' => 'Facturacion_Fija_'.$tel_fijo.'_'.$now->format('Ymd').$now->format('H:i:s'),
-            'ini' => $v_fecha_ini,
-            'fin' => $v_fecha_fin,
-            'lat' => 0,
-            'estado' => 1,
-            'mensaje' => 'se generó el archivo'
-        ]);*/
+        $excelFiles = [];
+        for ($i = 0; $i < $batches; $i++) {
+            $offset = $i * $batchSize;
 
-        return Excel::download(new FacturacionfijaExport($this->authService), 'facturacion_fija.xlsx');
+            // Consulta con OFFSET y FETCH NEXT para paginación
+            $query = "
+                SELECT * 
+                FROM USRAES.TB_FIJA_FACTURADA_{$this->userIdentifier}
+                ORDER BY horaini ASC
+                OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
+            ";
+
+            $data = DB::select($query, [
+                'offset' => $offset,
+                'limit' => $batchSize
+            ]);
+
+            // Crear archivo Excel por lote
+            $fileName = "report_batch_{$i}.csv";
+            $filePath = "{$directory}/{$fileName}";
+            $filePath2 = "facturacion-fija/{$this->userIdentifier}/{$fileName}";
+            try {
+                // Código para generar los Excel y el ZIP
+                Excel::store(new FacturacionfijaExport($data, $this->authService), $filePath2, 'local', 'Csv');                
+            } catch (\Exception $e) {
+                dd($e->getMessage());
+            }
+
+            $excelFiles[] = $filePath;
+        }
+
+        // Crear el archivo ZIP
+        $zipFileName = "facturacion_fija_{$this->userIdentifier}_" . Carbon::now()->format('YmdHis') . ".zip";
+        $zipFilePath = "{$directory}/{$zipFileName}";
+        $zip = new ZipArchive();
+        if ($zip->open($zipFilePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
+            foreach ($excelFiles as $file) {
+                $zip->addFile($file, basename($file));
+            }
+            $zip->close();
+        }
+
+        // Limpiar archivos Excel temporales
+        foreach ($excelFiles as $file) {
+            unlink($file);
+        }
+
+        // Retornar mensaje de éxito
+        return response()->json([
+            'message' => 'Reporte generado exitosamente',
+            'zip_path' => asset("storage/facturacion-fija/{$zipFileName}")
+        ]);
     }
 
     public function generar_reporte_sf(Request $request){
