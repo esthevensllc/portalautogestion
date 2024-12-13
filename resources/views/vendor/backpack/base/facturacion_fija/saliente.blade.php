@@ -130,34 +130,46 @@ $(function() {
                 }
                 else
                 {
-                    fetch("{{ url('facturacion-fija/salientes/export') }}"+`?cod_cliente=${cod_cliente}&f_ini=${f_ini}&f_fin=${f_fin}`, {
-                        method: 'GET'
-                    })
-                    .then(response => {
-                        if(!response.ok){
-                            throw new Error(response.statusText);
+                    $.ajax({
+                        url: '{{ url('facturacion-fija/salientes/export') }}', // Cambia por la ruta a tu controlador
+                        method: 'GET',
+                        data: {
+                            cod_cliente: cod_cliente,
+                            f_ini: f_ini,
+                            f_fin: f_fin
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                new Noty({
+                                    type: 'success',
+                                    layout: 'topRight',
+                                    text: response.message,
+                                    timeout: 3000
+                                }).show();
+                                $("#form_export")[0].reset();
+                                $(".btn_export").prop('disabled', false);
+                                $("#spinnerData").hide();
+                            } else {
+                                new Noty({
+                                    type: 'error',
+                                    layout: 'topRight',
+                                    text: response.message,
+                                    timeout: 3000
+                                }).show();
+                                $(".btn_export").prop('disabled', false);
+                                $("#spinnerData").hide();
+                            }
+                        },
+                        error: function(xhr) {
+                            new Noty({
+                                type: 'error',
+                                layout: 'topRight',
+                                text: 'Ocurrió un error en la solicitud.',
+                                timeout: 3000
+                            }).show();
+                            $(".btn_export").prop('disabled', false);
+                            $("#spinnerData").hide();
                         }
-                        
-                        return response;
-                                
-                    })
-                    .then(response => response.blob())
-                    .then(response => {
-                        let filename = 'Facturacion_Fija_'+cod_cliente+'_'+f_ini+'.xlsx';
-                        if(config['filename'] !== undefined){
-                            filename = config['filename'];
-                        }
-
-                        downloadFile(response , filename);  
-
-                        $(".btn_export").prop('disabled', false);
-                        $("#spinnerData").hide();
-                    })
-                    .catch(error => {
-                        $(".btn_export").prop('disabled', false);
-                        Promise.reject();
-                        $("#spinnerData").hide();
-                        //throw(error);
                     });
                 }
            }
