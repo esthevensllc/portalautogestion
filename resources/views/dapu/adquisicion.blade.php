@@ -97,7 +97,7 @@
         try {
             const formData = new FormData(e.target);
             const response = await fetch(`${config.url}`, {
-                method: 'GET',
+                method: 'POST',
                 headers: {
                     'Accept': 'application/json'
                 },
@@ -145,7 +145,7 @@
             formData.append('type', type);
 
             fetch("{{ asset('dapu/adquisicion/export') }}", {
-                method: 'GET',
+                method: 'POST',
                 headers: {
                     'Accept': 'application/json'
                 },
