@@ -187,7 +187,7 @@ Route::group([
     });
     Route::group(['prefix' => 'dapu/consulta-fono', 'trac_name' => 'dapu.consulta-fono'], function(){
         Route::get('/', [\AMovil\Reports\DAPU\FONO\Controllers\FonoController::class, 'view']);
-        Route::get('/json', [\AMovil\Reports\DAPU\FONO\Controllers\FonoController::class, 'getData']);
+        Route::post('/json', [\AMovil\Reports\DAPU\FONO\Controllers\FonoController::class, 'getData']);
         Route::post('/export', [\AMovil\Reports\DAPU\FONO\Controllers\FonoController::class, 'export']);
     });
     Route::group(['prefix' => 'dapu/ventas-linea', 'trac_name' => 'dapu.ventas-linea'], function(){
