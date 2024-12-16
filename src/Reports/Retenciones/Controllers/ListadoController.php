@@ -4,10 +4,10 @@ namespace AMovil\Reports\Retenciones\Controllers;
 
 use AMovil\Reports\Retenciones\Services\ExportRetenciones;
 use AMovil\Shared\Exports\Domain\WriterType;
-use DateTime;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Carbon;
 use DB;
-use Exception;
 
 class ListadoController
 {
@@ -28,22 +28,12 @@ class ListadoController
 
     public function store(Request $request)
     {
-        $now = new DateTime();
-        $minuto = (int) $now->format('i');
-        if(45 < $minuto && $minuto <= 59){
-            return response()->json(['message' => 'Solo es posible cargar en el rango de minutos de 00 hasta el minuto 45'], 400);
-        }
         $result = $this->service->__invoke($request->file("excel_c"));
         return $result;
     }
 
     public function rutas(Request $request)
     {
-        $now = new DateTime();
-        $minuto = (int) $now->format('i');
-        if(45 < $minuto && $minuto <= 59){
-            return response()->json(['message' => 'Solo es posible cargar en el rango de minutos de 00 hasta el minuto 45'], 400);
-        }
         $result = $this->service->__invokeRutas($request->file("excel_r"));
         return $result;
     }
@@ -94,6 +84,57 @@ class ListadoController
         ->get();
 
         return response()->json(["data" => $data]);
+    }
+
+    public function viewCentrales()
+    {
+        $config = [
+            "title" => "Centrales",
+            'getCentrales' => url('retenciones/centrales/consulta'),
+            'setCentrales' => url('retenciones/centrales/registro')
+        ];
+        return view('retenciones.centrales', compact('config'));
+    }
+
+    public function getCentrales(Request $request)
+    {        
+        $msisdn = $request->input("msisdn");
+        $data = DB::connection('mysql')->table("XDRS.CENTRALES")
+        ->select("numero","operador","tipo_llamada","dia","tipo_central")
+        ->where("numero", "{$msisdn}")
+        ->get();
+
+        return response()->json(["data" => $data]);
+    }
+
+    public function setCentrales(Request $request)
+    {        
+        // Validar los datos del formulario
+        $validator = Validator::make($request->all(), [
+            'msisdn' => 'required|numeric|digits:9',
+            'operador' => 'required|in:BITEL,ENTEL,MOVISTAR',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['message' => 'Datos inválidos', 'errors' => $validator->errors()], 422);
+        }
+
+        // Registrar los datos en la tabla
+        try {
+            \DB::connection('mysql')->table("XDRS.CENTRALES")->insert([
+                'numero' => $request->msisdn,
+                'operador' => $request->operador,
+                'tipo_llamada' => 'ENTRANTE', // Valor predeterminado
+                'fecha' => now(),             // Fecha actual
+                'tipo_central' => 'RETENCIONES', // Valor predeterminado
+                'dia' => Carbon::now()->toDateString(),               // Fecha actual
+                'validate' => null,           // Valor nulo
+            ]);
+
+            return response()->json(['message' => 'Número registrado exitosamente']);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error al registrar los datos', 'error' => $e->getMessage()], 500);
+        }
     }
     
 }

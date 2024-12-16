@@ -610,6 +610,9 @@ Route::group([
                 abort(404); // Error si el archivo no existe
             }
         });
+        Route::get('/centrales', [\AMovil\Reports\Retenciones\Controllers\ListadoController::class, 'viewCentrales'])->name("centrales.index");
+        Route::get('/centrales/consulta', [\AMovil\Reports\Retenciones\Controllers\ListadoController::class, 'getCentrales'])->name("centrales.consulta");
+        Route::post('/centrales/registro', [\AMovil\Reports\Retenciones\Controllers\ListadoController::class, 'setCentrales'])->name("centrales.registro");
     });
 
 });
