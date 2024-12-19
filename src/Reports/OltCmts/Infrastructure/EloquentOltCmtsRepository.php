@@ -50,13 +50,63 @@ class EloquentOltCmtsRepository implements OltCmtsRepository
     public function getOltReport(DateTime $fecha, array $olts)
     {
         $this->generateReport(1, $fecha, $olts);
-        return DB::connection("oracle")->select("select * from usraes.olt_mac_final_{$this->userIdentifier}");
+        return DB::connection("oracle")->select(DB::raw("SELECT 
+        CUSTOMER_ID_CODCLI,
+        FUENTE,
+        SERIALNUMBER,
+        NOMBRE,
+        ID_CARD_TYPE_VALUE,
+        TELEFONO_CLARO,
+        NUMERO_ADICIONAL,
+        SERVICIO_PRODUCTO,
+        CORREO,
+        DISTRITO,
+        PROVINCIA,
+        DEPARTAMENTO,
+        DESCRIPCION_PRODUCTO,
+        AGREEMENT_STATUS,
+        AGREEMENT_STATUS_DATE,
+        AGREEMENT_START_DATE,
+        AGREEMENT_END_DATE,
+        INSTALLATION_MAP,
+        NUMERO, 
+        CASE
+        WHEN LENGTH(DNI_RUC) <= 8 AND REGEXP_REPLACE(DNI_RUC, '[0-9]*') IS NOT NULL THEN LPAD(DNI_RUC, 12, '0')
+        WHEN LENGTH(DNI_RUC) < 8 THEN LPAD(DNI_RUC, 8, '0')
+        WHEN 8 < LENGTH(DNI_RUC) AND LENGTH(DNI_RUC) < 11 THEN LPAD(DNI_RUC, 12, '0')
+        ELSE DNI_RUC
+        END DNI_RUC FROM USRAES.OLT_MAC_FINAL_{$this->userIdentifier}"));
     }
 
     public function getCmtsReport(DateTime $fecha, array $cmts)
     {
         $this->generateReport(2, $fecha, $cmts);
-        return DB::connection("oracle")->select("select * from usraes.cmts_table_final_{$this->userIdentifier}");
+        return DB::connection("oracle")->select(DB::raw("SELECT 
+        CUSTOMER_ID_CODCLI,
+        FUENTE,
+        SERIALNUMBER,
+        NOMBRE,
+        ID_CARD_TYPE_VALUE,
+        TELEFONO_CLARO,
+        NUMERO_ADICIONAL,
+        SERVICIO_PRODUCTO,
+        CORREO,
+        DISTRITO,
+        PROVINCIA,
+        DEPARTAMENTO,
+        DESCRIPCION_PRODUCTO,
+        AGREEMENT_STATUS,
+        AGREEMENT_STATUS_DATE,
+        AGREEMENT_START_DATE,
+        AGREEMENT_END_DATE,
+        INSTALLATION_MAP,
+        NUMERO, 
+        CASE
+        WHEN LENGTH(DNI_RUC) <= 8 AND REGEXP_REPLACE(DNI_RUC, '[0-9]*') IS NOT NULL THEN LPAD(DNI_RUC, 12, '0')
+        WHEN LENGTH(DNI_RUC) < 8 THEN LPAD(DNI_RUC, 8, '0')
+        WHEN 8 < LENGTH(DNI_RUC) AND LENGTH(DNI_RUC) < 11 THEN LPAD(DNI_RUC, 12, '0')
+        ELSE DNI_RUC
+        END DNI_RUC FROM USRAES.cmts_table_final_{$this->userIdentifier}"));
     }
 
     private function generateReport(int $type_id, DateTime $fecha, array $values)
