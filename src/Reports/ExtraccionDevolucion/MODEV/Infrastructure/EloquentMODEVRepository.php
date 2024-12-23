@@ -61,8 +61,10 @@ class EloquentMODEVRepository implements MODEVRepository
         ]);
     }
 
-    public function validateRecargas($ticket)
+    public function validateRecargas(array $ticket)
     {
+        $ticketBinds = $this->getQueryBinds($ticket);
+
         $query = "SELECT
         ticket,
         fecha_carga,
@@ -75,7 +77,7 @@ class EloquentMODEVRepository implements MODEVRepository
             (
                 select ticket,msisdn,msisdn_devolver,modalidad_dev,mto_total_dev_igv,toDate(substring(fecha_carga,1,10)) fecha_carga
                 from  reptdm.base_prev_basedev
-                where ticket= :p_ticket  and modalidad_dev like '%PREPAGO%' and length(ticket)=9 
+                where ticket in ({$ticketBinds['str_binds']})  and modalidad_dev like '%PREPAGO%' and length(ticket)=9 
             ) xx 
             left join (
             select aa.*,bb.*,row_number() over(partition by aa.ticket,aa.msisdn,aa.msisdn_devolver,aa.mto_total_dev_igv 
@@ -84,7 +86,7 @@ class EloquentMODEVRepository implements MODEVRepository
             (
                 select ticket,msisdn,msisdn_devolver,modalidad_dev,mto_total_dev_igv,toDate(substring(fecha_carga,1,10)) fecha_carga
                 from  reptdm.base_prev_basedev
-                where  ticket= :p_ticket and modalidad_dev like '%PREPAGO%' and length(ticket)=9 
+                where  ticket in ({$ticketBinds['str_binds']}) and modalidad_dev like '%PREPAGO%' and length(ticket)=9 
             ) as aa 
             left join recargas.recargas_dwo_osip as bb 
             on aa.msisdn_devolver=bb.served_number and bb.recharge_qty>0 and round(toFloat64(aa.mto_total_dev_igv)*100,2)=round(bb.recharge_qty,2)
@@ -97,7 +99,7 @@ class EloquentMODEVRepository implements MODEVRepository
         having cantidad_user_no_devueltos>0 
         order by 2 desc";
 
-        return $this->db->select($query, ["p_ticket" => $ticket])->rows();
+        return $this->db->select($query, $ticketBinds["values"])->rows();
     }
 
     public function saveRecargasNoCorrectas($ticket){
@@ -132,7 +134,9 @@ class EloquentMODEVRepository implements MODEVRepository
         $this->db->write($query, ["p_ticket" => $ticket]);
     }
 
-    public function getReporteModev($ticket){
+    public function getReporteModev(array $ticket){
+        $ticketBinds = $this->getQueryBinds($ticket);
+
         $input = DB::connection("oracle_reptdm")->table("USRAES.BASE_PREV_BASEDEV_INPUT")
         ->selectRaw("round((CORTE_FECHA_FIN - CORTE_FECHA_INI)*24*60) as minutos_corte")
         ->where("ticket", $ticket)
@@ -187,7 +191,7 @@ class EloquentMODEVRepository implements MODEVRepository
         (
             select ticket,msisdn,msisdn_devolver,modalidad_dev,mto_total_dev_igv,toDate(substring(fecha_carga,1,10)) fecha_carga
             from  reptdm.base_prev_basedev
-            where ticket = :p_ticket and  modalidad_dev like '%PREPAGO%' and length(ticket)=9 
+            where ticket in ({$ticketBinds['str_binds']}) and  modalidad_dev like '%PREPAGO%' and length(ticket)=9 
         ) xx 
         left join (
         select aa.*,bb.*,row_number() over(partition by aa.ticket,aa.msisdn,aa.msisdn_devolver,aa.mto_total_dev_igv 
@@ -196,7 +200,7 @@ class EloquentMODEVRepository implements MODEVRepository
         (
             select ticket,msisdn,msisdn_devolver,modalidad_dev,mto_total_dev_igv,toDate(substring(fecha_carga,1,10)) fecha_carga
             from  reptdm.base_prev_basedev
-            where  ticket= :p_ticket and  modalidad_dev like '%PREPAGO%' and length(ticket)=9
+            where  ticket in ({$ticketBinds['str_binds']}) and  modalidad_dev like '%PREPAGO%' and length(ticket)=9
         ) as aa 
         left join recargas.recargas_dwo_osip as bb 
         on aa.msisdn_devolver=bb.served_number and bb.recharge_qty>0 and round(toFloat64(aa.mto_total_dev_igv)*100,2)=round(bb.recharge_qty,2)
@@ -209,9 +213,23 @@ class EloquentMODEVRepository implements MODEVRepository
         on aa.ticket=bb.ticket and aa.msisdn=bb.msisdn and aa.msisdn_devolver=bb.msisdn_devolver 
         /* where aa.ticket='202322137' and (modalidad_dev like '%POSTPAGO%' or modalidad_dev like '%PREPAGO%')*/
 
-        where aa.ticket in ( select ticket from portal_autogestion.base_devolucion_2023_2_semestre group by 1 ) 
+        where aa.ticket in ({$ticketBinds['str_binds']})
         and (modalidad_dev like '%POSTPAGO%' or modalidad_dev like '%PREPAGO%')";
 
-        return $this->db->select($query, ["p_ticket" => $ticket])->rows();
+        return $this->db->select($query, $ticketBinds['values'])->rows();
+    }
+
+    private function getQueryBinds(array $tickets){
+        $str_binds = [];
+        $bind_values = [];
+        foreach($tickets as $index => $value){
+            $str_binds[] = ":p_ticket_{$index}";
+            $bind_values["p_ticket_{$index}"] = $value;
+        }
+        $str_binds = implode(", ", $str_binds);
+        return [
+            "str_binds" => $str_binds,
+            "values" => $bind_values
+        ];
     }
 }

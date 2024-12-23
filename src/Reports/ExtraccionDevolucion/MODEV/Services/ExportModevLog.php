@@ -24,12 +24,13 @@ class ExportModevLog
 
     public function __invoke($ticket)
     {
-        $informeInput = $this->informeRepo->getInputByTicket($ticket);
-        $validation = $this->repo->validateRecargas($ticket);
-        if(count($validation) > 0){
-            $this->repo->saveRecargasNoCorrectas($ticket);
+        $tickets = explode(",", str_replace(" ", "", $ticket));
+        // $informeInput = $this->informeRepo->getInputByTicket($ticket);
+        $validation = $this->repo->validateRecargas($tickets);
+        foreach($validation as $row){
+            $this->repo->saveRecargasNoCorrectas($row['ticket']);
         }
-        $data = $this->repo->getReporteModev($ticket);
+        $data = $this->repo->getReporteModev($tickets);
 
         $headers = [
             "ticket" => ["label" => "TICKET"],

@@ -15,6 +15,9 @@
                 <div class="col-lg-3 col-md-4 form-group">
                     <label for="">Ticket</label>
                     <input type="text" class="form-control form-control-sm" name="ticket" required>
+                    <div class="invalid-feedback d-block text-dark">
+                        Puede ingresar mas de un ticket separado por comas
+                    </div>
                 </div>
                 <div class="col-lg-12 form-group">
                     <button type="submit" class="btn btn-primary btn-sm btn_export">Descargar</button>
