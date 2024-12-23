@@ -295,6 +295,10 @@ Route::group([
         Route::get('/', [\AMovil\Reports\ExtraccionDevolucion\MODEV\Controllers\MODEVController::class, 'view']);
         Route::post('/export', [\AMovil\Reports\ExtraccionDevolucion\MODEV\Controllers\MODEVController::class, 'export']);
     });
+    Route::group(['prefix' => 'extraccion-devolucion/modev-log', 'trac_name' => 'extraccion-devolucion.modev_log'], function(){
+        Route::get('/', [\AMovil\Reports\ExtraccionDevolucion\MODEV\Controllers\ModelLogController::class, 'view']);
+        Route::post('/export', [\AMovil\Reports\ExtraccionDevolucion\MODEV\Controllers\ModelLogController::class, 'export']);
+    });
     Route::group(['prefix' => 'extraccion-devolucion/carga-informe-fallas', 'trac_name' => 'extraccion-devolucion.carga-info-fallas'], function(){
         Route::get('/', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'view']);
         Route::post('/import', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'import']);

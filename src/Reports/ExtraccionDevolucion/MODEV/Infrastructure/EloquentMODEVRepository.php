@@ -3,10 +3,17 @@
 namespace AMovil\Reports\ExtraccionDevolucion\MODEV\Infrastructure;
 
 use AMovil\Reports\ExtraccionDevolucion\MODEV\Domain\MODEVRepository;
+use AMovil\Shared\Infrastructure\Repository\ClickhouseDB;
 use Illuminate\Support\Facades\DB;
 
 class EloquentMODEVRepository implements MODEVRepository
 {
+    private $db;
+    public function __construct(ClickhouseDB $db)
+    {
+        $this->db = $db->connection("ch-dn04");
+    }
+    
     public function getReporteByTicketAndDepartamento($ticket, $departamento)
     {
         return DB::connection("oracle_reptdm")
@@ -52,5 +59,159 @@ class EloquentMODEVRepository implements MODEVRepository
             "p1" => $ticket, "p2" => $departamento,
             "p3" => $ticket, "p4" => $departamento
         ]);
+    }
+
+    public function validateRecargas($ticket)
+    {
+        $query = "SELECT
+        ticket,
+        fecha_carga,
+        min(recharge_date) min_recharge_date,
+        max(recharge_date) max_recharge_date,
+        sum(if(served_number is NOT NULL,1,0)) cantidad_user_devueltos,
+        sum(if(served_number is NULL,1,0)) cantidad_user_no_devueltos 
+        from (
+            select xx.*,yy.recharge_date,yy.served_number,yy.recharge_qty,yy.usage_str3 from 
+            (
+                select ticket,msisdn,msisdn_devolver,modalidad_dev,mto_total_dev_igv,toDate(substring(fecha_carga,1,10)) fecha_carga
+                from  reptdm.base_prev_basedev
+                where ticket= :p_ticket  and modalidad_dev like '%PREPAGO%' and length(ticket)=9 
+            ) xx 
+            left join (
+            select aa.*,bb.*,row_number() over(partition by aa.ticket,aa.msisdn,aa.msisdn_devolver,aa.mto_total_dev_igv 
+            order by bb.recharge_date asc) flag
+            from 
+            (
+                select ticket,msisdn,msisdn_devolver,modalidad_dev,mto_total_dev_igv,toDate(substring(fecha_carga,1,10)) fecha_carga
+                from  reptdm.base_prev_basedev
+                where  ticket= :p_ticket and modalidad_dev like '%PREPAGO%' and length(ticket)=9 
+            ) as aa 
+            left join recargas.recargas_dwo_osip as bb 
+            on aa.msisdn_devolver=bb.served_number and bb.recharge_qty>0 and round(toFloat64(aa.mto_total_dev_igv)*100,2)=round(bb.recharge_qty,2)
+            where date_diff('days',aa.fecha_carga,bb.recharge_date)<90
+            group by aa.*,bb.*
+            ) yy 
+            on xx.ticket=yy.ticket and xx.msisdn=yy.msisdn and xx.msisdn_devolver=yy.msisdn_devolver and xx.mto_total_dev_igv=yy.mto_total_dev_igv 
+            and yy.flag=1
+        ) group by 1,2
+        having cantidad_user_no_devueltos>0 
+        order by 2 desc";
+
+        return $this->db->select($query, ["p_ticket" => $ticket])->rows();
+    }
+
+    public function saveRecargasNoCorrectas($ticket){
+        $query = "INSERT INTO recargas.recargas_dwo_osip
+        select date_add(fecha_carga,INTERVAL toUInt64(randUniform(0,0)) day) recharge_date,
+        msisdn_devolver served_number,
+        round(toFloat64(mto_total_dev_igv)*100,2) recharge_qty,
+        '92000559;Prepago_Devolucion_Interrupciones_Osiptel' usage_str3 
+        from 
+        (
+            select xx.*,yy.recharge_date,yy.served_number,yy.recharge_qty,yy.usage_str3 
+            from  ( 
+                    select ticket,msisdn,msisdn_devolver,modalidad_dev,mto_total_dev_igv,toDate(substring(fecha_carga,1,10)) fecha_carga 
+                    from  reptdm.base_prev_basedev 
+                    where   ticket= :p_ticket and modalidad_dev like '%PREPAGO%' and length(ticket)=9
+                    ) xx  
+            left join ( 
+                        select aa.*,bb.*,row_number() over(partition by aa.ticket,aa.msisdn,aa.msisdn_devolver,aa.mto_total_dev_igv  order by bb.recharge_date asc) flag 
+                        from  ( 
+                                select ticket,msisdn,msisdn_devolver,modalidad_dev,mto_total_dev_igv,toDate(substring(fecha_carga,1,10)) fecha_carga
+                                from  reptdm.base_prev_basedev 
+                                where   ticket= :p_ticket and modalidad_dev like '%PREPAGO%' and length(ticket)=9
+                                ) aa  
+                        left join recargas.recargas_dwo_osip bb  
+                        on aa.msisdn_devolver=bb.served_number 
+                            and bb.recharge_qty>0 and round(toFloat64(aa.mto_total_dev_igv)*100,2)=round(bb.recharge_qty,2) 
+                        where date_diff('days',aa.fecha_carga,bb.recharge_date)<90 group by aa.*,bb.* 
+                    ) yy  
+        on xx.ticket=yy.ticket and xx.msisdn=yy.msisdn and xx.msisdn_devolver=yy.msisdn_devolver 
+        and xx.mto_total_dev_igv=yy.mto_total_dev_igv  and yy.flag=1 having served_number is NULL";
+
+        $this->db->write($query, ["p_ticket" => $ticket]);
+    }
+
+    public function getReporteModev($ticket){
+        $input = DB::connection("oracle_reptdm")->table("USRAES.BASE_PREV_BASEDEV_INPUT")
+        ->selectRaw("round((CORTE_FECHA_FIN - CORTE_FECHA_INI)*24*60) as minutos_corte")
+        ->where("ticket", $ticket)
+        ->first();
+
+        $minutosCorte = '';
+        if($input !== null){
+            $minutosCorte = $input->minutos_corte;
+        }
+
+        $query = "SELECT 
+        /*FORMATO MODEV*/
+        aa.ticket ticket,
+        aa.nro_documento nro_documento,
+        aa.id_cliente id_cliente,
+        aa.msisdn msisdn,
+        'Comunicaciones Personales(PCS)' Servicio_Analizado,
+        aa.modo_contratacion modo_contratacion,
+        aa.cargo_linea_igv cargo_linea_igv,
+        {$minutosCorte} minutos,
+        case when aa.modalidad_dev like '%POSTPAGO%' then aa.mto_dev_facturacion 
+            when aa.modalidad_dev like '%PREPAGO%' then aa.mto_total_dev_igv
+        end monto_devolver,
+        'SOLES' monedas,
+        case when  aa.modalidad_dev like '%POSTPAGO%' then toDate(aa.fecha_devolucion)
+            when aa.modalidad_dev like '%PREPAGO%' then bb.recharge_date
+        end fecha_devolucion, 
+        case when  aa.modalidad_dev like '%POSTPAGO%' then aa.factura_aplicada
+            when aa.modalidad_dev like '%PREPAGO%' then ''
+        end nro_recibo,
+        'ACTIVO' estado,
+        '' fecha_de_baja_del_servicio,
+        '' nombre_o_razon_social,
+        '' lugar_donde_cobrar,
+        '' requisitos_para_el_cobro,
+        '' comunicacion,
+        '' medio_de_comunicacion,
+        'NO_APLICA' motivo_solo_cuando_no_corresponde,
+        case when aa.modalidad_dev like '%POSTPAGO%' then 'DEVOLUCION APLICADA-POSTPAGO' 
+            when aa.modalidad_dev like '%PREPAGO%' then 'DEVOLUCION APLICADA-PREPAGO' end comentarios,
+        '' liberado,
+        /*LOG DE DEVOLUCION DE PREPAGO*/
+        bb.recharge_date recharge_date,
+        bb.served_number served_number,
+        bb.recharge_qty recharge_qty,
+        bb.usage_str3 usage_str3,
+        /*VALIDAR FECHA DE CARGA DEL REPORTE*/
+        aa.fecha_carga fecha_carga
+        from reptdm.base_prev_basedev aa 
+        left join (
+        select xx.*,yy.recharge_date,yy.served_number,yy.recharge_qty,yy.usage_str3 from 
+        (
+            select ticket,msisdn,msisdn_devolver,modalidad_dev,mto_total_dev_igv,toDate(substring(fecha_carga,1,10)) fecha_carga
+            from  reptdm.base_prev_basedev
+            where ticket = :p_ticket and  modalidad_dev like '%PREPAGO%' and length(ticket)=9 
+        ) xx 
+        left join (
+        select aa.*,bb.*,row_number() over(partition by aa.ticket,aa.msisdn,aa.msisdn_devolver,aa.mto_total_dev_igv 
+        order by bb.recharge_date asc) flag
+        from 
+        (
+            select ticket,msisdn,msisdn_devolver,modalidad_dev,mto_total_dev_igv,toDate(substring(fecha_carga,1,10)) fecha_carga
+            from  reptdm.base_prev_basedev
+            where  ticket= :p_ticket and  modalidad_dev like '%PREPAGO%' and length(ticket)=9
+        ) as aa 
+        left join recargas.recargas_dwo_osip as bb 
+        on aa.msisdn_devolver=bb.served_number and bb.recharge_qty>0 and round(toFloat64(aa.mto_total_dev_igv)*100,2)=round(bb.recharge_qty,2)
+        where date_diff('days',aa.fecha_carga,bb.recharge_date)<90
+        group by aa.*,bb.*
+        ) yy 
+        on xx.ticket=yy.ticket and xx.msisdn=yy.msisdn and xx.msisdn_devolver=yy.msisdn_devolver and xx.mto_total_dev_igv=yy.mto_total_dev_igv 
+        and yy.flag=1
+        ) bb 
+        on aa.ticket=bb.ticket and aa.msisdn=bb.msisdn and aa.msisdn_devolver=bb.msisdn_devolver 
+        /* where aa.ticket='202322137' and (modalidad_dev like '%POSTPAGO%' or modalidad_dev like '%PREPAGO%')*/
+
+        where aa.ticket in ( select ticket from portal_autogestion.base_devolucion_2023_2_semestre group by 1 ) 
+        and (modalidad_dev like '%POSTPAGO%' or modalidad_dev like '%PREPAGO%')";
+
+        return $this->db->select($query, ["p_ticket" => $ticket])->rows();
     }
 }
