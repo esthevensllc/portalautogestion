@@ -43,4 +43,5 @@ interface ExtraccionDevFijaRepository
     public function updateTicketServicioInputByNumReporte(string $numReporte, int $servicioAfectadoId, ?string $ticket);
     public function deleteServicioInput(string $numReporte, int $servicioAfectadoId);
     public function deletePlanoInput(string $numReporte);
+    public function updateReporte($ticket, $departamento, $data);
 }
