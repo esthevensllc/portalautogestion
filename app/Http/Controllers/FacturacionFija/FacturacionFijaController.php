@@ -6,10 +6,14 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use DB;
 use App\Models\Log\logReport;
-use Carbon\Carbon;
 use App\Exports\facturacionFija\FacturacionFijaExport;
+use App\Exports\facturacionFija\FacturacionFijaSFExport;
+use AMovil\Shared\Infrastructure\Eloquent\EloquentCriteriaConverter;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use ZipArchive;
+use Carbon\Carbon;
 
 class FacturacionFijaController extends Controller {
     private $authService;
@@ -25,6 +29,13 @@ class FacturacionFijaController extends Controller {
             'title' => 'Facturación Fija / Saliente'
         ];
         return view('backpack::facturacion_fija.saliente', compact('data'));
+    }
+
+    public function index_sf(){
+        $data = [
+            'title' => 'Facturación Fija / Saliente Sin Factura'
+        ];
+        return view('backpack::facturacion_fija.saliente_sf', compact('data'));
     }
 
     public function validReport(Request $request){
@@ -57,19 +68,43 @@ class FacturacionFijaController extends Controller {
 
     }
 
-    public function generar_reporte(Request $request){
+    public function generar_reporte(Request $request)
+    {
+        ini_set('max_execution_time', 1800); // Aumentar el tiempo de ejecución si es necesario
+        ini_set('memory_limit', '2048M');
+
         $this->userIdentifier = $this->authService->getUserIdentifier();
-        //$now = Carbon::now();
-        //$v_log_id = (int) $now->format('YmdHis');
+
         $v_cod_clie = $request->get('cod_cliente');
         $v_fecha_ini = $request->get('f_ini');
         $v_fecha_fin = $request->get('f_fin');
 
-        while(strlen($v_cod_clie)<8){
-            $v_cod_clie = '0'.$v_cod_clie;
-        }     
+        // Validar si existe un registro con estado 0
+        $procesoPendiente = DB::select("
+            SELECT COUNT(*) AS total 
+            FROM USRAES.TB_FIJA_FACTURADA_LOG 
+            WHERE usuario = '{$this->userIdentifier}' AND (estado = 0 OR estado = 1)
+        ")[0]->total;
 
-        $resp = [];
+        if ($procesoPendiente > 0) {
+            // Si hay un proceso pendiente, regresar un mensaje a la vista
+            return response()->json(['success' => false, 'message' => 'Ya existe un proceso en ejecución pendiente.']);
+        }
+
+        // Si no hay procesos pendientes, insertar un nuevo registro
+        DB::statement("
+            INSERT INTO USRAES.TB_FIJA_FACTURADA_LOG (usuario, estado)
+            VALUES (?, ?)
+        ", [
+            $this->userIdentifier, // Nombre del usuario autenticado
+            0                    // Estado 0
+        ]);
+
+        // Formatear código cliente
+        while (strlen($v_cod_clie) < 8) {
+            $v_cod_clie = '0' . $v_cod_clie;
+        }
+
         $plsql = [];
         // $plsql[] = "drop table USRAES.TB_FIJA_FACTURADA";
         $plsql[] = "BEGIN
@@ -80,6 +115,7 @@ class FacturacionFijaController extends Controller {
                     RAISE;
                 END IF;
         END;";
+
         $plsql[] = "CREATE TABLE USRAES.TB_FIJA_FACTURADA_{$this->userIdentifier} as(
                 select distinct a.codcli, a.numser serie_recibo, a.numsut num_recibo, ani telefono_origen, 
                 dscisdest telefono_destino,dscserv servicio, b.nomdes nombre_destino,
@@ -99,8 +135,63 @@ class FacturacionFijaController extends Controller {
                 and d.idclaisdest=b.idclaisdest(+)
                 and e.idgrpdes=b.idgrpdes(+)
                 and a.codcli='{$v_cod_clie}'
-                and trunc(horaini)>=to_date('{$v_fecha_ini}','dd/mm/yyyy')
-                and trunc(horaini)<=to_date('{$v_fecha_fin}','dd/mm/yyyy')
+                and trunc(horaini)>=to_date('{$v_fecha_ini}','dd-mm-yyyy')
+                and trunc(horaini)<=to_date('{$v_fecha_fin}','dd-mm-yyyy')
+                )";
+
+        foreach($plsql as $sql){
+            DB::statement(DB::Raw($sql));
+        }
+        
+        return response()->json(['success' => true, 'message' => 'Proceso iniciado correctamente, ir a descargar reportes.']);
+    }
+
+    public function generar_reporte_sf(Request $request){
+        $this->userIdentifier = $this->authService->getUserIdentifier();
+        //$now = Carbon::now();
+        //$v_log_id = (int) $now->format('YmdHis');
+        $v_cod_clie = $request->get('cod_cliente');
+        $v_fecha_ini = $request->get('f_ini');
+        $v_fecha_fin = $request->get('f_fin');
+
+        while(strlen($v_cod_clie)<8){
+            $v_cod_clie = '0'.$v_cod_clie;
+        }     
+
+        $resp = [];
+        $plsql = [];
+        // $plsql[] = "drop table USRAES.TB_FIJA_FACTURADA";
+        $plsql[] = "BEGIN
+            EXECUTE IMMEDIATE 'DROP TABLE USRAES.TB_FIJA_SIN_FACTURADA_{$this->userIdentifier}';
+        EXCEPTION
+            WHEN OTHERS THEN
+                IF SQLCODE != -942 THEN
+                    RAISE;
+                END IF;
+        END;";
+        $plsql[] = "CREATE TABLE USRAES.TB_FIJA_SIN_FACTURADA_{$this->userIdentifier} as(
+                SELECT distinct codcli,
+                    ani telefono_origen,
+                    dscisdest telefono_destino,
+                    dscserv servicio,
+                    b.nomdes nombre_destino,
+                    tipdest tipo_destino,
+                    TO_CHAR(horaini, 'DD/MM/YYYY HH24:MI:SS') horaini,
+                    TO_CHAR(horafin, 'DD/MM/YYYY HH24:MI:SS') horafin,
+                    cantidad minutos,
+                    TRUNC((horafin - horaini) * (60 * 60 * 24)) + 1 segundos,
+                    idtiphor,
+                    tarifa, monto, b.idcon, b.idoperador, c.descripcion Operador,
+                    b.idclaisdest, d.descripcion Clase_Destino, b.idgrpdes, e.descripcion Grupo_Destino,cantidadval,
+                    cantidadorigen
+                from DWS.SA_BILVALCDR b, DWS.SA_OPERADOR c,
+                    DWS.SA_CLASEISDESTINO d, DWS.SA_GRUPODESTINO e
+                where c.idoperador=b.idoperador(+)
+                    and d.idclaisdest=b.idclaisdest(+)
+                    and e.idgrpdes=b.idgrpdes(+)
+                    and CODCLI = '{$v_cod_clie}'
+                    AND TO_CHAR(TRUNC(HORAINI),'YYYYMMDD') >= to_date('{$v_fecha_ini}','dd/mm/yyyy')
+                    AND TO_CHAR(TRUNC(HORAINI),'YYYYMMDD') <= to_date('{$v_fecha_fin}','dd/mm/yyyy')
                 )";
 
         $resp = [];
@@ -108,7 +199,7 @@ class FacturacionFijaController extends Controller {
             $resp[] = DB::statement(DB::Raw($sql));
         }
 
-        $result = DB::select(DB::RAW("select telefono_origen from USRAES.TB_FIJA_FACTURADA_{$this->userIdentifier} where rownum = 1"));
+        $result = DB::select(DB::RAW("select telefono_origen from USRAES.TB_FIJA_SIN_FACTURADA_{$this->userIdentifier} where rownum = 1"));
         if(isset($result[0])){
             $tel_fijo = $result[0]->telefono_origen;
         }else{
@@ -132,7 +223,40 @@ class FacturacionFijaController extends Controller {
             'mensaje' => 'se generó el archivo'
         ]);*/
 
-        return Excel::download(new FacturacionfijaExport($this->authService), 'facturacion_fija.xlsx');
+        return Excel::download(new FacturacionFijaSFExport($this->authService), 'facturacion_fija.xlsx');
+    }
+
+    public function reportes(){
+        $config = [
+            'title' => 'Descarga de reportes',
+            'getApi' => url('facturacion-fija/reportes/search'),
+            'downloadApi' => url('facturacion-fija/reportes/[file]/descargar'),
+        ];
+        return view('backpack::facturacion_fija.descargar_reportes', compact('config'));
+    }
+
+    public function search()
+    {
+        $this->userIdentifier = $this->authService->getUserIdentifier();
+        $fields = [
+            'fecha_creacion' => ["label" => 'Fecha Creación', "type" => 'datetime'],
+            'usuario' => ["label" => 'Usuario', "type" => 'string'],
+            'archivo' => ["label" => 'Archivo', "type" => 'string'],
+            'estado' => ["label" => 'Estado', "type" => 'string']
+        ];
+        $filters = ["usuario.eq.".$this->userIdentifier];
+        $builder = DB::table('USRAES.TB_FIJA_FACTURADA_LOG');
+
+        EloquentCriteriaConverter::fromRawArray($builder, $fields, $filters, [], 0, 0);
+
+        $response['data'] = $builder->get();
+        return response()->json(["data" => $response['data']]);
+    }
+
+    public function descargar_reporte($file){
+        $rutaArchivo = storage_path('app/facturacion-fija/'.$file);
+        $nombreArchivo = $file;
+        return response()->download($rutaArchivo, $nombreArchivo);
     }
 
     public function test()

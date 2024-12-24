@@ -1061,6 +1061,8 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
             WHERE (ticket) IN (
                 SELECT TICKET FROM USRAES.INPUT_DEVO_FIJA_TMP_{$this->userIdentifier} GROUP BY TICKET, DEPARTAMENTO
             )
+            AND MONTO_PRINCIPAL is not null
+            AND ESTADO_CONTRATO = 'A'
             AND (CASE FUENTE
                 WHEN 'BSCS' THEN (CASE WHEN ESTADO_CONTRATO != 'D' THEN 1 ELSE 0 END)
                 WHEN 'SGA' THEN (CASE WHEN CICFAC_DEVOL IS NOT NULL AND FCHFIN_INST IS NULL THEN 1 ELSE 0 END)
@@ -1228,9 +1230,18 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
     public function getReporteUsuariosAfectados($ticket)
     {
         return DB::connection($this->connection)->table("USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST")
-        ->selectRaw("rownum item,ticket,CODCLI CODIGO_CLIENTE,NRO_DOC NUMERO_DE_DOCUMENTO,
-        NOMCLI NOMBRES_APELLIDOS,FAMILIA SERVICIO_ANALIZADO,NUMERO SERVICIO,DPTO")
+        ->selectRaw("rownum item,ticket,CODCLI CODIGO_CLIENTE,
+        CASE
+            WHEN LENGTH(NRO_DOC) <= 8 AND regexp_replace(NRO_DOC, '[0-9]*') IS NOT NULL THEN LPAD(NRO_DOC, 12, '0')
+            WHEN LENGTH(NRO_DOC) < 8 THEN LPAD(NRO_DOC, 8, '0')
+            WHEN 8 < LENGTH(NRO_DOC) AND LENGTH(NRO_DOC) < 11 THEN LPAD(NRO_DOC, 12, '0')
+            ELSE NRO_DOC
+            END AS NUMERO_DE_DOCUMENTO,
+        NOMCLI NOMBRES_APELLIDOS,FAMILIA SERVICIO_ANALIZADO,NUMERO SERVICIO,DPTO,MONTO_PRINCIPAL")
         ->where("ticket", $ticket)
+        ->whereNotNull("MONTO_PRINCIPAL")
+        ->where("ESTADO_CONTRATO", "=", "A")
+        //->whereRaw("TRIM(MONTO_PRINCIPAL) != ''")
         ->where(function($query) {
             $query->whereRaw("(CASE FUENTE
             WHEN 'BSCS' THEN (CASE WHEN ESTADO_CONTRATO != 'D' THEN 1 ELSE 0 END)
@@ -1265,6 +1276,9 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
         'Dev. por interrupcion del ' || to_char(FEC_INI_INCIDENCIA, 'DD/MM/YYYY') || '. Tasa aplicada  0.01%' GLOSARIO")
         ->where("ticket", $ticket)
         ->where("fuente", $fuente)
+        ->whereNotNull("MONTO_PRINCIPAL")
+        ->where("ESTADO_CONTRATO", "=", "A")
+        //->where("MONTO_PRINCIPAL", '!=', '')
         ->where(function($query) {
             $query->whereRaw("(CASE FUENTE
             WHEN 'BSCS' THEN (CASE WHEN ESTADO_CONTRATO != 'D' THEN 1 ELSE 0 END)
@@ -1395,6 +1409,78 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
         DB::table("USRAES.INPUT_DEVO_FIJA_PLANO")
         ->where("numero_reporte", $numReporte)
         ->delete();
+    }
+
+    public function updateReporte($ticket, $departamento, $data)
+    {
+        DB::statement("DECLARE
+            V_TICKET VARCHAR2(100) := :p_ticket;
+            V_DEPARTAMENTO VARCHAR2(100):= :p_departamento;
+        BEGIN
+            UPDATE USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST SET
+            mto_dev_facturacion = NULL,
+            mto_dif_facturacion = NULL,
+            factura_aplicada = NULL,
+            fecha_devolucion = NULL,
+            fecha_registro_devolucion = NULL,
+            observacion = NULL,
+            fecha_baja = NULL
+            WHERE TICKET= V_TICKET AND DPTO = V_DEPARTAMENTO;
+            COMMIT;
+
+            UPDATE USRAES.DWH_DEVOLUCION_MASIV_DETALLE_TOTAL SET
+            ACREDITADOS = 0,
+            NO_ACREDITADOS = 0
+            WHERE TICKET= V_TICKET AND DEPARTAMENTO = V_DEPARTAMENTO;
+        END;", ["p_ticket" => $ticket, "p_departamento" => $departamento]);
+
+        foreach($data as $row){
+            DB::table("USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST")
+            ->where("ticket", $ticket)
+            ->where("numero", $row["msisdn"])
+            ->where("fuente", $row["fuente"])
+            ->update([
+                "mto_dev_facturacion" => $row["mto_dev_facturacion"],
+                "mto_dif_facturacion" => $row["mto_dif_facturacion"],
+                "factura_aplicada" => $row["factura_aplicada"],
+                "fecha_devolucion" => $row["fecha_devolucion"],
+                "fecha_registro_devolucion" => $row["fecha_registro_devolucion"],
+                "observacion" => $row["observacion"],
+                "fecha_baja" => $row["fecha_baja"],
+            ]);
+        }
+
+        DB::statement("DECLARE
+            V_TICKET VARCHAR2(100) := :p_ticket;
+            V_DEPARTAMENTO VARCHAR2(100):= :p_departamento;
+        BEGIN
+            MERGE INTO USRAES.DWH_DEVOLUCION_MASIV_DETALLE_TOTAL A
+            USING (
+                SELECT
+                TICKET,FAMILIA,
+                SUM(CASE WHEN FACTURA_APLICADA IS NOT NULL AND FECHA_BAJA IS NOT NULL THEN 1 ELSE 0 END) ACREDITADOS
+                FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST
+                WHERE TICKET= V_TICKET and DPTO = V_DEPARTAMENTO
+                AND MONTO_PRINCIPAL is not null
+                AND ESTADO_CONTRATO = 'A'
+                AND (CASE FUENTE
+                    WHEN 'BSCS' THEN (CASE WHEN ESTADO_CONTRATO != 'D' THEN 1 ELSE 0 END)
+                    WHEN 'SGA' THEN (CASE WHEN CICFAC_DEVOL IS NOT NULL AND FCHFIN_INST IS NULL THEN 1 ELSE 0 END)
+                    ELSE 0 END
+                ) = 1
+                GROUP BY TICKET,FAMILIA
+            ) B
+            ON (A.TICKET = B.TICKET AND A.SERVICIO_AFECTADO = B.FAMILIA)
+            WHEN MATCHED THEN UPDATE SET
+            A.ACREDITADOS = B.ACREDITADOS
+            WHERE TICKET= V_TICKET and DEPARTAMENTO = V_DEPARTAMENTO;
+            COMMIT;
+
+            UPDATE USRAES.DWH_DEVOLUCION_MASIV_DETALLE_TOTAL SET
+            NO_ACREDITADOS = ABONADOS_AFECTADOS - ACREDITADOS
+            WHERE TICKET= V_TICKET AND DEPARTAMENTO = V_DEPARTAMENTO;
+            COMMIT;
+        END;", ["p_ticket" => $ticket, "p_departamento" => $departamento]);
     }
 
     private function exec_sql(array $queries)

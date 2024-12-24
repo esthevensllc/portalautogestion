@@ -13,7 +13,7 @@
                         <label for="" data-toggle="tooltip" data-placement="top" title="Tooltip on top">Número de cuenta</label>
                         <input type="text" class="form-control form-control-sm" name="cuenta" required>
                         <div class="invalid-feedback d-block text-dark">
-                            Ej. 8.22104233.00.00.100000,8.21527968.00.00.100000
+                            Ej. 8.22104233.00.00.100000
                         </div>
                     </div>
                 </div>

@@ -12,7 +12,7 @@
                         <label for="" data-toggle="tooltip" data-placement="top" title="Tooltip on top">Número de cuenta</label>
                         <input type="text" class="form-control form-control-sm" name="cod_cliente" required>
                         <div class="invalid-feedback d-block text-dark">
-                            Ej. 8.22104233.00.00.100000,8.21527968.00.00.100000
+                            Ej. 8.22104233.00.00.100000
                         </div>
                     </div>
                 </div>
@@ -72,6 +72,7 @@
             <div class="text-danger">
                 *Toda consulta que se realice se registrara en un log
                 <br>*Si el periodo a consultar no se entra en el rango mostrado comunicarse con el área de Facturación a Clientes
+                <br>*El equipo de facturación cuenta con 5 dias de plazo luego del ciclo de cierre para cargar información del recibo
             </div>
         </form>
     </div>

@@ -220,5 +220,49 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\ListaExcepcionesEliminar\Domain\ListaExcepcionesEliminarRepository::class,
             \AMovil\Reports\ListaExcepcionesEliminar\Infrastructure\EloquentListaExcepcionesEliminarRepository::class
         );
+        $this->app->bind(
+            \AMovil\Reports\DAPU\ListaEir\Domain\ListaEirRepository::class,
+            \AMovil\Reports\DAPU\ListaEir\Infrastructure\EloquentListaEirRepository::class
+        );
+        $this->app->bind(
+            \AMovil\Reports\DAPU\MotivosBloqueoDesbloqueo\Domain\MotivosBloqueoDesbloqueoRepository::class,
+            \AMovil\Reports\DAPU\MotivosBloqueoDesbloqueo\Infrastructure\EloquentMotivosBloqueoDesbloqueoRepository::class
+        );
+        $this->app->bind(
+            \AMovil\Reports\DAPU\ServicioMovil\Domain\ServicioMovilRepository::class,
+            \AMovil\Reports\DAPU\ServicioMovil\Infrastructure\EloquentServicioMovilRepository::class
+        );
+        $this->app->bind(
+            \AMovil\Reports\DAPU\ListaExcepcionesImeiImsi\Domain\ListaExcepcionesImeiImsiRepository::class,
+            \AMovil\Reports\DAPU\ListaExcepcionesImeiImsi\Infrastructure\EloquentListaExcepcionesImeiImsiRepository::class
+        );
+        $this->app->bind(
+            \AMovil\Reports\ListaExcepcionesMasivo\Domain\ListaExcepcionesMasivoRepository::class,
+            \AMovil\Reports\ListaExcepcionesMasivo\Infrastructure\EloquentListaExcepcionesMasivoRepository::class
+        );
+        $this->app->bind(
+            \AMovil\Reports\BaseTipificaciones\Domain\BaseTipificacionesRepository::class,
+            \AMovil\Reports\BaseTipificaciones\Infrastructure\EloquentBaseTipificacionesRepository::class
+        );
+        $this->app->bind(
+            \AMovil\Reports\ListaExcepcionesArt25\Domain\ListaExcepcionesArt25Repository::class,
+            \AMovil\Reports\ListaExcepcionesArt25\Infrastructure\EloquentListaExcepcionesArt25Repository::class
+        );
+        $this->app->bind(
+            \AMovil\Reports\ReporteLineasEnrutadas\Domain\ReporteLineasEnrutadasRepository::class,
+            \AMovil\Reports\ReporteLineasEnrutadas\Infrastructure\EloquentReporteLineasEnrutadasRepository::class
+        );
+        $this->app->bind(
+            \AMovil\Reports\Retenciones\Domain\RetencionesRepository::class,
+            \AMovil\Reports\Retenciones\Infrastructure\EloquentRetencionesRepository::class
+        );
+        $this->app->bind(
+            \AMovil\Reports\DAPU\ConsultaImei\Domain\ConsultaImeiRepository::class,
+            \AMovil\Reports\DAPU\ConsultaImei\Infrastructure\EloquentConsultaImeiRepository::class
+        );
+        $this->app->bind(
+            \AMovil\Reports\DAPU\Sots\Domain\DapuSotRepository::class,
+            \AMovil\Reports\DAPU\Sots\Infrastructure\EloquentDapuSotRepository::class
+        );
     }
 }

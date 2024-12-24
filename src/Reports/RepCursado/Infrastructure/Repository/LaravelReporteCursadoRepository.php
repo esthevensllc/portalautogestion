@@ -176,7 +176,7 @@ class LaravelReporteCursadoRepository implements ReporteCursadoRepository
             $queries[] = ["sql" => "CREATE TABLE USRAES.REPORTE_GPRS_LINEAS_{$this->userIdentifier} AS 
                 SELECT /*+parallel(4)*/ TO_DATE(TO_CHAR(s_rec_opening_time,'YYYY-MM-DD'),'YYYY-MM-DD') as FECHA,
                 served_msisdn AS MSISDN,
-                round(sum(s_uplink+s_downlink)/(1024*1024),2) as traf_mb 
+                round(sum(s_uplink+s_downlink),2) as traf_b 
                 from DM.CDR_GPRS PARTITION(P_{$before_now->format('Ymd')}) 
                 where served_msisdn in (select LINEA from USRAES.TMP_PULL_LINES_{$this->userIdentifier}) 
                 group by TO_DATE(TO_CHAR(s_rec_opening_time,'YYYY-MM-DD'),'YYYY-MM-DD'),served_msisdn"

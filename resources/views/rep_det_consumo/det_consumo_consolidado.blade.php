@@ -10,9 +10,9 @@
                 <div class="col-lg-2">
                     <div class="form-group">
                         <label for="" data-toggle="tooltip" data-placement="top" title="Tooltip on top">Número de cuenta</label>
-                        <input type="text" class="form-control form-control-sm" name="cod_cliente" required>
+                        <textarea type="text" class="form-control form-control-sm" name="cod_cliente" required></textarea>
                         <div class="invalid-feedback d-block text-dark">
-                            Ej. 8.22104233.00.00.100000,8.21527968.00.00.100000
+                            Ej. 8.22104233.00.00.100000
                         </div>
                     </div>
                 </div>
@@ -94,6 +94,7 @@
             <div class="text-danger">
                 *Toda consulta que se realice se registrara en un log
                 <br>*Si el periodo a consultar no se entra en el rango mostrado comunicarse con el área de Facturación a Clientes
+                <br>*El equipo de facturación cuenta con 5 dias de plazo luego del ciclo de cierre para cargar información del recibo
             </div>
         </form>
     </div>
@@ -121,7 +122,8 @@ $(function() {
         e.preventDefault();
         $(".btn_export").prop('disabled', true);
         $(".loader_component").show();
-        const cod_cliente = $("#form_export input[name=cod_cliente]").val();
+
+        let cod_cliente = $("#form_export textarea[name=cod_cliente]").val();
         const periodo = $("#form_export input[name=periodo]").val();
         const unidad_trafico_id = $("#form_export select[name=unidad_trafico_id]").val();
         const unidad_consumo_id = $("#form_export select[name=unidad_consumo_id]").val();
@@ -129,7 +131,72 @@ $(function() {
         const tipo_input = $("#form_export select[name=tipo_input]").val();
         const fecha1 = $("#form_export input[name=fecha1]").val();
         const fecha2 = $("#form_export input[name=fecha2]").val();
-        fetch("{{asset($data['url_validator'])}}"+`?cod_cliente=${cod_cliente}&periodo=${periodo}&tipo_input=${tipo_input}&fecha1=${fecha1}&fecha2=${fecha2}`, {
+
+        // Si cod_cliente contiene comas, dividirlo en un array
+        if (cod_cliente.includes(',')) {
+            cod_cliente = cod_cliente.split(',').map(item => item.trim());
+        } else {
+            cod_cliente = [cod_cliente];
+        }
+
+        // Función para procesar un solo cod_cliente
+        const processClient = async (client) => {
+            try {
+                const validateResponse = await fetch(`{{asset($data['url_validator'])}}?cod_cliente=${client}&periodo=${periodo}&tipo_input=${tipo_input}&fecha1=${fecha1}&fecha2=${fecha2}`, {
+                    method: 'GET',
+                    redirect: 'manual'
+                }).then(utils.fetchAuthMiddleware);
+
+                if (!validateResponse.ok) {
+                    throw new Error(validateResponse.statusText);
+                }
+
+                const validateData = await validateResponse.json();
+
+                if (validateData.passes === true) {
+                    const exportResponse = await utils.fetch(`{{asset(isset($data['url_export']) ? $data['url_export'] : '')}}?cod_cliente=${client}&periodo=${periodo}&unidad_trafico_id=${unidad_trafico_id}&unidad_consumo_id=${unidad_consumo_id}&consumo_sin_cargo=${consumo_sin_cargo}&tipo_input=${tipo_input}&fecha1=${fecha1}&fecha2=${fecha2}`, {
+                        method: 'GET'
+                    });
+
+                    if (!exportResponse.ok) {
+                        throw new Error(exportResponse.statusText);
+                    }
+
+                    const exportData = await exportResponse.json();
+
+                    if (!exportData.success) {
+                        throw new Error('Error al exportar el archivo');
+                    }
+
+                    console.log('File saved to:', exportData.path);
+
+                } else {
+                    console.log(validateData.errors.message);
+                }
+            } catch (error) {
+                console.log(error);
+            } finally {
+                $(".loader_component").hide();
+                $(".btn_export").prop('disabled', false);
+            }
+        };
+
+        // Función para iterar sobre todos los clientes secuencialmente
+        const processAllClients = async () => {
+            for (const client of cod_cliente) {
+                await processClient(client);
+            }
+        };
+
+        // Iniciar el procesamiento
+        processAllClients().then(() => {
+            console.log('Todos los clientes han sido procesados.');
+            alert('Puede descargar el archivo en el menú Descarga de reportes, al finalizar el día se eliminarán todos los archivos generados para este módulo');
+        }).catch(error => {
+            console.log(error);
+        });
+
+        /*fetch("{{asset($data['url_validator'])}}"+`?cod_cliente=${cod_cliente}&periodo=${periodo}&tipo_input=${tipo_input}&fecha1=${fecha1}&fecha2=${fecha2}`, {
             method: 'GET',
             redirect: 'manual'
         })
@@ -180,34 +247,36 @@ $(function() {
             $(".loader_component").hide();
             $(".btn_export").prop('disabled', false);
             alert(error);
-        });
+        });*/
     });
     if("{{ isset($data['url_export']) ? $data['url_export'] : '' }}" === ''){
         $(".btn_export").prop('disabled', true);
     }
 
-    $("input[name=cod_cliente]").on('change', function(){
-        const cod_cliente = $("#form_export input[name=cod_cliente]").val();
-        fetch("{{ $data['url_cliente_validator'] }}"+`?cliente=${cod_cliente}`, {
-            method: 'GET'
-        })
-        .then(response => {
-            if(!response.ok){
-                throw new Error(response.statusText);
-            }
-            return response;
-        })
-        .then(response => response.json())
-        .then(resp => {
-            if(resp.min_periodo === undefined){
-                $(".min_periodo").html("Periodo mínimo: yyyymm<br>Periodo máximo: yyyymm <br>*Verificar que el numero de cuenta sea correcto");
-            }else{
-                $(".min_periodo").html(`Periodo mínimo: ${resp.min_periodo}<br>Periodo máximo: ${resp.max_periodo}`);
-            }
-        })
-        .catch(error => {
-            $(".min_periodo").html("Periodo mínimo: yyyymm<br>Periodo máximo: yyyymm");
-        });
+    $("textarea[name=cod_cliente]").on('change', function(){
+        const cod_cliente = $("#form_export textarea[name=cod_cliente]").val();
+        if (!cod_cliente.includes(',')) {
+            fetch("{{ $data['url_cliente_validator'] }}"+`?cliente=${cod_cliente}`, {
+                method: 'GET'
+            })
+            .then(response => {
+                if(!response.ok){
+                    throw new Error(response.statusText);
+                }
+                return response;
+            })
+            .then(response => response.json())
+            .then(resp => {
+                if(resp.min_periodo === undefined){
+                    $(".min_periodo").html("Periodo mínimo: yyyymm<br>Periodo máximo: yyyymm <br>*Verificar que el numero de cuenta sea correcto");
+                }else{
+                    $(".min_periodo").html(`Periodo mínimo: ${resp.min_periodo}<br>Periodo máximo: ${resp.max_periodo}`);
+                }
+            })
+            .catch(error => {
+                $(".min_periodo").html("Periodo mínimo: yyyymm<br>Periodo máximo: yyyymm");
+            });
+        }
     });
 
     document.querySelector("input[name=fecha1]").addEventListener("change", function(e){

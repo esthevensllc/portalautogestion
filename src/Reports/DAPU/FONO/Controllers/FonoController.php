@@ -4,6 +4,7 @@ namespace AMovil\Reports\DAPU\FONO\Controllers;
 
 use AMovil\Reports\DAPU\FONO\Services\ExportDataDni;
 use AMovil\Reports\DAPU\FONO\Services\GetDataDni;
+use AMovil\Shared\Application\FileInput;
 use Illuminate\Http\Request;
 
 class FonoController
@@ -20,17 +21,19 @@ class FonoController
     public function view()
     {
         $config = [
-            "title" => "BUSCAR DNI POR FONO",
+            "title" => "CONSULTA IMSI",
             "url" => asset("dapu/consulta-fono/json"),
             "url_export" => asset("dapu/consulta-fono/export"),
             "fields" => [
-                "fono" => ["label" => "FONO"],
-                "nombre" => ["label" => "NOMBRE"],
-                "fecha_alta" => ["label" => "FECHA_ALTA"],
-                "fecha_baja" => ["label" => "FECHA_BAJA"],
-                "numero_doc" => ["label" => "NUMERO_DOC"],
-                "tipo_doc" => ["label" => "TIPO_DOC"],
+                "msisdn" => ["label" => "MSISDN"],
+                "imsi" => ["label" => "IMSI"],
+                "tecnologia_red_chip" => ["label" => "TECNOLOGIA_RED_CHIP"],
+                "tplname" => ["label" => "TPLNAME"],
+                "provi_volte" => ["label" => "PROVI_VOLTE"],
+                "simcard_3g_sinvolte" => ["label" => "SIMCARD_3G_SINVOLTE"],
+                "simcard_3g_convolte" => ["label" => "SIMCARD_3G_CONVOLTE"],
             ],
+            "form_method" => "POST",
             "form_view" => "dapu.consulta_dni_form",
         ];
         return view("dapu.shared", compact("config"));
@@ -38,16 +41,39 @@ class FonoController
 
     public function getData(Request $request)
     {
-        $response = $this->getDataDni->__invoke($request->input("fono"))->data();
+        $response = null;
+        if((int) $request->input("tipo_input") === 1){
+            $values = explode(",", str_replace(" ", "", $request->input('linea')));
+            $response = $this->getDataDni->__invoke($values)->data();
+        } else {
+            $file = new FileInput(
+                $request->file("file")->getPathname(),
+                $request->file("file")->getClientOriginalName()
+            );
+            $response = $this->getDataDni->fromFile($file)->data();
+        }
         return response()->json($response);
     }
 
     public function export(Request $request)
     {
-        $response = $this->export->__invoke(
-            $request->input('fono'),
-            $request->input('type'),
-        )->data();
+        $response = null;
+        if((int) $request->input("tipo_input") === 1){
+            $values = explode(",", str_replace(" ", "", $request->input('linea')));
+            $response = $this->export->__invoke(
+                $values,
+                $request->input('type'),
+            )->data();
+        } else {
+            $file = new FileInput(
+                $request->file("file")->getPathname(),
+                $request->file("file")->getClientOriginalName()
+            );
+            $response = $this->export->fromFile(
+                $file,
+                $request->input('type'),
+            )->data();
+        }
 
         $headers_type = [
             'csv' => [

@@ -34,6 +34,7 @@ class FacturacionFijaExport implements FromCollection, WithHeadings, WithStyles,
 
     public function collection()
     {
+        ini_set('max_execution_time', 1800);
         $this->userIdentifier = $this->authService->getUserIdentifier();
         return collect(DB::connection('oracle')->select(DB::RAW("select distinct codcli, serie_recibo, num_recibo, telefono_origen, 
         telefono_destino,servicio, nombre_destino,

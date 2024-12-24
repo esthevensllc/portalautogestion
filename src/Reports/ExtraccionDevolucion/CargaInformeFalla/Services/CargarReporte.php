@@ -3,6 +3,7 @@
 namespace AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Services;
 
 use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Domain\ExtraccionRepository;
+use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Domain\InformeTipoReporte;
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services\ProcessExtraccion;
 use AMovil\Reports\ExtraccionDevolucion\TablaInteres\Domain\TablaInteresRepository;
 use DateTime;
@@ -22,7 +23,7 @@ class CargarReporte
         $this->repo = $repo;
     }
 
-    public function __invoke($numero, $excel, $detalleExtraccion)
+    public function __invoke($numero, $tipoReporte, $excel, $detalleExtraccion)
     {
         $this->validate($detalleExtraccion);
         $filename = $excel->getClientOriginalName();
@@ -31,6 +32,7 @@ class CargarReporte
             foreach($detalleExtraccion as $row){
                 $this->saveInputs(
                     $numero,
+                    $tipoReporte,
                     explode(",", $row["celdas"]),
                     explode("\n", str_replace(["\t","\r"], ["",""], $row["distritos"])),
                     $row["corteFechaIni"],
@@ -41,6 +43,9 @@ class CargarReporte
             $excel->storeAs('carga_informe_falla', $numero.'_'.$excel->getClientOriginalName());
             // $reportes = $this->repo->getReportesSnRevisado();
             $reportes = $this->repo->findInputFor($numero);
+            if((int) $tipoReporte === InformeTipoReporte::BY_MSISDN){
+                $this->repo->saveInputMsisdn($numero, $this->getMsisdnDataFromCsv($excel));
+            }
             $correo = new NotificacionCarga($reportes);
             $correo->setSubject("CARGA DE INFORMES DE FALLAS - {$filename}");
             
@@ -74,7 +79,7 @@ class CargarReporte
         }
     }
 
-    private function saveInputs($numero, $celdas, $provincias, $corteFechaIni, $corteFechaFin)
+    private function saveInputs($numero, $tipoReporte, $celdas, $provincias, $corteFechaIni, $corteFechaFin)
     {
         $arrayDistritos = [];
         foreach($provincias as $row){
@@ -91,6 +96,7 @@ class CargarReporte
 
         $this->repo->saveReportInputs(
             $numero,
+            $tipoReporte,
             $celdas,
             $arrayDistritos,
             $dtFechaIni,
@@ -102,4 +108,29 @@ class CargarReporte
         );
     }
 
+    public function getMsisdnDataFromCsv($file){
+        $reader = IOFactory::createReader('Csv');
+        $spreedsheet = $reader->load($file->getPathname());
+        $sheet = $spreedsheet->getSheet(0);
+        $highestRow = $sheet->getHighestRow();
+        $data = [];
+        for ($i=2; $i <= $highestRow; $i++) {
+            $row = [
+                "ticket" => $sheet->getCellByColumnAndRow(1, $i)->getValue(),
+                "msisdn" => $sheet->getCellByColumnAndRow(2, $i)->getValue(),
+                "fecha_carga" => $sheet->getCellByColumnAndRow(3, $i)->getValue(),
+                "celda" => $sheet->getCellByColumnAndRow(4, $i)->getValue(),
+                "fecha_corte" => $sheet->getCellByColumnAndRow(5, $i)->getValue(),
+                "departamento" => $sheet->getCellByColumnAndRow(6, $i)->getValue(),
+                "provincia" => $sheet->getCellByColumnAndRow(7, $i)->getValue(),
+                "distrito" => $sheet->getCellByColumnAndRow(8, $i)->getValue(),
+            ];
+            $row["fecha_carga"] = DateTime::createFromFormat("d/m/Y", $row["fecha_carga"]);
+            $row["fecha_carga"] = $row["fecha_carga"] ? $row["fecha_carga"]->format("Y-m-d") : null;
+            $row["fecha_corte"] = DateTime::createFromFormat("d/m/Y", $row["fecha_corte"]);
+            $row["fecha_corte"] = $row["fecha_corte"] ? $row["fecha_corte"]->format("Y-m-d") : null;
+            $data[] = $row;
+        }
+        return $data;
+    }
 }

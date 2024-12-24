@@ -4,6 +4,7 @@ namespace AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services;
 
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Domain\ExtraccionRepository as ExtraccionRepository1;
 use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Domain\ExtraccionRepository as ExtraccionRepository2;
+use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Domain\InformeTipoReporte;
 use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Services\GetDepartamentosByNumReporte;
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Domain\TipoInput;
 use AMovil\Reports\ExtraccionDevolucion\TablaInteres\Domain\TablaInteresRepository;
@@ -110,7 +111,13 @@ class ProcessExtraccion
             }
 
             if($step === 1){
-                $usuariosAfectados = $this->repo->getReporte($arrayCeldas, $arrayProvincias, $dtFechaIni, $dtFechaFin, $ticketOsiptel, $dtFechaInteres, $dtCorteFechaIni, $dtCorteFechaFin);
+                $informe = $this->repo2->getInputByTicket($ticketOsiptel);
+                $usuariosAfectados = null;
+                if($informe !== null && (int) $informe->tipo_reporte === InformeTipoReporte::BY_MSISDN){
+                    $usuariosAfectados = $this->repo->getReporteWithoutValidation($arrayCeldas, $arrayProvincias, $dtFechaIni, $dtFechaFin, $ticketOsiptel, $dtFechaInteres, $dtCorteFechaIni, $dtCorteFechaFin);
+                } else {
+                    $usuariosAfectados = $this->repo->getReporte($arrayCeldas, $arrayProvincias, $dtFechaIni, $dtFechaFin, $ticketOsiptel, $dtFechaInteres, $dtCorteFechaIni, $dtCorteFechaFin);
+                }
 
                 return new Response([], $usuariosAfectados);
             }else{
@@ -152,6 +159,11 @@ class ProcessExtraccion
                 'bryan.robles@claro.com.pe',
                 'cdiazb@claro.com.pe',
                 'C26670@claro.com.pe',
+                'rhurtado@claro.com.pe',
+                'angela.felix@claro.com.pe',
+                'luis.huatuco@claro.com.pe',
+                'david.granados@claro.com.pe',
+                'c26977@claro.com.pe',
             ])->send($correo);
 
             $this->sendFilePrepago->__invoke($ticketOsiptel, $depatamento);

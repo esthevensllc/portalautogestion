@@ -6,8 +6,12 @@ use AMovil\Reports\RepDetConsumo\Services\ClienteValidator;
 use AMovil\Reports\RepDetConsumo\Services\ExportDetalleConsumoConsolidado;
 use AMovil\Reports\RepDetConsumo\Services\ExportDetalleConsumoDetallado;
 use AMovil\Reports\RepDetConsumo\Services\RecordsValidator;
+use AMovil\Auth\AccessControl\Domain\AuthService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 
 class DetalleConsumoController
 {
@@ -15,18 +19,22 @@ class DetalleConsumoController
     private $exportDetallado;
     private $validator;
     private $clienteValidator;
+    private $userIdentifier;
+    private $authService;
 
     public function __construct(
         ExportDetalleConsumoConsolidado $exportConsolidado,
         ExportDetalleConsumoDetallado $exportDetallado,
         RecordsValidator $validator,
-        ClienteValidator $clienteValidator
+        ClienteValidator $clienteValidator,
+        AuthService $authService
     )
     {
         $this->exportConsolidado = $exportConsolidado;
         $this->exportDetallado = $exportDetallado;
         $this->validator = $validator;
         $this->clienteValidator = $clienteValidator;
+        $this->authService = $authService;
     }
 
     public function detallado(){
@@ -82,8 +90,12 @@ class DetalleConsumoController
     {
         ini_set('max_execution_time', '7200');
         set_time_limit(7200);
+
+        $cod_clie = $request->get('cod_cliente');
+        $current_date = now()->format('Ymd');
+
         $export = $this->exportConsolidado->__invoke(
-            $request->get('cod_cliente'),
+            $cod_clie,
             $request->get('periodo'),
             $request->get('unidad_trafico_id'),
             $request->get('unidad_consumo_id'),
@@ -93,21 +105,78 @@ class DetalleConsumoController
             $request->get('fecha2'),
         );
 
-        return response($export, 200, [
+        $this->userIdentifier = $this->authService->getUserIdentifier();
+
+        // Guardar el archivo en una ruta específica en el servidor
+        $fileName = "CONSOLIDADO_DE_CONSUMO_{$cod_clie}_{$this->userIdentifier}_{$current_date}.xlsx";
+        $filePath = 'rep_det_consumo/portalautogestion_Detalle_Consolidado/' . $fileName;
+
+        Storage::disk('local')->put($filePath, $export);
+
+        return response()->json([
+            'success' => true,
+            'path' => storage_path('app/' . $filePath)
+        ]);
+
+        /*return response($export, 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition' => 'attachment;filename="CONSOLIDADO_DE_CONSUMO.xlsx"'
-        ]);
+        ]);*/
+    }
+
+    public function viewReportes(){
+        $data = [
+            'title' => 'Descarga de reportes',
+            'api' => url('rep-det-consumo/detalle-consumo/reportes/descarga-reportes'),
+            'storagePath' => '/portalautogestion_Detalle_Consolidado'
+        ];
+        return view('rep_det_consumo.det_consumo_reportes', compact('data'));
+    }
+
+    public function descargaReportes()
+    {
+        $filePath = 'rep_det_consumo/portalautogestion_Detalle_Consolidado';
+        $files = Storage::disk('local')->files($filePath);
+        $this->userIdentifier = $this->authService->getUserIdentifier();
+
+        $fileDetails = [];
+        foreach ($files as $file) {
+            if(str_contains(basename($file), $this->userIdentifier)){
+                $fileDetails[] = [
+                    'filename' => basename($file),
+                    'path' => $file,
+                    'created_at' => Carbon::createFromTimestamp(Storage::disk('local')->lastModified($file))->toDateTimeString(),
+                    'size' => Storage::disk('local')->size($file),
+                ];
+            }
+        }
+
+        return response()->json(["data" => $fileDetails]);
     }
 
     public function validation(Request $request)
     {
+        $cod_clie = $request->get('cod_cliente');
+        $current_date = now()->format('Ymd');
+
         $response = $this->validator->__invoke(
-            $request->input('cod_cliente'),
+            $cod_clie,
             $request->get('periodo'),
             $request->get('tipo_input'),
             $request->get('fecha1'),
             $request->get('fecha2'),
         );
+
+        $this->userIdentifier = $this->authService->getUserIdentifier();
+
+        if(!$response['passes']){
+            $errorMessage = $response['errors']['message'];
+            // Guardar el archivo en una ruta específica en el servidor
+            $fileName = "ERROR_{$this->userIdentifier}_{$current_date}.txt";
+            $filePath = storage_path('app/rep_det_consumo/portalautogestion_Detalle_Consolidado/' . $fileName);
+            file_put_contents($filePath, $errorMessage . PHP_EOL, FILE_APPEND);
+        }
+
         return response()->json($response);
     }
 

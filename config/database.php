@@ -128,6 +128,19 @@ return [
             ]
         ],
 
+        'ch-dn03' => [
+            'driver' => 'bavix::clickhouse',
+            'host' => env('DB11_HOST', 'localhost'),
+            'port' => env('DB11_PORT', '1433'),
+            'database' => env('DB11_DATABASE', 'default'),
+            'username' => env('DB11_USERNAME', 'default'),
+            'password' => env('DB11_PASSWORD', ''),
+            'options' => [
+                'timeout' => 30,
+                'protocol' => 'http'
+            ]
+        ],
+
         'ch-dn05' => [
             'driver' => 'bavix::clickhouse',
             'host' => env('DB7_HOST', 'localhost'),
@@ -194,11 +207,11 @@ return [
         'mysql' => [
             'driver' => 'mysql',
             'url' => env('DATABASE_URL'),
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '3306'),
-            'database' => env('DB_DATABASE', 'forge'),
-            'username' => env('DB_USERNAME', 'forge'),
-            'password' => env('DB_PASSWORD', ''),
+            'host' => env('DB12_HOST', '127.0.0.1'),
+            'port' => env('DB12_PORT', '3306'),
+            'database' => env('DB12_DATABASE', 'forge'),
+            'username' => env('DB12_USERNAME', 'forge'),
+            'password' => env('DB12_PASSWORD', ''),
             'unix_socket' => env('DB_SOCKET', ''),
             'charset' => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',

@@ -1,4 +1,25 @@
-
+const tabs = {
+    createTabSelectController: function(input){
+        let tab_id  = input.id;
+        let change_handler = function(e){
+            let value = e.target.value;
+            let panels = document.querySelectorAll(`.tabs[data-tab-target=${tab_id}] .tab-item`);
+            panels.forEach(row => {
+                let attr = row.attributes.getNamedItem('data-tab-target');
+                if(attr !== null && attr.value === value){
+                    row.style.display = '';
+                    row.classList.remove('tab-item-active');
+                    row.classList.add('tab-item-active');
+                } else {
+                    row.style.display = 'none';
+                    row.classList.remove('tab-item-active');
+                }
+            });
+        }
+        input.addEventListener('change', change_handler);
+        change_handler({target: input});
+    }
+};
 
 const utils = {
     downloadFile: (blob, fileName, charset = 'UTF-8') => {
@@ -117,5 +138,6 @@ const utils = {
             args[1] = {redirect: 'manual'};
         }
         return fetch(...args).then(utils.fetchAuthMiddleware);
-    }
+    },
+    tabs: tabs,
 };

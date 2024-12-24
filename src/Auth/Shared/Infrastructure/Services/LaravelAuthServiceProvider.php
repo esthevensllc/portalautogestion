@@ -21,6 +21,12 @@ class LaravelAuthServiceProvider extends ServiceProvider
             );
         });
 
+        // Session
+        $this->app->bind(
+            \AMovil\Shared\Session\Domain\Session::class,
+            \AMovil\Shared\Session\Infrastructure\LaravelSession::class
+        );
+
         // Modules
         $this->app->bind(
             \AMovil\Auth\Modules\Domain\ModuleRepository::class,

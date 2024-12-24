@@ -3,6 +3,7 @@
 namespace AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Services;
 
 use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Domain\ExtraccionRepository as InforFallasRepository;
+use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Domain\InformeTipoReporte;
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Domain\ExtraccionRepository;
 use AMovil\Shared\Application\Response;
 use DateTime;
@@ -41,6 +42,23 @@ class GetUsuariosExtraccion
         return new Response([], $data);
     }
 
+    public function getUsuariosMinutos($num_reporte, $departamento, $minutos): Response
+    {
+        $input = $this->infoFallasRepo->getInputByNumReporte_Departamento($num_reporte, $departamento);
+        $numUsuariosAfectados = null;
+        if($input !== null){
+            $numUsuariosAfectados = $this->getNumUsuariosAfectados($input, $input->ticket, $minutos);
+        }
+        $data = [
+            "input" => $input,
+            "usuarios" => [
+                ["num_usuarios" => $numUsuariosAfectados, "minutos" => $minutos]
+            ]
+        ];
+        $data = json_decode(json_encode($data));
+        return new Response([], $data);
+    }
+
     public function getInputs($num_reporte, $departamento): Response
     {
         $input = $this->infoFallasRepo->getInputByNumReporte_Departamento($num_reporte, $departamento);
@@ -57,16 +75,32 @@ class GetUsuariosExtraccion
         $dtFechaFin = DateTime::createFromFormat("Y-m-d H:i:s", $input->corte_fecha_ini);
         $dtFechaIni = (clone $dtFechaFin)->modify("-{$minutos_usuarios} minute");
 
-        $usuariosAfectados = $this->repo->getReporte(
-            $input->celdas,
-            $arrayDistritos,
-            $dtFechaIni,
-            DateTime::createFromFormat("Y-m-d H:i:s", $input->fecha_fin),
-            $ticket,
-            DateTime::createFromFormat("Y-m-d H:i:s", $input->fecha_interes),
-            DateTime::createFromFormat("Y-m-d H:i:s", $input->corte_fecha_ini),
-            DateTime::createFromFormat("Y-m-d H:i:s", $input->corte_fecha_fin)
-        );
+        $informeInput = $this->infoFallasRepo->getInputByTicket($ticket);
+        $usuariosAfectados = null;
+
+        if($informeInput !== null && (int) $informeInput->tipo_reporte === InformeTipoReporte::BY_MSISDN){
+            $usuariosAfectados = $this->repo->getReporteWithoutValidation(
+                $input->celdas,
+                $arrayDistritos,
+                $dtFechaIni,
+                DateTime::createFromFormat("Y-m-d H:i:s", $input->fecha_fin),
+                $ticket,
+                DateTime::createFromFormat("Y-m-d H:i:s", $input->fecha_interes),
+                DateTime::createFromFormat("Y-m-d H:i:s", $input->corte_fecha_ini),
+                DateTime::createFromFormat("Y-m-d H:i:s", $input->corte_fecha_fin)
+            );
+        } else {
+            $usuariosAfectados = $this->repo->getReporte(
+                $input->celdas,
+                $arrayDistritos,
+                $dtFechaIni,
+                DateTime::createFromFormat("Y-m-d H:i:s", $input->fecha_fin),
+                $ticket,
+                DateTime::createFromFormat("Y-m-d H:i:s", $input->fecha_interes),
+                DateTime::createFromFormat("Y-m-d H:i:s", $input->corte_fecha_ini),
+                DateTime::createFromFormat("Y-m-d H:i:s", $input->corte_fecha_fin)
+            );
+        }
         return $usuariosAfectados;
     }
 }

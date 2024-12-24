@@ -12,6 +12,28 @@
 </style>
 @endsection
 
+@section('header')
+<!-- Modal de confirmación de Bootstrap -->
+<div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmationModalLabel">Confirmación</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        ¿Estás seguro de que deseas eliminar al usuario?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-danger" id="confirmDelete">Confirmar</button>
+      </div>
+    </div>
+  </div>
+</div>
+@endsection
 @section('content')
 <div class="d-flex mb-2">
     <h4 class="mb-0 mr-3">Usuarios</h4>
@@ -80,15 +102,21 @@
                 return `<a href="{{asset('admin/usuarios')}}/${row['id']}" class="btn btn-sm btn-info pt-0 pb-0 mr-1"><li class="la la-eye"></li> Ver</a>
                 <a href="{{asset('admin/usuarios/edit')}}/${row['id']}" class="btn btn-sm btn-warning pt-0 pb-0 mr-1"><li class="la la-pencil"></li> Editar</a>
                 <button
+                    id="toogleUser"
                     class="btn btn-sm btn-secondary pt-0 pb-0"
                     data-id="${row['id']}"
-                    data-value="${row['status']}">${(parseInt(row['status']) === 1 ? 'Desactivar':'Activar')}</button>`;
+                    data-value="${row['status']}">${(parseInt(row['status']) === 1 ? 'Desactivar':'Activar')}</button>
+                <button
+                    id="deleteUser"
+                    class="btn btn-sm btn-danger pt-0 pb-0"
+                    data-id="${row['id']}"
+                    data-value="eliminar">Eliminar</button>`;
             }},
         ],
         //serverSide: true
     });
     document.querySelector('table tbody').addEventListener('click', function(e){
-        if(e.target.tagName === 'BUTTON'){
+        if(e.target.id === 'toogleUser'){
             console.log(e.target);
             const id = e.target.getAttribute('data-id');
             const status = parseInt(e.target.getAttribute('data-value'));
@@ -123,6 +151,50 @@
                     text: 'Ocurrió un error al cambiar el estado'
                 }).show();
             });
+        }
+        if(e.target.id === 'deleteUser'){
+            console.log(e.target);
+            const id = e.target.getAttribute('data-id');
+            
+            //const _token = document.querySelector('meta[name=csrf-token]').getAttribute('content');
+            const _token = document.querySelector('input[name=_token]').value;
+            const data = new FormData();
+            data.append('_token', _token);
+
+            // Muestra el modal de confirmación
+            $('#confirmationModal').modal('show');
+
+            // Maneja la confirmación
+            document.getElementById('confirmDelete').addEventListener('click', function() {
+                // Aquí realizas el fetch POST para eliminar
+                fetch(`{{ asset('admin/usuarios') }}/${id}/eliminar`, {
+                    method: 'POST', body: data
+                })
+                .then(response => {
+                    if(!response.ok){
+                        throw new Error(response.statusText);
+                    }
+                    return response;
+                })
+                .then(response => response.json())
+                .then(response => {
+                    // Puedes ocultar el modal después de la confirmación
+                    $('#confirmationModal').modal('hide');
+                    new Noty({
+                        type: 'success',
+                        layout: 'topRight',
+                        text: 'Se elimino al usuario correctamente'
+                    }).show();
+                    _datatable.ajax.reload();
+                })
+                .catch(error => {
+                    new Noty({
+                        type: 'error',
+                        layout: 'topRight',
+                        text: 'Ocurrió un error al eliminar al usuario'
+                    }).show();
+                });
+            });            
         }
     }, false);
 </script>

@@ -8,7 +8,7 @@
         <form id="form_export">
             @csrf
             <div class="mb-3 row">
-                <div class="col-lg-3 col-md-4">
+                <div class="col-lg-2 col-md-3">
                     <div class="form-group">
                         <label for="">Tipo input</label>
                         <select name="tipo_reporte" class="form-control form-control-sm">
@@ -18,11 +18,20 @@
                         </select>
                     </div>
                 </div>
-                <div class="col-lg-3 col-md-4">
+                <div class="col-lg-5 col-md-5">
                     <div class="form-group">
                         <label for="">Txt</label>
-                        <input type="file" name="file1" required>
+                        <input type="file" name="file1" required style="display: block;">
                     </div>
+                </div>
+                <div class="col-lg-5 col-md-5">
+                    <p class="text-danger mb-0">DICCIONARIO DE TEXT:</p>
+                    <ul class="text-danger">
+                        <li>Suspensiones : MTC_E_SUS_02_YYYYMMDD.txt</li>
+                        <li>Titularidad: MTC_E_00_TITU_YYYYMMDD.txt</li>
+                        <li>Reporte Mensual: MTC_E_00_REPO_YYYYMMDD.txt</li>
+                        <li>Notificaciones: MTC_E_ALE_02_YYYYMMDD.txt</li>
+                    </ul>
                 </div>
                 <div class="col-12" style="display: flex; align-items: end;">
                     <div class="form-group">

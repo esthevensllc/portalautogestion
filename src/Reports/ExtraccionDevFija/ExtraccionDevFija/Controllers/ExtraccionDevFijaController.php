@@ -163,7 +163,11 @@ class ExtraccionDevFijaController
             $request->file("excel")->getPathname(),
             $request->file("excel")->getClientOriginalName()
         );
-        $this->reporteExtraccionUploader->__invoke($file);
+        $this->reporteExtraccionUploader->__invoke(
+            $request->input("ticket"),
+            $request->input("departamento"),
+            $file
+        );
         return response()->json([]);
     }
 }

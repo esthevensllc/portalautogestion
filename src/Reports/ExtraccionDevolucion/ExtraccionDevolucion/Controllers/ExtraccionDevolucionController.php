@@ -5,6 +5,7 @@ namespace AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Controllers;
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services\CargarReporte;
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services\ExportExtraccion;
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services\ExportMontoDevolucion;
+use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services\ExportReporteMsisdn;
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services\ExportRepPostpago;
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services\ExportRepPrepago;
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services\ExportUsuarioAfectados;
@@ -12,6 +13,7 @@ use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services\ProcessExt
 use AMovil\Reports\ExtraccionDevolucion\TicketReports\Services\GetTicketReports;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Response;
 
 class ExtraccionDevolucionController
 {
@@ -21,6 +23,7 @@ class ExtraccionDevolucionController
     private $exportUsuarioAfectados;
     private $exportRepPostpago;
     private $exportRepPrepago;
+    private $exportRepMsisdn;
     private $cargarReporte;
     private $getTicketReports;
 
@@ -31,6 +34,7 @@ class ExtraccionDevolucionController
         ExportUsuarioAfectados $exportUsuarioAfectados,
         ExportRepPostpago $exportRepPostpago,
         ExportRepPrepago $exportRepPrepago,
+        ExportReporteMsisdn $exportRepMsisdn,
         CargarReporte $cargarReporte,
         GetTicketReports $getTicketReports,
     ){
@@ -40,6 +44,7 @@ class ExtraccionDevolucionController
         $this->exportUsuarioAfectados = $exportUsuarioAfectados;
         $this->exportRepPostpago = $exportRepPostpago;
         $this->exportRepPrepago = $exportRepPrepago;
+        $this->exportRepMsisdn = $exportRepMsisdn;
         $this->cargarReporte = $cargarReporte;
         $this->getTicketReports = $getTicketReports;
     }
@@ -212,5 +217,14 @@ class ExtraccionDevolucionController
                 'Content-Disposition' => 'attachment;filename="'.$response['filename'].'"'
             ]);
         }
+    }
+
+    public function exportReporteMsisdn(Request $request){
+        $ticket = $request->input("ticket");
+        $response = $this->exportRepMsisdn->__invoke($ticket)->data();
+        return Response::stream($response["content"], 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment;filename="'.$response["filename"].'"'
+        ]);
     }
 }

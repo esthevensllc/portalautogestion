@@ -143,7 +143,7 @@
                 </div>
                 <div class="col-lg-3 col-md-4 form-group">
                     <label for="">Subir Excel:</label>
-                    <input type="file" class="form-control-file" name="excel" accept=".xlsx" required>
+                    <input type="file" class="form-control-file" name="excel" @if(!array_key_exists('fileFormat', $config)) accept=".xlsx" @else accept="{{ $config['fileFormat'] }}" @endif required>
                 </div>
                 <div class="col-lg-12">
                     <h5>Extracción</h5>

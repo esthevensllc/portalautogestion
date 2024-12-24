@@ -33,6 +33,8 @@ return [
 
     'lifetime' => env('SESSION_LIFETIME', 20 * 60),
 
+    'timeout' => env('SESSION_TIMEOUT', 10),
+
     'expire_on_close' => false,
 
     /*
@@ -85,7 +87,7 @@ return [
     |
     */
 
-    'table' => 'sessions',
+    'table' => 'portal_autogestion_sessions',
 
     /*
     |--------------------------------------------------------------------------
