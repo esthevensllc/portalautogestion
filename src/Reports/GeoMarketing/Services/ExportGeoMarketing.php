@@ -14,6 +14,9 @@ class ExportGeoMarketing
         "1" => ["name" => "ESTADIO_NACIONAL"],
         "2" => ["name" => "ESTADIO_MONUMENTAL"],
         "3" => ["name" => "ESTADIO_MONUMENTAL_DE_LA_UNSA"],
+        "4" => ["name" => "ESTACION_LOS_JARDINES"],
+        "5" => ["name" => "ESTACION_VILLA_EL_SALVADOR"],
+        "6" => ["name" => "GOLF_LOS_INCAS"],
     ];
     private $repository;
     const MAX_DAYS = 30;
