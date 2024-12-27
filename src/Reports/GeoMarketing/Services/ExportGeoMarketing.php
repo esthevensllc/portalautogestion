@@ -16,6 +16,10 @@ class ExportGeoMarketing
         "3" => ["name" => "ESTADIO_MONUMENTAL_DE_LA_UNSA"],
         "4" => ["name" => "ESTACION_LOS_JARDINES"],
         "5" => ["name" => "ESTACION_VILLA_EL_SALVADOR"],
+        "6" => ["name" => "GOLF_LOS_INCAS"],
+        "7" => ["name" => "GOLF_SAN_ISIDRO_COUNTRY"],
+        "8" => ["name" => "GOLF_LA_PLANICIE"],
+        "9" => ["name" => "COUNTRY_CLUB_VILLA_DE_GOLF"],
     ];
     private $repository;
     const MAX_DAYS = 30;
