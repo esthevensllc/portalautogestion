@@ -1458,7 +1458,7 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
             USING (
                 SELECT
                 TICKET,FAMILIA,
-                SUM(CASE WHEN FACTURA_APLICADA IS NOT NULL AND FECHA_BAJA IS NOT NULL THEN 1 ELSE 0 END) ACREDITADOS
+                SUM(CASE WHEN FACTURA_APLICADA IS NOT NULL AND FECHA_DEVOLUCION IS NOT NULL THEN 1 ELSE 0 END) ACREDITADOS
                 FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST
                 WHERE TICKET= V_TICKET and DPTO = V_DEPARTAMENTO
                 AND MONTO_PRINCIPAL is not null
