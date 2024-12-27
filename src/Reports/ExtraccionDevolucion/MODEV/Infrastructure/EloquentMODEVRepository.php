@@ -2,6 +2,7 @@
 
 namespace AMovil\Reports\ExtraccionDevolucion\MODEV\Infrastructure;
 
+use AMovil\Auth\AccessControl\Domain\AuthService;
 use AMovil\Reports\ExtraccionDevolucion\MODEV\Domain\MODEVRepository;
 use AMovil\Shared\Infrastructure\Repository\ClickhouseDB;
 use Illuminate\Support\Facades\DB;
@@ -9,9 +10,13 @@ use Illuminate\Support\Facades\DB;
 class EloquentMODEVRepository implements MODEVRepository
 {
     private $db;
-    public function __construct(ClickhouseDB $db)
+    private $authService;
+    private $userIdentifier;
+
+    public function __construct(ClickhouseDB $db, AuthService $authService)
     {
         $this->db = $db->connection("ch-dn04");
+        $this->authService = $authService;
     }
     
     public function getReporteByTicketAndDepartamento($ticket, $departamento)
@@ -135,17 +140,35 @@ class EloquentMODEVRepository implements MODEVRepository
     }
 
     public function getReporteModev(array $ticket){
+        $this->userIdentifier = $this->authService->getUserIdentifier();
+
         $ticketBinds = $this->getQueryBinds($ticket);
 
-        $input = DB::connection("oracle_reptdm")->table("USRAES.BASE_PREV_BASEDEV_INPUT")
-        ->selectRaw("round((CORTE_FECHA_FIN - CORTE_FECHA_INI)*24*60) as minutos_corte")
-        ->where("ticket", $ticket)
-        ->first();
+        $inputMinutos = DB::connection("oracle_reptdm")->table("USRAES.BASE_PREV_BASEDEV_INPUT")
+        ->selectRaw("ticket, round((CORTE_FECHA_FIN - CORTE_FECHA_INI)*24*60) as minutos_corte")
+        ->whereIn("ticket", $ticket)
+        ->get();
 
-        $minutosCorte = '';
-        if($input !== null){
-            $minutosCorte = $input->minutos_corte;
+        $this->db->write("DROP TABLE IF EXISTS default.base_extraccion_modev_input_{$this->userIdentifier}");
+
+        $this->db->write("CREATE TABLE default.base_extraccion_modev_input_{$this->userIdentifier}(
+            ticket String,
+            minutos_corte Nullable(Int64)
+        )
+        ENGINE = MergeTree
+        PRIMARY KEY ticket
+        SETTINGS index_granularity = 8192");
+
+        $data = [];
+
+        foreach($inputMinutos as $row){
+            $data[] = [$row->ticket, $row->minutos_corte];
         }
+
+        if(count($data) > 0){
+            $this->db->insert("default.base_extraccion_modev_input_{$this->userIdentifier}", $data, ["ticket", "minutos_corte"]);
+        }
+
 
         $query = "SELECT 
         /*FORMATO MODEV*/
@@ -156,7 +179,7 @@ class EloquentMODEVRepository implements MODEVRepository
         'Comunicaciones Personales(PCS)' Servicio_Analizado,
         aa.modo_contratacion modo_contratacion,
         aa.cargo_linea_igv cargo_linea_igv,
-        {$minutosCorte} minutos,
+        tinput.minutos_corte minutos,
         case when aa.modalidad_dev like '%POSTPAGO%' then aa.mto_dev_facturacion 
             when aa.modalidad_dev like '%PREPAGO%' then aa.mto_total_dev_igv
         end monto_devolver,
@@ -186,37 +209,42 @@ class EloquentMODEVRepository implements MODEVRepository
         /*VALIDAR FECHA DE CARGA DEL REPORTE*/
         aa.fecha_carga fecha_carga
         from reptdm.base_prev_basedev aa 
+        left join default.base_extraccion_modev_input_{$this->userIdentifier} as tinput
+        on tinput.ticket = aa.ticket
         left join (
-        select xx.*,yy.recharge_date,yy.served_number,yy.recharge_qty,yy.usage_str3 from 
-        (
-            select ticket,msisdn,msisdn_devolver,modalidad_dev,mto_total_dev_igv,toDate(substring(fecha_carga,1,10)) fecha_carga
-            from  reptdm.base_prev_basedev
-            where ticket in ({$ticketBinds['str_binds']}) and  modalidad_dev like '%PREPAGO%' and length(ticket)=9 
-        ) xx 
-        left join (
-        select aa.*,bb.*,row_number() over(partition by aa.ticket,aa.msisdn,aa.msisdn_devolver,aa.mto_total_dev_igv 
-        order by bb.recharge_date asc) flag
-        from 
-        (
-            select ticket,msisdn,msisdn_devolver,modalidad_dev,mto_total_dev_igv,toDate(substring(fecha_carga,1,10)) fecha_carga
-            from  reptdm.base_prev_basedev
-            where  ticket in ({$ticketBinds['str_binds']}) and  modalidad_dev like '%PREPAGO%' and length(ticket)=9
-        ) as aa 
-        left join recargas.recargas_dwo_osip as bb 
-        on aa.msisdn_devolver=bb.served_number and bb.recharge_qty>0 and round(toFloat64(aa.mto_total_dev_igv)*100,2)=round(bb.recharge_qty,2)
-        where date_diff('days',aa.fecha_carga,bb.recharge_date)<90
-        group by aa.*,bb.*
-        ) yy 
-        on xx.ticket=yy.ticket and xx.msisdn=yy.msisdn and xx.msisdn_devolver=yy.msisdn_devolver and xx.mto_total_dev_igv=yy.mto_total_dev_igv 
-        and yy.flag=1
+            select xx.*,yy.recharge_date,yy.served_number,yy.recharge_qty,yy.usage_str3 from 
+            (
+                select ticket,msisdn,msisdn_devolver,modalidad_dev,mto_total_dev_igv,toDate(substring(fecha_carga,1,10)) fecha_carga
+                from  reptdm.base_prev_basedev
+                where ticket in ({$ticketBinds['str_binds']}) and  modalidad_dev like '%PREPAGO%' and length(ticket)=9 
+            ) xx 
+            left join (
+                select aa.*,bb.*,row_number() over(partition by aa.ticket,aa.msisdn,aa.msisdn_devolver,aa.mto_total_dev_igv 
+                order by bb.recharge_date asc) flag
+                from 
+                (
+                    select ticket,msisdn,msisdn_devolver,modalidad_dev,mto_total_dev_igv,toDate(substring(fecha_carga,1,10)) fecha_carga
+                    from  reptdm.base_prev_basedev
+                    where  ticket in ({$ticketBinds['str_binds']}) and  modalidad_dev like '%PREPAGO%' and length(ticket)=9
+                ) as aa 
+                left join recargas.recargas_dwo_osip as bb 
+                on aa.msisdn_devolver=bb.served_number and bb.recharge_qty>0 and round(toFloat64(aa.mto_total_dev_igv)*100,2)=round(bb.recharge_qty,2)
+                where date_diff('days',aa.fecha_carga,bb.recharge_date)<90
+                group by aa.*,bb.*
+            ) yy 
+            on xx.ticket=yy.ticket and xx.msisdn=yy.msisdn and xx.msisdn_devolver=yy.msisdn_devolver and xx.mto_total_dev_igv=yy.mto_total_dev_igv 
+            and yy.flag=1
         ) bb 
         on aa.ticket=bb.ticket and aa.msisdn=bb.msisdn and aa.msisdn_devolver=bb.msisdn_devolver 
         /* where aa.ticket='202322137' and (modalidad_dev like '%POSTPAGO%' or modalidad_dev like '%PREPAGO%')*/
 
         where aa.ticket in ({$ticketBinds['str_binds']})
-        and (modalidad_dev like '%POSTPAGO%' or modalidad_dev like '%PREPAGO%')";
+        and (aa.modalidad_dev like '%POSTPAGO%' or aa.modalidad_dev like '%PREPAGO%')";
 
-        return $this->db->select($query, $ticketBinds['values'])->rows();
+        $result = $this->db->select($query, $ticketBinds['values'])->rows();
+        $this->db->write("DROP TABLE IF EXISTS default.base_extraccion_modev_input_{$this->userIdentifier}");
+
+        return $result;
     }
 
     private function getQueryBinds(array $tickets){
