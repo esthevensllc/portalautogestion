@@ -29,6 +29,9 @@ class GeoMarketingController
                 ["id" => "4", "label" => "ESTACION LOS JARDINES"],
                 ["id" => "5", "label" => "ESTACION VILLA EL SALVADOR"],
                 ["id" => "6", "label" => "GOLF LOS INCAS"],
+                ["id" => "7", "label" => "GOLF SAN ISIDRO COUNTRY"],
+                ["id" => "8", "label" => "GOLF LA PLANICIE"],
+                ["id" => "9", "label" => "COUNTRY CLUB VILLA DE GOLF"],
             ],
             "maxDays" => ExportGeoMarketing::MAX_DAYS,
             "whiteBlackList" => $this->finder->getBlackAndWhiteListSummary()
@@ -63,7 +66,10 @@ class GeoMarketingController
                 ["id" => "3", "label" => "ESTADIO MONUMENTAL DE LA UNSA"],
                 ["id" => "4", "label" => "ESTACION LOS JARDINES"],
                 ["id" => "5", "label" => "ESTACION VILLA EL SALVADOR"],
-                ["id" => "6", "label" => "GOLF LOS INCAS"],                
+                ["id" => "6", "label" => "GOLF LOS INCAS"],   
+                ["id" => "7", "label" => "GOLF SAN ISIDRO COUNTRY"],
+                ["id" => "8", "label" => "GOLF LA PLANICIE"],
+                ["id" => "9", "label" => "COUNTRY CLUB VILLA DE GOLF"],             
             ]
         ];
         return view("geomarketing.geomarketing_log", compact("config"));
