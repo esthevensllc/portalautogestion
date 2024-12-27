@@ -1684,6 +1684,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
                 "departamento" => $row["departamento"],
                 "provincia" => $row["provincia"],
                 "distrito" => $row["distrito"],
+                "comentario" => $row["comentario"],
             ]);
         }
     }

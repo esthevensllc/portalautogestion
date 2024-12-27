@@ -124,6 +124,7 @@ class CargarReporte
                 "departamento" => $sheet->getCellByColumnAndRow(6, $i)->getValue(),
                 "provincia" => $sheet->getCellByColumnAndRow(7, $i)->getValue(),
                 "distrito" => $sheet->getCellByColumnAndRow(8, $i)->getValue(),
+                "comentario" => $sheet->getCellByColumnAndRow(9, $i)->getValue(),
             ];
             $row["fecha_carga"] = DateTime::createFromFormat("d/m/Y", $row["fecha_carga"]);
             $row["fecha_carga"] = $row["fecha_carga"] ? $row["fecha_carga"]->format("Y-m-d") : null;
