@@ -394,6 +394,10 @@ Route::group([
         Route::get('/', [\AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Controllers\ExtraccionDevFijaController::class, 'cargaReporteView']);
         Route::post('/upload', [\AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Controllers\ExtraccionDevFijaController::class, 'uploadReport']);
     });
+    Route::group(['prefix' => 'extraccion-dev-fija/modev-log', 'trac_name' => 'extraccion-dev-fija.modev_log'], function(){
+        Route::get('/', [\AMovil\Reports\ExtraccionDevFija\Modev\Controllers\ModevLogFijaController::class, 'view']);
+        Route::post('/export', [\AMovil\Reports\ExtraccionDevFija\Modev\Controllers\ModevLogFijaController::class, 'export']);
+    });
 
     Route::group(['prefix' => 'lineas-mtc-osiptel', 'trac_name' => 'lineas-mtc-osiptel'], function(){
         Route::get('/', [\AMovil\Reports\General\LineasMTCOsiptel\Controllers\LineasMTCOsiptelController::class, 'view']);

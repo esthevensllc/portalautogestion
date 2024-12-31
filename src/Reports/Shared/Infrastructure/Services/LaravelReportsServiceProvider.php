@@ -264,5 +264,9 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\DAPU\Sots\Domain\DapuSotRepository::class,
             \AMovil\Reports\DAPU\Sots\Infrastructure\EloquentDapuSotRepository::class
         );
+        $this->app->bind(
+            \AMovil\Reports\ExtraccionDevFija\Modev\Domain\ModevFijaRepository::class,
+            \AMovil\Reports\ExtraccionDevFija\Modev\Infrastructure\EloquentModevFijaRepository::class
+        );
     }
 }
