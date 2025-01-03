@@ -182,7 +182,7 @@ Route::group([
     });
     Route::group(['prefix' => 'dapu/consulta-linea', 'trac_name' => 'dapu.consulta-linea'], function(){
         Route::get('/', [\AMovil\Reports\DAPU\Lineas\Controllers\LineaController::class, 'view']);
-        Route::get('/json', [\AMovil\Reports\DAPU\Lineas\Controllers\LineaController::class, 'getData']);
+        Route::post('/json', [\AMovil\Reports\DAPU\Lineas\Controllers\LineaController::class, 'getData']);
         Route::post('/export', [\AMovil\Reports\DAPU\Lineas\Controllers\LineaController::class, 'export']);
     });
     Route::group(['prefix' => 'dapu/consulta-fono', 'trac_name' => 'dapu.consulta-fono'], function(){
@@ -207,12 +207,12 @@ Route::group([
     });
     Route::group(['prefix' => 'dapu/historico-bloqueos', 'trac_name' => 'dapu.historico-bloqueos'], function(){
         Route::get('/', [\AMovil\Reports\DAPU\HistoricoBloqueos\Controllers\HistoricoBloqueoController::class, 'view']);
-        Route::get('/json', [\AMovil\Reports\DAPU\HistoricoBloqueos\Controllers\HistoricoBloqueoController::class, 'getData']);
+        Route::post('/json', [\AMovil\Reports\DAPU\HistoricoBloqueos\Controllers\HistoricoBloqueoController::class, 'getData']);
         Route::post('/export', [\AMovil\Reports\DAPU\HistoricoBloqueos\Controllers\HistoricoBloqueoController::class, 'export']);
     });
     Route::group(['prefix' => 'dapu/lista-eir', 'trac_name' => 'dapu.lista-eir'], function(){
         Route::get('/', [\AMovil\Reports\DAPU\ListaEir\Controllers\ListaEirController::class, 'view']);
-        Route::get('/json', [\AMovil\Reports\DAPU\ListaEir\Controllers\ListaEirController::class, 'getData']);
+        Route::post('/json', [\AMovil\Reports\DAPU\ListaEir\Controllers\ListaEirController::class, 'getData']);
         Route::post('/export', [\AMovil\Reports\DAPU\ListaEir\Controllers\ListaEirController::class, 'export']);
     });
     Route::group(['prefix' => 'dapu/motivos-bloqueo-desbloqueo', 'trac_name' => 'dapu.motivos-bloqueo-desbloqueo'], function(){
@@ -229,6 +229,16 @@ Route::group([
         Route::get('/', [\AMovil\Reports\DAPU\ListaExcepcionesImeiImsi\Controllers\ListaExcepcionesImeiImsiController::class, 'view']);
         Route::get('/json', [\AMovil\Reports\DAPU\ListaExcepcionesImeiImsi\Controllers\ListaExcepcionesImeiImsiController::class, 'getData']);
         Route::post('/export', [\AMovil\Reports\DAPU\ListaExcepcionesImeiImsi\Controllers\ListaExcepcionesImeiImsiController::class, 'export']);
+    });
+    Route::group(['prefix' => 'dapu/consulta-imei', 'trac_name' => 'dapu.consulta-imei'], function(){
+        Route::get('/', [\AMovil\Reports\DAPU\ConsultaImei\Controllers\ConsultaImeiController::class, 'view']);
+        Route::get('/json', [\AMovil\Reports\DAPU\ConsultaImei\Controllers\ConsultaImeiController::class, 'getData']);
+        Route::post('/export', [\AMovil\Reports\DAPU\ConsultaImei\Controllers\ConsultaImeiController::class, 'export']);
+    });
+    Route::group(['prefix' => 'dapu/consulta-sot', 'trac_name' => 'dapu.consulta-sot'], function(){
+        Route::get('/', [\AMovil\Reports\DAPU\Sots\Controllers\DapuSotController::class, 'view']);
+        Route::get('/json', [\AMovil\Reports\DAPU\Sots\Controllers\DapuSotController::class, 'getData']);
+        Route::post('/export', [\AMovil\Reports\DAPU\Sots\Controllers\DapuSotController::class, 'export']);
     });
 
     Route::group(['prefix' => 'rep-recargas/detalle', 'trac_name' => 'rep-recargas.detalle'], function(){
