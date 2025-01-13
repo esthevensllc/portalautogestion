@@ -77,7 +77,8 @@ class LaravelMtcSuspensionesRepository implements MtcSuspensionesRepository
                 'ASNV_IDENTIFICADORGRUPOMTC' => $row[0],
                 'ASNN_IDENTIFICADOR' => $row[1],
                 'ASNC_TIPO_TELEFONICO' => $row[2],
-                'ASNV_NUMERO_LINEA' => $row[3]
+                'ASNV_NUMERO_LINEA' => $row[3],
+                'ASNN_NUM_DIAS_SUSPENDE' => $row[5],
             ];
         }
         DB::table("USRAES.TMP_PLANTILLA_{$this->userIdentifier}")->insert($suspensiones_to_insert);
@@ -446,10 +447,10 @@ class LaravelMtcSuspensionesRepository implements MtcSuspensionesRepository
                 WHEN MATCHED THEN UPDATE SET
         
                 TF.ASNC_ESTADO=TMP.ESTADO,
-                TF.ASND_FECHA_INI_SUSPENSION=TMP.INICIO_SUSPENSION,
-                TF.ASND_FECHA_FIN_SUSPENSION=TMP.TERMINO_SUSPENSION,
+                TF.ASND_FECHA_INI_SUSPENSION = TRUNC(SYSDATE, 'DD'),
+                TF.ASND_FECHA_FIN_SUSPENSION = TRUNC(SYSDATE + TO_NUMBER(B.ASNN_NUM_DIAS_SUSPENDE), 'DD'),
                 TF.ASNC_FLAG_REACTIVADO=TMP.ESTADO_REACTIVACION,
-                TF.ASND_FECHA_REACTIVACION=TMP.FECHA_REACTIVACION,
+                TF.ASND_FECHA_REACTIVACION = TRUNC(SYSDATE + TO_NUMBER(B.ASNN_NUM_DIAS_SUSPENDE) + 1, 'DD'),
                 TF.ASNC_MOTIVO_NOSUSPENSION=TMP.MOTIVO_NO_SUSPENSION,
                 TF.ASND_FECHA_BAJA=TMP.FECHA_BAJA_LINEA,
                 TF.ASNC_TIPO_TITULAR=TMP.TIPO_TITULAR,
