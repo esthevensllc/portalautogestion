@@ -144,10 +144,19 @@ class EloquentMODEVRepository implements MODEVRepository
 
         $ticketBinds = $this->getQueryBinds($ticket);
 
-        $inputMinutos = DB::connection("oracle_reptdm")->table("USRAES.BASE_PREV_BASEDEV_INPUT")
-        ->selectRaw("ticket, round((CORTE_FECHA_FIN - CORTE_FECHA_INI)*24*60) as minutos_corte")
-        ->whereIn("ticket", $ticket)
-        ->get();
+        $inputMinutos = DB::connection("oracle_reptdm")->select("SELECT
+        ticket, round((CORTE_FECHA_FIN - CORTE_FECHA_INI)*24*60) as minutos_corte
+        from USRAES.BASE_PREV_BASEDEV_INPUT
+        where ticket in ({$ticketBinds['str_binds']})
+        and (ticket, departamento) in (
+            select ticket, departamento from USRAES.BASE_PREV_BASEDEV_HIST
+            group by ticket, departamento
+        )", $ticketBinds['values']);
+
+        // ("USRAES.BASE_PREV_BASEDEV_INPUT")
+        // ->selectRaw("ticket, round((CORTE_FECHA_FIN - CORTE_FECHA_INI)*24*60) as minutos_corte")
+        // ->whereIn("ticket", $ticket)
+        // ->get();
 
         $this->db->write("DROP TABLE IF EXISTS default.base_extraccion_modev_input_{$this->userIdentifier}");
 
@@ -239,7 +248,8 @@ class EloquentMODEVRepository implements MODEVRepository
         /* where aa.ticket='202322137' and (modalidad_dev like '%POSTPAGO%' or modalidad_dev like '%PREPAGO%')*/
 
         where aa.ticket in ({$ticketBinds['str_binds']})
-        and (aa.modalidad_dev like '%POSTPAGO%' or aa.modalidad_dev like '%PREPAGO%')";
+        and (aa.modalidad_dev like '%POSTPAGO%' or aa.modalidad_dev like '%PREPAGO%')
+        group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19.20,21,22,23,24,25,26,27";
 
         $result = $this->db->select($query, $ticketBinds['values'])->rows();
         $this->db->write("DROP TABLE IF EXISTS default.base_extraccion_modev_input_{$this->userIdentifier}");
