@@ -189,7 +189,7 @@ class EloquentMODEVRepository implements MODEVRepository
         aa.modo_contratacion modo_contratacion,
         aa.cargo_linea_igv cargo_linea_igv,
         tinput.minutos_corte minutos,
-        case when aa.modalidad_dev like '%POSTPAGO%' then aa.mto_dev_facturacion 
+        case when aa.modalidad_dev like '%POSTPAGO%' then if(aa.mto_dev_facturacion is not null, aa.mto_dev_facturacion, aa.mto_total_dev_igv)
             when aa.modalidad_dev like '%PREPAGO%' then aa.mto_total_dev_igv
         end monto_devolver,
         'SOLES' monedas,
