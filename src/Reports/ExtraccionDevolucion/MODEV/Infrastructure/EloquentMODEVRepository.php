@@ -182,6 +182,7 @@ class EloquentMODEVRepository implements MODEVRepository
         $query = "SELECT 
         /*FORMATO MODEV*/
         aa.ticket ticket,
+        aa.tipo_documento tipo_documento,
         aa.nro_documento nro_documento,
         aa.id_cliente id_cliente,
         aa.msisdn msisdn,
@@ -249,7 +250,7 @@ class EloquentMODEVRepository implements MODEVRepository
 
         where aa.ticket in ({$ticketBinds['str_binds']})
         and (aa.modalidad_dev like '%POSTPAGO%' or aa.modalidad_dev like '%PREPAGO%')
-        group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19.20,21,22,23,24,25,26,27";
+        group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19.20,21,22,23,24,25,26,27,28";
 
         $result = $this->db->select($query, $ticketBinds['values'])->rows();
         $this->db->write("DROP TABLE IF EXISTS default.base_extraccion_modev_input_{$this->userIdentifier}");

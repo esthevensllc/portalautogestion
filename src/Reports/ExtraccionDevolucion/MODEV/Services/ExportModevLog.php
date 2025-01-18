@@ -34,6 +34,7 @@ class ExportModevLog
 
         $headers = [
             "ticket" => ["label" => "TICKET"],
+            "tipo_documento" => ["label" => "TIPO_DOCUMENTO"],
             "nro_documento" => ["label" => "NRO_DOCUMENTO"],
             "id_cliente" => ["label" => "ID_CLIENTE"],
             "msisdn" => ["label" => "MSISDN"],
