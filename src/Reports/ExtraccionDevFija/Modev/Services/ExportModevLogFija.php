@@ -26,6 +26,7 @@ class ExportModevLogFija
 
         $headers = [
             "ticket" => ["label" => "TICKET"],
+            "tipo_documento" => ["label" => "TIPO_DOCUMENTO"],
             "nro_doc" => ["label" => "NRO_DOC"],
             "id_cliente" => ["label" => "ID_CLIENTE"],
             "msisdn" => ["label" => "MSISDN"],

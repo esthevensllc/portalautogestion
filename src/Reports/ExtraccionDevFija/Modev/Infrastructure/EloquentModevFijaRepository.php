@@ -12,6 +12,7 @@ class EloquentModevFijaRepository implements ModevFijaRepository
 
         $query = "SELECT
         a.TICKET,
+        a.TIPDOC as tipo_documento,
         a.NRO_DOC,
         a.CODCLI as ID_CLIENTE,
         a.NUMERO AS MSISDN,
