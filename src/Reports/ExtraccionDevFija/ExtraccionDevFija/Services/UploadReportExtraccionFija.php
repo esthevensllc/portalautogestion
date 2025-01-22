@@ -44,7 +44,12 @@ class UploadReportExtraccionFija
             $reader = IOFactory::createReader('Xlsx');
             $spreedsheet = $reader->load($excel->getFilePath());
             $this->validateExcel($spreedsheet);
-            $sheet = $spreedsheet->getSheet(1);
+            $sheet = null;
+            if ($spreedsheet->getSheetCount() > 1) {
+                $sheet = $spreedsheet->getSheet(1);
+            } else {
+                $sheet = $spreedsheet->getSheet(0);
+            }
             $highestRow = $sheet->getHighestRow();
             for ($i=2; $i <= $highestRow; $i++) {
                 $row = [];
@@ -73,8 +78,8 @@ class UploadReportExtraccionFija
     private function validateExcel(Spreadsheet $spreedsheet)
     {
         $sheetCount = $spreedsheet->getSheetCount();
-        if($sheetCount !== 2){
-            throw new Exception("El número de hojas deven ser dos");
+        if($sheetCount > 2){
+            throw new Exception("No se puede cargar mas de dos hojas");
         }
         $sheet = $spreedsheet->getSheet(1);
         $firstRowCount = $sheet->getHighestColumn(1);
