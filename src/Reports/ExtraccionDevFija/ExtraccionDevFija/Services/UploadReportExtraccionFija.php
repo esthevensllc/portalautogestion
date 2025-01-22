@@ -81,8 +81,8 @@ class UploadReportExtraccionFija
         $sheet = $spreedsheet->getSheet($sheetCount-1);
         $firstRowCount = $sheet->getHighestColumn(1);
         $maxColumnIndex = Coordinate::columnIndexFromString($firstRowCount);
-        if($maxColumnIndex > 25){
-            throw new Exception("El número de columnas deven ser 25(columna 'Y' como máximo)");
+        if($maxColumnIndex > 26){
+            throw new Exception("El número de columnas deven ser 26(columna 'Z' como máximo)");
         }
     }
 
