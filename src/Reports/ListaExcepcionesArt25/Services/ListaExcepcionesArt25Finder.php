@@ -18,8 +18,8 @@ class ListaExcepcionesArt25Finder
         return $this->repo->findLast();
     }
 
-    public function findByImei($imei)
+    public function findByImei($imeis)
     {
-        return $this->repo->getByImei($imei);
+        return $this->repo->getByImei($imeis);
     }
 }

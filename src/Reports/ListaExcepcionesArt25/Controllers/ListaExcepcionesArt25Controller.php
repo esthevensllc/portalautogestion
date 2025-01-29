@@ -34,15 +34,18 @@ class ListaExcepcionesArt25Controller
         if($value === null){
             $results = $this->finder->findLast();
         }else{
-            $results = $this->finder->findByImei($request->input("value"));
+            $inputValue = $request->input('value');
+            $values = $inputValue !== null ? explode(",", str_replace(" ", "", $inputValue)) : null;
+            $results = $this->finder->findByImei($values);
         }
         return response()->json(["data" => $results]);
     }
 
     public function export(Request $request)
     {
-        $value = $request->input("value");
-        $response = $this->exporter->__invoke($value)->data();
+        $inputValue = $request->input('value');
+        $values = $inputValue !== null ? explode(",", str_replace(" ", "", $inputValue)) : null;
+        $response = $this->exporter->__invoke($values)->data();
 
         return response($response["content"], 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

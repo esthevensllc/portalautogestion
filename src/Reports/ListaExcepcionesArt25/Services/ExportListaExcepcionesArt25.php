@@ -20,13 +20,13 @@ class ExportListaExcepcionesArt25
         $this->exportService = $exportService;
     }
 
-    public function __invoke($imei)
+    public function __invoke($imeis)
     {
         $results = [];
-        if($imei === null){
+        if($imeis === null){
             $results = $this->repo->findAll();
         }else{
-            $results = $this->repo->getByImei($imei);
+            $results = $this->repo->getByImei($imeis);
         }
         $content = $this->export($results);
         $strDate = (new DateTime())->format("Ymd");

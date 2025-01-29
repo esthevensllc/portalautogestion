@@ -12,7 +12,7 @@
             @csrf
             <div class="mb-0 col-6">
                 <div class="input-group mb-3">
-                    <input type="text" class="form-control" placeholder="Ingresa Imei" name="value">
+                    <input type="text" class="form-control" placeholder="Ingresa Imeis separado por comnas" name="value">
                     <div class="input-group-append">
                         <button type="submit" class="btn btn-outline-danger" type="button">Buscar</button>
                     </div>
