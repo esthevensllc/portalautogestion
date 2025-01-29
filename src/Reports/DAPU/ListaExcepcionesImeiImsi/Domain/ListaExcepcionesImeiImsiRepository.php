@@ -4,5 +4,5 @@ namespace AMovil\Reports\DAPU\ListaExcepcionesImeiImsi\Domain;
 
 interface ListaExcepcionesImeiImsiRepository
 {
-    public function getByImei($imei);
+    public function getByImeis(array $imeis);
 }

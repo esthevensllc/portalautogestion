@@ -227,7 +227,7 @@ Route::group([
     });
     Route::group(['prefix' => 'dapu/lista-excepciones-imei-imsi', 'trac_name' => 'dapu.lista-excepciones-imei-imsi'], function(){
         Route::get('/', [\AMovil\Reports\DAPU\ListaExcepcionesImeiImsi\Controllers\ListaExcepcionesImeiImsiController::class, 'view']);
-        Route::get('/json', [\AMovil\Reports\DAPU\ListaExcepcionesImeiImsi\Controllers\ListaExcepcionesImeiImsiController::class, 'getData']);
+        Route::post('/json', [\AMovil\Reports\DAPU\ListaExcepcionesImeiImsi\Controllers\ListaExcepcionesImeiImsiController::class, 'getData']);
         Route::post('/export', [\AMovil\Reports\DAPU\ListaExcepcionesImeiImsi\Controllers\ListaExcepcionesImeiImsiController::class, 'export']);
     });
     Route::group(['prefix' => 'dapu/consulta-imei', 'trac_name' => 'dapu.consulta-imei'], function(){
