@@ -202,7 +202,7 @@ class EloquentMODEVRepository implements MODEVRepository
         end nro_recibo,
         'ACTIVO' estado,
         '' fecha_de_baja_del_servicio,
-        '' nombre_o_razon_social,
+        aa.customer_full_name nombre_o_razon_social,
         '' lugar_donde_cobrar,
         '' requisitos_para_el_cobro,
         '' comunicacion,
