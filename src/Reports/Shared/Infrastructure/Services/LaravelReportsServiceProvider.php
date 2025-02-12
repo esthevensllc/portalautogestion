@@ -268,5 +268,9 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\ExtraccionDevFija\Modev\Domain\ModevFijaRepository::class,
             \AMovil\Reports\ExtraccionDevFija\Modev\Infrastructure\EloquentModevFijaRepository::class
         );
+        $this->app->bind(
+            \AMovil\Reports\DAPU\UltimoTrafico\Domain\UltimoTraficoRepository::class,
+            \AMovil\Reports\DAPU\UltimoTrafico\Infrastructure\EloquentUltimoTraficoRepository::class
+        );
     }
 }

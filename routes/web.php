@@ -240,6 +240,11 @@ Route::group([
         Route::get('/json', [\AMovil\Reports\DAPU\Sots\Controllers\DapuSotController::class, 'getData']);
         Route::post('/export', [\AMovil\Reports\DAPU\Sots\Controllers\DapuSotController::class, 'export']);
     });
+    Route::group(['prefix' => 'dapu/ultimo-trafico', 'trac_name' => 'dapu.ultimo-trafico'], function(){
+        Route::get('/', [\AMovil\Reports\DAPU\UltimoTrafico\Controllers\UltimoTraficoController::class, 'view']);
+        Route::post('/json', [\AMovil\Reports\DAPU\UltimoTrafico\Controllers\UltimoTraficoController::class, 'getData']);
+        Route::post('/export', [\AMovil\Reports\DAPU\UltimoTrafico\Controllers\UltimoTraficoController::class, 'export']);
+    });
 
     Route::group(['prefix' => 'rep-recargas/detalle', 'trac_name' => 'rep-recargas.detalle'], function(){
         Route::get('/', [\AMovil\Reports\RepRecargas\Controllers\ReporteRecargasController::class, 'detalle']);
