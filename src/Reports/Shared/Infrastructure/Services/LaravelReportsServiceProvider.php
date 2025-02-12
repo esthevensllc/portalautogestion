@@ -272,5 +272,9 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\DAPU\UltimoTrafico\Domain\UltimoTraficoRepository::class,
             \AMovil\Reports\DAPU\UltimoTrafico\Infrastructure\EloquentUltimoTraficoRepository::class
         );
+        $this->app->bind(
+            \AMovil\Reports\DAPU\RegistroAbonados\Domain\RegistroAbonadoRepository::class,
+            \AMovil\Reports\DAPU\RegistroAbonados\Infrastructure\EloquentRegistroAbonadoRepository::class
+        );
     }
 }

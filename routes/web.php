@@ -245,6 +245,11 @@ Route::group([
         Route::post('/json', [\AMovil\Reports\DAPU\UltimoTrafico\Controllers\UltimoTraficoController::class, 'getData']);
         Route::post('/export', [\AMovil\Reports\DAPU\UltimoTrafico\Controllers\UltimoTraficoController::class, 'export']);
     });
+    Route::group(['prefix' => 'dapu/registro-abonados', 'trac_name' => 'dapu.registro-abonados'], function(){
+        Route::get('/', [\AMovil\Reports\DAPU\RegistroAbonados\Controllers\RegistroAbonadoController::class, 'view']);
+        Route::post('/json', [\AMovil\Reports\DAPU\RegistroAbonados\Controllers\RegistroAbonadoController::class, 'getData']);
+        Route::post('/export', [\AMovil\Reports\DAPU\RegistroAbonados\Controllers\RegistroAbonadoController::class, 'export']);
+    });
 
     Route::group(['prefix' => 'rep-recargas/detalle', 'trac_name' => 'rep-recargas.detalle'], function(){
         Route::get('/', [\AMovil\Reports\RepRecargas\Controllers\ReporteRecargasController::class, 'detalle']);
