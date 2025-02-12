@@ -250,6 +250,11 @@ Route::group([
         Route::post('/json', [\AMovil\Reports\DAPU\RegistroAbonados\Controllers\RegistroAbonadoController::class, 'getData']);
         Route::post('/export', [\AMovil\Reports\DAPU\RegistroAbonados\Controllers\RegistroAbonadoController::class, 'export']);
     });
+    Route::group(['prefix' => 'dapu/ventas-fija', 'trac_name' => 'dapu.ventas-fija'], function(){
+        Route::get('/', [\AMovil\Reports\DAPU\VentasFija\Controllers\VentasFijaController::class, 'view']);
+        Route::post('/json', [\AMovil\Reports\DAPU\VentasFija\Controllers\VentasFijaController::class, 'getData']);
+        Route::post('/export', [\AMovil\Reports\DAPU\VentasFija\Controllers\VentasFijaController::class, 'export']);
+    });
 
     Route::group(['prefix' => 'rep-recargas/detalle', 'trac_name' => 'rep-recargas.detalle'], function(){
         Route::get('/', [\AMovil\Reports\RepRecargas\Controllers\ReporteRecargasController::class, 'detalle']);

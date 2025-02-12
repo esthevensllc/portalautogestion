@@ -276,5 +276,9 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\DAPU\RegistroAbonados\Domain\RegistroAbonadoRepository::class,
             \AMovil\Reports\DAPU\RegistroAbonados\Infrastructure\EloquentRegistroAbonadoRepository::class
         );
+        $this->app->bind(
+            \AMovil\Reports\DAPU\VentasFija\Domain\VentasFijaRepository::class,
+            \AMovil\Reports\DAPU\VentasFija\Infrastructure\EloquentVentasFijaRepository::class
+        );
     }
 }
