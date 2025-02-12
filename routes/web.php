@@ -600,7 +600,7 @@ Route::group([
     });
     Route::group(['prefix' => 'lista-excepciones-art25', 'trac_name' => 'lista-excepciones-art25'], function(){
         Route::get('/', [\AMovil\Reports\ListaExcepcionesArt25\Controllers\ListaExcepcionesArt25Controller::class, 'view']);
-        Route::get('search', [\AMovil\Reports\ListaExcepcionesArt25\Controllers\ListaExcepcionesArt25Controller::class, 'search']);
+        Route::post('search', [\AMovil\Reports\ListaExcepcionesArt25\Controllers\ListaExcepcionesArt25Controller::class, 'search']);
         Route::post('export', [\AMovil\Reports\ListaExcepcionesArt25\Controllers\ListaExcepcionesArt25Controller::class, 'export']);
     });
 
