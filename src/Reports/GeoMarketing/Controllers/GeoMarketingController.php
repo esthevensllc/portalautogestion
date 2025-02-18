@@ -32,6 +32,8 @@ class GeoMarketingController
                 ["id" => "7", "label" => "GOLF SAN ISIDRO COUNTRY"],
                 ["id" => "8", "label" => "GOLF LA PLANICIE"],
                 ["id" => "9", "label" => "COUNTRY CLUB VILLA DE GOLF"],
+                ["id" => "10", "label" => "PARQUE DE LA EXPOSICION - ANFITEATRO"],
+                ["id" => "11", "label" => "GRAN TEATRO NACIONAL"],
             ],
             "maxDays" => ExportGeoMarketing::MAX_DAYS,
             "whiteBlackList" => $this->finder->getBlackAndWhiteListSummary()
@@ -69,7 +71,9 @@ class GeoMarketingController
                 ["id" => "6", "label" => "GOLF LOS INCAS"],   
                 ["id" => "7", "label" => "GOLF SAN ISIDRO COUNTRY"],
                 ["id" => "8", "label" => "GOLF LA PLANICIE"],
-                ["id" => "9", "label" => "COUNTRY CLUB VILLA DE GOLF"],             
+                ["id" => "9", "label" => "COUNTRY CLUB VILLA DE GOLF"], 
+                ["id" => "10", "label" => "PARQUE DE LA EXPOSICION - ANFITEATRO"],
+                ["id" => "11", "label" => "GRAN TEATRO NACIONAL"],            
             ]
         ];
         return view("geomarketing.geomarketing_log", compact("config"));

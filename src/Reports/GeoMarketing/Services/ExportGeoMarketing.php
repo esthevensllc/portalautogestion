@@ -20,6 +20,8 @@ class ExportGeoMarketing
         "7" => ["name" => "GOLF_SAN_ISIDRO_COUNTRY"],
         "8" => ["name" => "GOLF_LA_PLANICIE"],
         "9" => ["name" => "COUNTRY_CLUB_VILLA_DE_GOLF"],
+        "10" => ["name" => "PARQUE_DE_LA_EXPOSICION_ANFITEATRO"],
+        "11" => ["name" => "GRAN_TEATRO_NACIONAL"],
     ];
     private $repository;
     const MAX_DAYS = 30;
