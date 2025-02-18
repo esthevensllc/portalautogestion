@@ -6,5 +6,5 @@ interface ListaExcepcionesArt25Repository
 {
     public function findAll();
     public function findLast();
-    public function getByImei($imei);
+    public function getByImei(array $imeis);
 }

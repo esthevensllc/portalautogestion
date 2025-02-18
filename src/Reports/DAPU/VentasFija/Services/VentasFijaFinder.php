@@ -1,34 +1,30 @@
 <?php
 
-namespace AMovil\Reports\ListaExcepcionesArt25\Services;
+namespace AMovil\Reports\DAPU\VentasFija\Services;
 
-use AMovil\Reports\ListaExcepcionesArt25\Domain\ListaExcepcionesArt25Repository;
+use AMovil\Reports\DAPU\VentasFija\Domain\VentasFijaRepository;
 use AMovil\Shared\Application\FileInput;
-use Exception;
+use AMovil\Shared\Application\Response;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
-class ListaExcepcionesArt25Finder
+class VentasFijaFinder
 {
     private $repo;
 
-    public function __construct(ListaExcepcionesArt25Repository $repo)
+    public function __construct(VentasFijaRepository $repo)
     {
         $this->repo = $repo;
     }
 
-    public function findLast()
+    public function __invoke(array $values)
     {
-        return $this->repo->findLast();
-    }
-
-    public function findByImei($imeis)
-    {
-        return $this->repo->getByImei($imeis);
+        $data = $this->repo->getByNumDocumento($values);
+        return new Response([], $data);
     }
 
     public function fromFile(FileInput $file){
         if(!in_array($file->getExtension(), ["csv"])){
-            throw new Exception("La extension {$file->getExtension()} no es valida");
+            return new Response(["message" => "La extension {$file->getExtension()} no es valida"]);
         }
         $extension = ucfirst($file->getExtension());
         $reader = IOFactory::createReader($extension);
@@ -41,6 +37,6 @@ class ListaExcepcionesArt25Finder
             $data[] = trim($sheet->getCellByColumnAndRow(1, $i)->getValue());
         }
         
-        return $this->repo->getByImei($data);
+        return $this->__invoke($data);
     }
 }

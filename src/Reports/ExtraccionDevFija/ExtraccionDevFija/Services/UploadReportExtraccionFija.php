@@ -6,6 +6,7 @@ use AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Domain\ExtraccionDevFijaR
 use AMovil\Shared\Application\FileInput;
 use DateTime;
 use Exception;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
@@ -44,7 +45,8 @@ class UploadReportExtraccionFija
             $reader = IOFactory::createReader('Xlsx');
             $spreedsheet = $reader->load($excel->getFilePath());
             $this->validateExcel($spreedsheet);
-            $sheet = $spreedsheet->getSheet(1);
+            $sheetCount = $spreedsheet->getSheetCount();
+            $sheet = $sheet = $spreedsheet->getSheet($sheetCount-1);
             $highestRow = $sheet->getHighestRow();
             for ($i=2; $i <= $highestRow; $i++) {
                 $row = [];
@@ -73,13 +75,14 @@ class UploadReportExtraccionFija
     private function validateExcel(Spreadsheet $spreedsheet)
     {
         $sheetCount = $spreedsheet->getSheetCount();
-        if($sheetCount !== 2){
-            throw new Exception("El número de hojas deven ser dos");
+        if($sheetCount > 3){
+            throw new Exception("No se puede cargar mas de tres hojas");
         }
-        $sheet = $spreedsheet->getSheet(1);
+        $sheet = $spreedsheet->getSheet($sheetCount-1);
         $firstRowCount = $sheet->getHighestColumn(1);
-        if($firstRowCount !== "Z"){
-            throw new Exception("El número de columnas deven ser 26(columna 'Y' como máximo)");
+        $maxColumnIndex = Coordinate::columnIndexFromString($firstRowCount);
+        if($maxColumnIndex > 26){
+            throw new Exception("El número de columnas deven ser 26(columna 'Z' como máximo)");
         }
     }
 

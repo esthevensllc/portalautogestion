@@ -3,24 +3,43 @@
 namespace AMovil\Reports\DAPU\ListaExcepcionesImeiImsi\Services;
 
 use AMovil\Reports\DAPU\ListaExcepcionesImeiImsi\Domain\ListaExcepcionesImeiImsiRepository;
+use AMovil\Shared\Application\FileInput;
 use AMovil\Shared\Application\Response;
 use AMovil\Shared\Exports\Domain\ExportService;
 use DateTime;
 
 class ExportListaExcepcionesImeiImsi
 {
-    private $repo;
+    private $finder;
     private $exportService;
 
-    public function __construct(ListaExcepcionesImeiImsiRepository $repo, ExportService $exportService)
+    public function __construct(ListaExcepcionesImeiImsiFinder $finder, ExportService $exportService)
     {
-        $this->repo = $repo;
+        $this->finder = $finder;
         $this->exportService = $exportService;
     }
 
-    public function __invoke($type, $imei)
+    public function __invoke($exportType, array $values): Response
     {
-        $data = $this->repo->getByImei($imei);
+        $response = $this->finder->__invoke($values);
+        if($response->fails()){
+            return $response;
+        }
+        $data = $response->data();
+        return $this->export($data, $exportType);
+    }
+
+    public function fromFile($exportType, FileInput $file){
+        $response= $this->finder->fromFile($file);
+        if($response->fails()){
+            return $response;
+        }
+        $data = $response->data();
+        return $this->export($data, $exportType);
+    }
+
+    public function export($data, $type)
+    {
         $headers = [
             "transact_date" => ["label" => "FECHA"],
             "task_id" => ["label" => "TASK_ID"],

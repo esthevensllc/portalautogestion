@@ -3,10 +3,13 @@
 namespace AMovil\Reports\ListaExcepcionesArt25\Services;
 
 use AMovil\Reports\ListaExcepcionesArt25\Domain\ListaExcepcionesArt25Repository;
+use AMovil\Shared\Application\FileInput;
 use AMovil\Shared\Application\Response;
 use AMovil\Shared\Exports\Domain\ExportService;
 use AMovil\Shared\Exports\Domain\WriterType;
 use DateTime;
+use Exception;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Style as SpreadsheetStyle;
 
 class ExportListaExcepcionesArt25
@@ -20,46 +23,53 @@ class ExportListaExcepcionesArt25
         $this->exportService = $exportService;
     }
 
-    public function __invoke($imei)
+    public function __invoke($imeis, $exportType)
     {
         $results = [];
-        if($imei === null){
-            $results = $this->repo->findAll();
+        if($imeis === null){
+            $results = $this->repo->findLast();
         }else{
-            $results = $this->repo->getByImei($imei);
+            $results = $this->repo->getByImei($imeis);
         }
-        $content = $this->export($results);
+        $content = $this->export($results, $exportType);
         $strDate = (new DateTime())->format("Ymd");
         return Response::respData([
-            "filename" => "Lista_Excepciones_Art25_{$strDate}.xlsx",
+            "filename" => "Lista_Excepciones_Art25_{$strDate}.".strtolower($exportType),
             "content" => $content,
         ]);
     }
 
-    private function export($data)
+    public function fromFile(FileInput $file, $exportType){
+        if(!in_array($file->getExtension(), ["csv"])){
+            throw new Exception("La extension {$file->getExtension()} no es valida");
+        }
+        $extension = ucfirst($file->getExtension());
+        $reader = IOFactory::createReader($extension);
+        $spreedsheet = $reader->load($file->getFilePath());
+        $sheet = $spreedsheet->getSheet(0);
+        $highestRow = $sheet->getHighestRow();
+
+        $data = [];
+        for ($i=1; $i <= $highestRow; $i++) {
+            $data[] = trim($sheet->getCellByColumnAndRow(1, $i)->getValue());
+        }
+        
+        return $this->__invoke($data, $exportType);
+    }
+
+    private function export($data, $exportType)
     {
         $headers = [
-            "numero_registro" => ["label" => "NUMERO_REGISTRO"],
-            "codigo_cliente" => ["label" => "CODIGO_CLIENTE"],
-            "cargo" => ["label" => "CARGO"],
-            "area" => ["label" => "AREA"],
-            "direccion" => ["label" => "DIRECCION"],
-            "jefe" => ["label" => "JEFE"],
-            "titular" => ["label" => "TITULAR"],
-            "tipo_documento" => ["label" => "TIPO_DOCUMENTO"],
-            "numero_documento" => ["label" => "NUMERO_DOCUMENTO"],
-            "linea" => ["label" => "LINEA"],
+            "transact_date" => ["label" => "TRANSACT_DATE"],
             "imei" => ["label" => "IMEI"],
+            "operacion" => ["label" => "OPERACION"],
+            "msisdn" => ["label" => "MSISDN"],
             "imsi" => ["label" => "IMSI"],
-            "estado" => ["label" => "ESTADO"],
-            "ejecucion_bloqueo" => ["label" => "EJECUCION_BLOQUEO"],
-            "fecha_registro" => ["label" => "FECHA_REGISTRO"],
-            "trama" => ["label" => "TRAMA"],
         ];
 
         $this->exportService->loadData($headers, $data, [
             'sheetIndex' => 0,
-            'title' => "OLT_CMTS",
+            'title' => "REPORTE",
             'styles' => [
                 'header' => [
                     'font' => ['bold' => true, 'size' => 9],
@@ -72,6 +82,6 @@ class ExportListaExcepcionesArt25
                 ]
             ]
         ]);
-        return $this->exportService->getWriter(WriterType::XLSX)->getOutput();
+        return $this->exportService->getWriter($exportType)->getOutput();
     }
 }

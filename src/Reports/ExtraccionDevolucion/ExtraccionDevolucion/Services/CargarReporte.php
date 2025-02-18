@@ -43,13 +43,13 @@ class CargarReporte
                 $row["msisdn"] = $sheet->getCellByColumnAndRow(2, $i)->getValue();
                 // $row["mto_dev_facturacion"] = $sheet->getCellByColumnAndRow(19, $i)->getOldCalculatedValue();
                 $row["mto_dev_facturacion"] = $sheet->getCellByColumnAndRow(19, $i)->getValue();
-                if(str_starts_with($row["mto_dev_facturacion"], "=")){
+                //if(str_starts_with($row["mto_dev_facturacion"], "=")){
                     $row["mto_dev_facturacion"] = $sheet->getCellByColumnAndRow(19, $i)->getOldCalculatedValue();
-                }
+                //}
                 $row["mto_dev"] = $sheet->getCellByColumnAndRow(20, $i)->getValue();
-                if(str_starts_with($row["mto_dev"], "=")){
+                //if(str_starts_with($row["mto_dev"], "=")){
                     $row["mto_dev"] = $sheet->getCellByColumnAndRow(20, $i)->getOldCalculatedValue();
-                }
+                //}
                 $row["factura_aplicada"] = $sheet->getCellByColumnAndRow(21, $i)->getValue();
                 $row["fecha_devolucion"] = $this->formatExcelDate($sheet->getCellByColumnAndRow(22, $i)->getValue());
                 $row["fecha_registro_devolucion"] = $this->formatExcelDate($sheet->getCellByColumnAndRow(23, $i)->getValue());
