@@ -31,7 +31,7 @@ Route::group([
 });
 
 Route::group([
-    'middleware' => ['web','auth.cas', 'amovil.limit_sessions', 'check.permission', 'amovil.access_log'],
+    'middleware' => ['web','auth.cas', 'amovil.limit_sessions', 'check.permission'],
     'namespace'  => 'App\Http\Controllers',
 ], function () {
     Route::get('lineas-mtc-osiptel/logs/tickets/{tipo_plan}/{tipo_solicitud}', [\AMovil\Reports\General\LineasMTCOsiptel\Controllers\LineasMTCOsiptelController::class, 'getTickets']);
@@ -44,7 +44,7 @@ Route::group([
         (array) config('backpack.base.web_middleware', 'web'),
         (array) config('backpack.base.middleware_key', 'admin')
     ),*/
-    'middleware' => ['web','auth.cas', 'amovil.limit_sessions', 'check.permission', 'amovil.access_log'],
+    'middleware' => ['web','auth.cas', 'amovil.limit_sessions', 'check.permission'],
     'namespace'  => 'App\Http\Controllers',
 ], function () {
     // SIGREI
