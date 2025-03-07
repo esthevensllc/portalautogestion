@@ -4,6 +4,7 @@ namespace AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Infrastructure;
 
 use AMovil\Auth\AccessControl\Domain\AuthService;
 use AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Domain\ExtraccionDevFijaRepository;
+use AMovil\Shared\Infrastructure\Repository\ClickhouseDB;
 use DateTime;
 use Illuminate\Support\Facades\DB;
 
@@ -12,9 +13,12 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
     private $userIdentifier;
     private $authService;
     private $connection = "oracle";
+    private $chDb;
 
-    public function __construct(AuthService $authService)
+    public function __construct(ClickhouseDB $chDb, AuthService $authService)
     {
+        $this->authService = $authService;
+        $this->chDb = $chDb->connection("ch-dn05");
         $this->authService = $authService;
     }
 
@@ -1013,11 +1017,111 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
             SELECT ticket, departamento, provincia, distrito, plano FROM USRAES.input_devo_fija_plano_{$this->userIdentifier};
             commit;
         END;"];*/
+
+        $this->exec_sql($queries);
+
+        $codClientes = DB::connection($this->connection)
+        ->select(DB::raw("SELECT to_number(CUSTOMER_ID) as customer_id
+        FROM (
+            SELECT
+            a.*,
+            row_number() over(partition by ticket,CODCLI order by cr_neto desc) flag
+            FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE a
+        ) WHERE flag=1"));
+
+        $this->chDb->write("DROP TABLE IF EXISTS default.base_ext_cod_cli_{$this->userIdentifier}");
+        $this->chDb->write("CREATE TABLE default.base_ext_cod_cli_{$this->userIdentifier}(
+        customer_id UInt64
+        )
+        ENGINE = MergeTree
+        PRIMARY KEY customer_id
+        SETTINGS index_granularity = 8192");
+
+        $data = [];
+        foreach($codClientes as $row){
+            $data[] = [$row->customer_id];
+        }
+        $codClientes = [];
+        $this->chDb->insert("default.base_ext_cod_cli_{$this->userIdentifier}", $data, ["customer_id"]);
+
+        $data = [];
+
+        try {
+            $strFechaIniDay = $fechaIni->format("Ymd");
+
+            $queryClickHouse = "SELECT
+                -- X.hourpolled,
+                -- X.serialnumber,
+                -- X.ifoutoctets,
+                Y.codigo_cliente as customer_id
+                -- Y.mac_cm,
+                -- Y.tipo,
+                -- Y.fecha
+            FROM
+            (
+                SELECT
+                    hourpolled,
+                    serialnumber,
+                    ifoutoctets
+                FROM hfc.ftth{$strFechaIniDay}
+                UNION ALL
+                SELECT
+                    hourpolled,
+                    macaddress AS serialnumber,
+                    traffic AS ifoutoctets
+                FROM hfc.hfc{$strFechaIniDay}
+            ) AS X
+            INNER JOIN hfc.clientes_hfc_ftth_hist AS Y ON upper(X.serialnumber) = Y.mac_cm
+            WHERE (Y.codigo_cliente in (
+                select z.customer_id from default.base_ext_cod_cli_{$this->userIdentifier} z
+            ))
+            AND (hourpolled < formatDateTime(parseDateTimeBestEffort('{$strFechaIniF1}'), '%H:%i:%s'))
+            AND ((hourpolled >= formatDateTime(parseDateTimeBestEffort('{$strFechaIniF1}') - toIntervalMinute(15), '%H:%i:%s'))
+            AND (hourpolled <= formatDateTime(parseDateTimeBestEffort('{$strFechaIniF1}') + toIntervalMinute(15), '%H:%i:%s') ))
+            and X.ifoutoctets > 167772160
+            GROUP BY 1";
+
+            $data = $this->chDb->select($queryClickHouse)->rows();
+        } catch (\Throwable $th) {
+            $data = [];
+        }
+
+        $queries = [];
+        $queries[] = ["sql" => "BEGIN
+            EXECUTE IMMEDIATE 'DROP TABLE USRAES.base_ext_cod_cli_{$this->userIdentifier}';
+        EXCEPTION
+        WHEN OTHERS THEN
+            IF SQLCODE != -942 THEN RAISE; END IF;
+        END;"];
+        $queries[] = ["sql" => "CREATE TABLE USRAES.base_ext_cod_cli_{$this->userIdentifier}(
+            customer_id  VARCHAR2(100)
+        )"];
+
+        $this->exec_sql($queries);
+        
+        $chunk = [];
+        $lastIndex = count($data)-1;
+        foreach($data as $index => $row){
+            $chunk[] = ["customer_id" => $row['customer_id']];
+            if(count($chunk) === 20 || $index === $lastIndex){
+                DB::connection($this->connection)->table("usraes.base_ext_cod_cli_{$this->userIdentifier}")->insert($chunk);
+                $chunk = [];
+            }
+        }
+
+
+        $queries = [];
         
         $queries[] = ["sql" => "BEGIN
             DELETE FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST
             WHERE (TICKET) IN (
                 SELECT TICKET FROM USRAES.INPUT_DEVO_FIJA_TMP_{$this->userIdentifier} GROUP BY TICKET
+            );
+            COMMIT;
+
+            DELETE FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE
+            WHERE customer_id in (
+                select customer_id from USRAES.base_ext_cod_cli_{$this->userIdentifier}
             );
             COMMIT;
 
