@@ -85,23 +85,25 @@ class ExportReporteLlamadas
                     "message" => "El archivo supera el limite de registros se enviara los reportes al modulo de reportes y estaran disponibles solo por el resto del dia"
                 ];
             }else{
+                $allChunk = [];
                 foreach ($data->getIterator() as $chunk) {
-                    $excel_content = $this->export($chunk, "{$periodo1} - {$periodo2}")->getOutput();
-
-                    $this->exportService->reset();
-                    $headers = [
-                        "numero_origen" => ['label' => 'NUMERO_ORIGEN'],
-                        "fecha" => ['label' => 'FECHA'],
-                        "hora_inicio" => ['label' => 'HORA_INICIO'],
-                        "hora_fin" => ['label' => 'HORA_FIN'],
-                        "numero_destino" => ['label' => 'NUMBERO_DESTINO'],
-                        "consumo" => ['label' => 'CONSUMO'],
-                        "tipo" => ['label' => 'TIPO'],
-                    ];
-                    $this->exportService->loadData($headers, $chunk, []);
-                    $this->reportLog($tipo_reporte, $this->exportService, $dt_start, new DateTime());
-                    return $excel_content;
+                    $allChunk = array_merge($allChunk, $chunk);
                 }
+                $excel_content = $this->export($allChunk, "{$periodo1} - {$periodo2}")->getOutput();
+
+                $this->exportService->reset();
+                $headers = [
+                    "numero_origen" => ['label' => 'NUMERO_ORIGEN'],
+                    "fecha" => ['label' => 'FECHA'],
+                    "hora_inicio" => ['label' => 'HORA_INICIO'],
+                    "hora_fin" => ['label' => 'HORA_FIN'],
+                    "numero_destino" => ['label' => 'NUMBERO_DESTINO'],
+                    "consumo" => ['label' => 'CONSUMO'],
+                    "tipo" => ['label' => 'TIPO'],
+                ];
+                $this->exportService->loadData($headers, $allChunk, []);
+                $this->reportLog($tipo_reporte, $this->exportService, $dt_start, new DateTime());
+                return $excel_content;
             }
         } catch (\Throwable $th) {
             $this->reportLog($tipo_reporte, null, $dt_start, new DateTime(), ['mensaje' => $th->getMessage()]);
