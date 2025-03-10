@@ -75,6 +75,8 @@ class ExportExtraccionFijaPostpago
             "cargo_linea_igv" => ["label" => "CARGO_LINEA_IGV"],
             "mto_dev" => ["label" => "MTO_DEV"],
             "mto_dev_igv" => ["label" => "MTO_DEV_IGV"],
+            "compensacion" => ["label" => "COMPENSACION"],
+            "factor_multiplicativo" => ["label" => "FACTOR_MULTIPLICATIVO"],
             "interes" => ["label" => "INTERES"],
             "tasa" => ["label" => "TASA"],
             "mto_total_dev_igv" => ["label" => "MTO_TOTAL_DEV_IGV"],
