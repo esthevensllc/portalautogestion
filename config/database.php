@@ -196,6 +196,19 @@ return [
             ]
         ],
 
+        'ch-dn09' => [
+            'driver' => 'bavix::clickhouse',
+            'host' => env('DB13_HOST', 'localhost'),
+            'port' => env('DB13_PORT', '1433'),
+            'database' => env('DB13_DATABASE', 'default'),
+            'username' => env('DB13_USERNAME', 'default'),
+            'password' => env('DB13_PASSWORD', ''),
+            'options' => [
+                'timeout' => 30,
+                'protocol' => 'http'
+            ]
+        ],
+
         'sqlite' => [
             'driver' => 'sqlite',
             'url' => env('DATABASE_URL'),

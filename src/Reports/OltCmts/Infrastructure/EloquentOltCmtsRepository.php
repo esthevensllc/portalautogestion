@@ -30,20 +30,25 @@ class EloquentOltCmtsRepository implements OltCmtsRepository
     public function getOltsValues(DateTime $fecha)
     {
         $stFecha = $fecha->format("Y-m-d");
-        $query = "SELECT nombre_olt id, nombre_olt label FROM portal_autogestion.list_olt_1day
-        where fecha = toDate('{$stFecha}') and nombre_olt is not null
-        order by nombre_olt";
-        $data = DB::connection("ch-dn05")->select(DB::raw($query));
+        $query = "SELECT device_name id, device_name label
+        FROM fija_analisis.fija_usuarios_ftth
+        WHERE tecnologia = 'FTTH' and fecha = toDate('{$stFecha}') and device_name is not null
+        group by 1
+        order by device_name";
+        $data = DB::connection("ch-dn09")->select(DB::raw($query));
         return json_decode(json_encode($data), false);
     }
 
     public function getCmtsValues(DateTime $fecha)
     {
         $stFecha = $fecha->format("Y-m-d");
-        $query = "SELECT ubicacion_de_red id, ubicacion_de_red label FROM portal_autogestion.list_olt_cmts_hfc_1day
-        where fecha = toDate('{$stFecha}') and ubicacion_de_red is not null
-        order by ubicacion_de_red";
-        $data = DB::connection("ch-dn05")->select(DB::raw($query));
+        $query = "SELECT
+        device_name id, device_name label
+        from fija_analisis.fija_usuarios_hfc
+        where tecnologia='HFC' and fecha = toDate('{$stFecha}') and device_name is not null
+        group by 1
+        order by device_name";
+        $data = DB::connection("ch-dn09")->select(DB::raw($query));
         return json_decode(json_encode($data), false);
     }
 
