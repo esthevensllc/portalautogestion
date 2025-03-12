@@ -29,6 +29,7 @@ class RepMichaellCIANNController
     public function export(Request $request)
     {
         ini_set('max_execution_time', '1800');
+        set_time_limit(1800);
 
         $response = $this->export->__invoke(
             $request->input("num_cuenta"),
