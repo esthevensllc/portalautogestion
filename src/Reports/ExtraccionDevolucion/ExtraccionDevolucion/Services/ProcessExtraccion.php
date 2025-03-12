@@ -144,7 +144,6 @@ class ProcessExtraccion
                 'alex.leguia@claro.com.pe',
                 'michael.lazaro@claro.com.pe',
                 'factsopfacturacion@claro.com.pe',
-                'C26282@claro.com.pe',
                 'C25976@claro.com.pe',
                 'josias.luna@claro.com.pe',
                 'omori@claro.com.pe',

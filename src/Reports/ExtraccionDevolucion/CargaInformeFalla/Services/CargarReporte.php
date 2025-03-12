@@ -53,7 +53,6 @@ class CargarReporte
                 // Envío del correo
                 Mail::to([
                     'C19884@claro.com.pe',
-                    'C26282@claro.com.pe',
                     'lizeth.moya@claro.com.pe',
                     'carlos.malpartida@claro.com.pe',
                     'bryan.robles@claro.com.pe',
@@ -61,7 +60,7 @@ class CargarReporte
                     'cpalacios@claro.com.pe',
                     'cdiazb@claro.com.pe',
                 ])->send($correo);
-                // Mail::to(['cclinarez@indracompany.com','C26282@claro.com.pe'])->send($correo);
+                // Mail::to(['cclinarez@indracompany.com'])->send($correo);
             } catch (\Exception $e) {
                 // Captura cualquier excepción generada durante el envío del correo
                 return response()->json(['message' => 'Error al enviar el correo: '.$e->getMessage()], 500);
