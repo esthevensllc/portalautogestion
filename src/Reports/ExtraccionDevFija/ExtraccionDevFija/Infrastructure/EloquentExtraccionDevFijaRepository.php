@@ -493,6 +493,58 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
         END;"];
 
         $queries[] = ["sql" => "BEGIN
+            EXECUTE IMMEDIATE 'DROP TABLE USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier}';
+        EXCEPTION
+        WHEN OTHERS THEN
+            IF SQLCODE != -942 THEN RAISE; END IF;
+        END;"];
+
+        $queries[] = ["sql" => "CREATE TABLE USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier}(
+        TICKET                      VARCHAR2(100),
+        CODCLI                      VARCHAR2(500),
+        NOMCLI                      VARCHAR2(500),
+        NRO_DOC                     VARCHAR2(500),
+        TIPDOC                      VARCHAR2(500),
+        NUMERO                      VARCHAR2(100),
+        CID                         NUMBER,
+        FAMILIA                     VARCHAR2(100),
+        IDPLANO                     VARCHAR2(100),
+        FEC_INI_INCIDENCIA          DATE,
+        FEC_FIN_INCIDENCIA          DATE,
+        MINUTOS_AFECTACION          NUMBER,
+        DPTO                        VARCHAR2(100),
+        PROVINCIA                   VARCHAR2(100),
+        DISTRITO                    VARCHAR2(100),
+        MONEDA                      VARCHAR2(100),
+        CR_NETO                     NUMBER,
+        FCHINI_INST                 DATE,
+        FCHFIN_INST                 DATE,
+        CICFAC_DEVOL                VARCHAR2(100),
+        CUSTCODE                    VARCHAR2(500),
+        CO_ID                       VARCHAR2(500),
+        FECHAALTA                   DATE,
+        ESTADO_CONTRATO             VARCHAR2(250),
+        CUSTOMER_ID                 VARCHAR2(250),
+        FUENTE                      VARCHAR2(100),
+        CODSRV                      VARCHAR2(50),
+        DSCSRV                      VARCHAR2(50),
+        OBS                         VARCHAR2(100),
+        ESTADO_IDINTPROD_DEVOL      VARCHAR2(100),
+        SERVICIO_DEVOL              VARCHAR2(100),
+        IDINTPROD_DEVOL             NUMBER,
+        TASA_AL                     DATE,
+        FCH_CALC_TASA               DATE,
+        TASA                        NUMBER,
+        MONEDA_DEVOL                VARCHAR2(100),
+        MONTO_DEVOL_CIGV            NUMBER,
+        INTERES                     NUMBER,
+        MONTO_PRINC_CIGV            NUMBER,
+        ULT_FECHA                   NUMBER,
+        CR_NETOCIGV                 NUMBER,
+        MONTO_PRINCIPAL             NUMBER
+        )"];
+
+        $queries[] = ["sql" => "BEGIN
             MERGE INTO USRAES.WRK_DEV_INC_MASI_BSCS_{$this->userIdentifier} A
             USING (SELECT C.CO_ID,SUM(C.COSTO)COSTO FROM USRAES.TMP_BSCS_CF_{$this->userIdentifier} C,dws.sa_MPUSPTAB M
             WHERE C.SPCODE=M.SPCODE AND C.COSTO>0
@@ -502,9 +554,7 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
             UPDATE SET A.CARGO_FIJO= B.COSTO;
             commit;
 
-            execute immediate 'truncate table USRAES.DWH_DEVOLUCION_MASIV_DETALLE';
-
-            INSERT INTO USRAES.DWH_DEVOLUCION_MASIV_DETALLE (TICKET,CODCLI,NOMCLI,NRO_DOC,TIPDOC,NUMERO,CID,FAMILIA,
+            INSERT INTO USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier} (TICKET,CODCLI,NOMCLI,NRO_DOC,TIPDOC,NUMERO,CID,FAMILIA,
             IDPLANO,FEC_INI_INCIDENCIA,FEC_FIN_INCIDENCIA,MINUTOS_AFECTACION,DPTO,PROVINCIA,DISTRITO,MONEDA,CR_NETO,FCHINI_INST,FCHFIN_INST,
             CICFAC_DEVOL,CUSTCODE,CO_ID,FECHAALTA,ESTADO_CONTRATO,CUSTOMER_ID,FUENTE)
             (SELECT /*SQ_CODTICKET_MASIV.NEXTVAL,T.TRIMESTRE,*/T.TICKET,T.CODCLI,T.RAZON_SOCIAL,T.NRO_DOCUMENTO,T.TIPDOC_CLIENTE,T.NUMERO,T.CID,T.FAMILIA,
@@ -607,7 +657,7 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
 
         $queries[] = ["sql" => "ALTER TABLE USRAES.WRK_DEVOL_INC_MASIV_{$this->userIdentifier} ADD FLGCONSIDERA VARCHAR2(5)"];
         $queries[] = ["sql" => "BEGIN
-            INSERT INTO USRAES.DWH_DEVOLUCION_MASIV_DETALLE (TICKET,CODCLI,NOMCLI,NRO_DOC,TIPDOC,NUMERO,CID,FAMILIA,CODSRV,DSCSRV,
+            INSERT INTO USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier} (TICKET,CODCLI,NOMCLI,NRO_DOC,TIPDOC,NUMERO,CID,FAMILIA,CODSRV,DSCSRV,
             IDPLANO,FEC_INI_INCIDENCIA,FEC_FIN_INCIDENCIA,MINUTOS_AFECTACION,DPTO,PROVINCIA,DISTRITO,MONEDA,CR_NETO,FCHINI_INST,FCHFIN_INST,FUENTE)
             (SELECT /*SQ_CODTICKET_MASIV.NEXTVAL, T.TRIMESTRE,*/T.TICKET,T.CODCLI,T.NOMCLI,T.NRO_DOC,T.TIPDOC,T.NUMERO,T.CID,T.FAMILIA,T.CODSRV,T.DSCSRV,T.IDPLANO,
             TO_DATE(T.FEC_INI_INCIDENCIA,'DD/MM/YYYY HH24:MI:SS'),TO_DATE(T.FEC_FIN_INCIDENCIA,'DD/MM/YYYY HH24:MI:SS'),T.MINUTOS_AFECTACION,
@@ -630,7 +680,7 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
         $queries[] = ["sql" => "CREATE TABLE USRAES.WRK_DEVOLUCION_MASIVA_{$this->userIdentifier} NOLOGGING PARALLEL 8 AS
         SELECT W.TICKET,W.CODCLI,W.NOMCLI,W.TIPDOC,W.NRO_DOC,W.CID,W.NUMERO,I.TIPSRV,W.FAMILIA,W.DSCSRV,W.CODSRV,W.IDPLANO,W.FEC_INI_INCIDENCIA,
         W.FEC_FIN_INCIDENCIA,W.MINUTOS_AFECTACION,W.DPTO,W.PROVINCIA,W.FCHINI_INST,W.FCHFIN_INST,W.DISTRITO,W.MONEDA,W.CR_NETO
-        FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE W,(SELECT TIPSRV,DSCTIPSRV FROM USRAES.SA_DEVOLUCION_EQUIVALENCIAS) I
+        FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier} W,(SELECT TIPSRV,DSCTIPSRV FROM USRAES.SA_DEVOLUCION_EQUIVALENCIAS) I
         WHERE W.TICKET ='{$ticket}' AND TRIM(W.FAMILIA)=TRIM(I.DSCTIPSRV)"];
         
         $queries[] = ["sql" => "BEGIN
@@ -833,7 +883,7 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
         $fechaIniDetalle = null;
         $factorAcumulado3 = 'null';
         $result = DB::select(DB::raw("SELECT TO_CHAR(T.FEC_INI_INCIDENCIA, 'DDMMYYYY') FECHA_INICIO
-        FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE T
+        FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier} T
         WHERE T.TICKET = '{$ticket}'"));
 
         if(count($result)>0){
@@ -858,7 +908,7 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
             /*
             SELECT TO_CHAR(T.FEC_INI_INCIDENCIA, 'DDMMYYYY')
             INTO V_FECHA_INICIO
-            FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE T
+            FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier} T
             WHERE T.TICKET = '{$ticket}';
             
             SELECT TO_CHAR(TRUNC(SYSDATE - 1), 'DDMMYYYY')
@@ -931,7 +981,7 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
         BEGIN
             FOR X IN C1
             LOOP
-                UPDATE USRAES.DWH_DEVOLUCION_MASIV_DETALLE W
+                UPDATE USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier} W
                 SET W.MONTO_PRINCIPAL=X.MONTO_PRINCIPAL,
                 W.CR_NETOCIGV=X.CR_NETOCIGV,
                 W.ULT_FECHA=X.ULT_FECHA,
@@ -959,9 +1009,9 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
             S_PART VARCHAR2(8);
             v_ticket VARCHAR2(100) := :p_ticket;
         BEGIN
-            MERGE INTO DWH_DEVOLUCION_MASIV_DETALLE  A
+            MERGE INTO USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier}  A
             USING (select AGREEMENT_CONTRACT_NUMBER,CUSTOMER_ACCOUNT_BILLING_CYCLE_SC from DWA.DW_M_SUBSCRIPTION where AGREEMENT_CONTRACT_NUMBER
-            in (select CO_ID from USRAES.DWH_DEVOLUCION_MASIV_DETALLE where ticket= v_ticket group by CO_ID)
+            in (select CO_ID from USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier} where ticket= v_ticket group by CO_ID)
             group by AGREEMENT_CONTRACT_NUMBER,CUSTOMER_ACCOUNT_BILLING_CYCLE_SC) T
             ON (A.CO_ID=T.AGREEMENT_CONTRACT_NUMBER)
             WHEN MATCHED THEN
@@ -969,14 +1019,14 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
             WHERE A.TICKET= v_ticket AND A.FUENTE='BSCS';
             COMMIT;
 
-            UPDATE USRAES.DWH_DEVOLUCION_MASIV_DETALLE w
+            UPDATE USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier} w
             SET w.obs='DEVOLVER_FACTURA_BSCS'
             WHERE w.ticket= v_ticket
             AND w.estado_contrato in ('A','S')
             AND w.fuente='BSCS';
             COMMIT;
 
-            UPDATE USRAES.DWH_DEVOLUCION_MASIV_DETALLE w
+            UPDATE USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier} w
             SET w.obs='VERIFICAR_DEUDA_BSCS'
             WHERE w.ticket = v_ticket
             AND w.estado_contrato='D'
@@ -984,7 +1034,7 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
             COMMIT;
 
             --DELETE FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST
-            DELETE FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE
+            DELETE FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier}
             WHERE TICKET = v_ticket AND NRO_DOC IN 
             (SELECT RUC FROM USRAES.CUENTA_DE_GOBIERNO_TMP GROUP BY RUC);
             COMMIT;
@@ -1026,7 +1076,7 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
             SELECT
             a.*,
             row_number() over(partition by ticket,CODCLI order by cr_neto desc) flag
-            FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE a
+            FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier} a
         ) WHERE flag=1"));
 
         $this->chDb->write("DROP TABLE IF EXISTS default.base_ext_cod_cli_{$this->userIdentifier}");
@@ -1119,7 +1169,7 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
             );
             COMMIT;
 
-            DELETE FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE
+            DELETE FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier}
             WHERE customer_id in (
                 select customer_id from USRAES.base_ext_cod_cli_{$this->userIdentifier}
             );
@@ -1146,7 +1196,7 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
                 SELECT
                 a.*,
                 row_number() over(partition by ticket,CODCLI order by cr_neto desc) flag
-                FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE a
+                FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier} a
             ) WHERE flag=1;
             COMMIT;
 
@@ -1191,7 +1241,7 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
         return DB::select(DB::raw("SELECT TICKET, CODCLI, NOMCLI, NRO_DOC, TIPDOC, NUMERO, CID, FAMILIA,
         CODSRV, DSCSRV, IDPLANO, FEC_INI_INCIDENCIA, FEC_FIN_INCIDENCIA, MINUTOS_AFECTACION,
         DPTO, PROVINCIA, DISTRITO,MONEDA, CR_NETO
-        FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE"));
+        FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier}"));
 
         /*
         DB::statement("BEGIN
