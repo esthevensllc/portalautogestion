@@ -1175,6 +1175,12 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
             );
             COMMIT;
 
+            DELETE FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier}
+            WHERE to_number(CICFAC_DEVOL) not in (
+                29, 3, 6, 11, 21, 37, 114, 39, 26, 36, 12, 20
+            );
+            COMMIT;
+
             INSERT INTO USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST(
                 TICKET, CODCLI, NOMCLI, NRO_DOC, TIPDOC, NUMERO, CID, FAMILIA, IDPLANO,
                 FEC_INI_INCIDENCIA, FEC_FIN_INCIDENCIA, MINUTOS_AFECTACION,
@@ -1403,6 +1409,7 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
             ELSE 0 END
             ) = 1");
         })
+        ->whereNotIn('CICFAC_DEVOL', [29, 3, 6, 11, 21, 37, 114, 39, 26, 36, 12, 20])
         ->get();
     }
 
@@ -1454,6 +1461,7 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
             ELSE 0 END
             ) = 1");
         })
+        ->whereNotIn('CICFAC_DEVOL', [29, 3, 6, 11, 21, 37, 114, 39, 26, 36, 12, 20])
         ->get();
     }
 
