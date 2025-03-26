@@ -3,6 +3,9 @@
 namespace AMovil\Reports\RepDetConsumoNF\Services;
 
 use AMovil\Reports\RepDetConsumoNF\Domain\DetalleConsumoNFRepository;
+use AMovil\Reports\ReportLog\Domain\ReportLogStatus;
+use AMovil\Reports\ReportLog\Services\SaveReportDto;
+use AMovil\Reports\ReportLog\Services\SaveReportLog;
 use AMovil\Shared\Application\FileInput;
 use AMovil\Shared\Application\Response;
 use AMovil\Shared\Exports\Domain\ExportService;
@@ -16,31 +19,48 @@ class ExportConsumoDetalladoNF
 {
     private $repo;
     private $exportService;
+    private $saveReportLog;
 
-    public function __construct(DetalleConsumoNFRepository $repo, ExportService $exportService)
+    public function __construct(DetalleConsumoNFRepository $repo, ExportService $exportService, SaveReportLog $saveReportLog)
     {
         $this->repo = $repo;
         $this->exportService = $exportService;
+        $this->saveReportLog = $saveReportLog;
     }
 
     public function __invoke(int $tipoInput, ?FileInput $excel, ?string $numCuenta, ?string $fechaIni, ?string $fechaFin): Response
     {
-        $dtFechaIni = DateTime::createFromFormat("Y-m-d", $fechaIni);
-        $dtFechaFin = DateTime::createFromFormat("Y-m-d", $fechaFin);
-        $data = [];
-        if($tipoInput === 2){
-            $data = $this->repo->getReporteDetallado($numCuenta, $dtFechaIni, $dtFechaFin);
-        }else if ($tipoInput === 1){
-            $lineas = $this->getDataFromExcel($excel);
-            $data = $this->repo->getReporteDetalladoByLineas($lineas, $dtFechaIni, $dtFechaFin);
+        $fechaIniExec = new DateTime();
+        $reporteInput = ['tipoInput' => $tipoInput, 'fechaInicio' => $fechaIni, 'fechaFin' => $fechaFin];
+        try {
+            $dtFechaIni = DateTime::createFromFormat("Y-m-d", $fechaIni);
+            $dtFechaFin = DateTime::createFromFormat("Y-m-d", $fechaFin);
+            $data = [];
+            if($tipoInput === 2){
+                $reporteInput['numCuenta'] = $numCuenta;
+                $data = $this->repo->getReporteDetallado($numCuenta, $dtFechaIni, $dtFechaFin);
+            }else if ($tipoInput === 1){
+                $lineas = $this->getDataFromExcel($excel);
+                $reporteInput['lineas'] = $lineas;
+                $data = $this->repo->getReporteDetalladoByLineas($lineas, $dtFechaIni, $dtFechaFin);
+            }
+            $filename = "REPORTE_CONSUMO_NF_DETALLADO_".$fechaIniExec->format('YmdHis').".xlsx";
+            $tempfile = $this->generateReport($data);
+
+            copy($tempfile, SaveReportLog::LOCAL_PATH."/DETALLE_CONSUMO/{$filename}");
+            $this->reportLog($tempfile, $filename, $fechaIniExec, new DateTime(), $reporteInput, null);
+
+            $content = file_get_contents($tempfile);
+            unlink($tempfile);
+            
+            return Response::respData([
+                "filename" => $filename,
+                "content" => $content,
+            ]);
+        } catch (\Throwable $th) {
+            $this->reportLog(null, null, $fechaIniExec, new DateTime(), $reporteInput, $th);
+            throw $th;
         }
-        $tempfile = $this->generateReport($data);
-        $content = file_get_contents($tempfile);
-        unlink($tempfile);
-        return Response::respData([
-            "filename" => "REPORTE_CONSUMO_NF_DETALLADO.xlsx",
-            "content" => $content,
-        ]);
     }
 
     private function getDataFromExcel(FileInput $excel)
@@ -99,5 +119,23 @@ class ExportConsumoDetalladoNF
         $this->exportService->loadData($headers, $data, $options);
         $tempfile = $this->exportService->getWriter(WriterType::XLSX)->saveToTempfile();
         return $tempfile;
+    }
+
+    private function reportLog(?string $local_file, ?string $filename, DateTime $ini, DateTime $fin, array $input, ?\Throwable $error)
+    {
+        $logDto = SaveReportDto::create(
+            'DETALLE_CONSUMO',
+            $filename,
+            $ini,
+            $fin,
+            $error === null ? ReportLogStatus::CORRECTO : ReportLogStatus::ERROR,
+            $error !== null ? $error->getMessage() : null,
+            'rep-det-consumo.nf.detallado',
+            json_encode($input)
+        );
+        $this->saveReportLog->create($logDto);
+        if ($local_file !== null) {
+            $this->saveReportLog->sendFileToRemoteServer($local_file, "DETALLE_CONSUMO/{$filename}");
+        }
     }
 }
