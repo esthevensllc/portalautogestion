@@ -3,6 +3,8 @@
 namespace AMovil\Reports\RepCursado\Services;
 
 use AMovil\Reports\RepCursado\Domain\ReporteCursadoRepository;
+use AMovil\Reports\ReportLog\Domain\ReportLogStatus;
+use AMovil\Reports\ReportLog\Services\SaveReportDto;
 use AMovil\Reports\ReportLog\Services\SaveReportLog;
 use AMovil\Shared\Application\Response;
 use AMovil\Shared\Exports\Domain\ExportService;
@@ -28,7 +30,13 @@ class ExportReporteCursado
     public function __invoke(?string $tipo_input, $value, $fecha1, $fecha2): Response
     {
         $dt_start = new DateTime();
+        $reporteInput = ["tipoInput" => $tipo_input, "fechaInicio" => $fecha1, "fechaFin" => $fecha2];
         try {
+            if ($tipo_input !== 'lineas') {
+                $reporteInput['values'] = $value;
+            } else {
+                $reporteInput['values'] = $this->getDataFromExcel($value);
+            }
             $dt_fecha1 = DateTime::createFromFormat("Y-m-d", $fecha1);
             $dt_fecha2 = DateTime::createFromFormat("Y-m-d", $fecha2);
 
@@ -140,19 +148,23 @@ class ExportReporteCursado
                 $fecha_ini->modify("+1 month");
             }*/
 
-            $content = $this->exportService->getWriter(WriterType::XLSX)->getOutput();
+            $filename = 'REPORTE_CURSADO_'.$dt_fecha1->format("YmdHis").".xlsx";
+            $filePath = SaveReportLog::LOCAL_PATH."/DATOS_CURSADOS/{$filename}";
 
-            $data = $this->repo->getConsolidado();
+            $this->exportService->getWriter(WriterType::XLSX)->save($filePath);
+            $content = file_get_contents($filePath);
+
+            /*$data = $this->repo->getConsolidado();
             $this->exportService->reset();
-            $this->exportService->loadData($headers, $data, []);
-            $this->reportLog($this->exportService, $dt_start, new DateTime());
+            $this->exportService->loadData($headers, $data, []);*/
+            $this->reportLog($filePath, $filename, $dt_start, new DateTime(), $reporteInput, null);
 
             return new Response([], [
                 'filename' => 'REPORTE_TRAFICO_DATOS_'.$dt_fecha1->format("Ymd")."_".$dt_fecha2->format("Ymd").".xlsx",
                 "content" => $content
             ]);
         } catch (\Throwable $th) {
-            $this->reportLog(null, $dt_start, new DateTime(), ['mensaje' => $th->getMessage()]);
+            $this->reportLog(null, null, $dt_start, new DateTime(), $reporteInput, $th);
             throw $th;
         }
     }
@@ -267,15 +279,21 @@ class ExportReporteCursado
         return $values;
     }
 
-    private function reportLog(?ExportService $exportService, DateTime $ini, DateTime $fin, array $extra_data = [])
+    private function reportLog(?string $local_file, ?string $filename, DateTime $ini, DateTime $fin, array $input, ?\Throwable $error)
     {
-        $filename = "REPORTE_CURSADO_".$ini->format('YmdHis');
-        $data = array_merge([
-            'name' => 'DATOS_CURSADOS',
-            'ini' => $ini->format('Y-m-d H:i:s'),
-            'fin' => $fin->format('Y-m-d H:i:s'),
-            'trac_name' => "reporte-cursados",
-        ], $extra_data);
-        $this->saveReportLog->fromExport($exportService, $data, $filename, 'DATOS_CURSADOS');
+        $logDto = SaveReportDto::create(
+            'DATOS_CURSADOS',
+            $filename,
+            $ini,
+            $fin,
+            $error === null ? ReportLogStatus::CORRECTO : ReportLogStatus::ERROR,
+            $error !== null ? $error->getMessage() : null,
+            'reporte-cursados',
+            json_encode($input)
+        );
+        $this->saveReportLog->create($logDto);
+        if ($local_file !== null) {
+            $this->saveReportLog->sendFileToRemoteServer($local_file, "DATOS_CURSADOS/{$filename}");
+        }
     }
 }
