@@ -86,7 +86,7 @@ class ExportFacturacionAdelantadaConsolidado
             $tempFilename = $this->exportExcel($title_periodo, $title, $customer_full_name, $cuenta, $unidad_trafico_id, $consumo_sin_cargo, $data);
             $filename = "FACTURACION_ADELANTADA_CONSOLIDADO_".$dt_start->format('YmdHis').".xlsx";
             
-            copy($tempFilename, SaveReportLog::LOCAL_PATH."/{$filename}");
+            copy($tempFilename, SaveReportLog::LOCAL_PATH."/DETALLE_CONSUMO/{$filename}");
             $this->reportLog($tempFilename, $filename, $dt_start, new DateTime(), $reporteInput, null);
             
             $content = file_get_contents($tempFilename);
