@@ -4,6 +4,8 @@ namespace AMovil\Reports\RepDetConsumo\Services;
 
 use AMovil\Auth\AccessControl\Domain\AuthService;
 use AMovil\Reports\RepDetConsumo\Infrastructure\Repository\LaravelDetalleConsumoRepository;
+use AMovil\Reports\ReportLog\Domain\ReportLogStatus;
+use AMovil\Reports\ReportLog\Services\SaveReportDto;
 use AMovil\Reports\ReportLog\Services\SaveReportLog;
 use AMovil\Shared\Exports\Domain\ExportService;
 use AMovil\Shared\Exports\Domain\WriterType;
@@ -13,6 +15,7 @@ use Illuminate\Support\Facades\Http;
 use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use stdClass;
+use Throwable;
 use ZipArchive;
 
 class ExportDetalleConsumoDetallado
@@ -37,16 +40,21 @@ class ExportDetalleConsumoDetallado
     {
         $this->userId = $this->authService->getUserIdentifier();
         $dt_start = new DateTime();
+        $reportInput = ['tipoInput' => $tipo_input, 'consumoSinCargo' => $consumo_sin_cargo];
         try {
             $periodos = [];
             if($tipo_input === '1'){
                 $periodos = explode(",", trim($periodo));
+                $reportInput = ["periodos" => $periodos];
             }else{
                 $periodos = $this->repo->getPeriodosByFechas(
                     $cliente,
                     DateTime::createFromFormat("Y-m-d", $fecha1),
                     DateTime::createFromFormat("Y-m-d", $fecha2)
                 );
+                $reportInput["cliente"] = $cliente;
+                $reportInput["fechaInicio"] = $fecha1;
+                $reportInput["fechaFin"] = $fecha2;
             }
             foreach($periodos as $p){
                 $dt_periodo = DateTime::createFromFormat('Ym', $p);
@@ -162,13 +170,19 @@ class ExportDetalleConsumoDetallado
                 }
 
                 $str_time = (new DateTime())->format("YmdHis");
-                $temp_file = "{$this->storage_path}/REPORTE_CONSUMO_DETALLADO_{$str_time}.{$response['type']}";
+                $filename = "REPORTE_CONSUMO_DETALLADO_{$str_time}.{$response['type']}";
+                $temp_file = "{$this->storage_path}/{$filename}";
                 $file = fopen($temp_file, "w");
                 fwrite($file, $response["content"]);
                 fclose($file);
 
-                $this->reportLog($temp_file, $dt_start, new DateTime());
+                copy($temp_file, SaveReportLog::LOCAL_PATH."/DETALLE_CONSUMO/{$filename}");
+
+
+                $this->reportLog($temp_file, $filename, $dt_start, new DateTime(), $reportInput, null);
                 unlink($temp_file);
+
+                $response['filename'] = $filename;
 
                 return $response;
             }else{
@@ -176,20 +190,23 @@ class ExportDetalleConsumoDetallado
                 if(is_array($error_message)){
                     $error_message = json_encode($error_message);
                 }
-                throw new Exception($error_message);
+
+                $exception = new Exception($error_message);
+                $this->reportLog(null, null, $dt_start, new DateTime(), $reportInput, $exception);
+
+                throw $exception;
             }
 
+            /*¨
             if(count($data) > $this->limit_to_paginate){
-                // $this->exportService->reset();
-                // $this->exportService->loadData($headers, $data);
-                // $this->reportLog($this->exportService, $dt_start, new DateTime());
 
                 $pagination = $this->paginate(count($data), $this->limit_to_paginate);
 
                 $zip = new ZipArchive();
                 $str_time = (new DateTime())->format("YmdHis");
-                $zipFilename = "{$this->storage_path}/REPORTE_CONSUMO_DETALLADO_{$str_time}.zip";
-                $zip->open($zipFilename, ZipArchive::CREATE);
+                $zipFilename = "REPORTE_CONSUMO_DETALLADO_{$str_time}.zip";
+                $zipFilePath = "{$this->storage_path}/REPORTE_CONSUMO_DETALLADO_{$str_time}.zip";
+                $zip->open($zipFilePath, ZipArchive::CREATE);
                 $files_generated = [];
 
                 for ($i=1; $i <= $pagination['pages']; $i++) { 
@@ -203,28 +220,37 @@ class ExportDetalleConsumoDetallado
                     $zip->addFile($exportFilename, "REPORTE_CONSUMO_DETALLADO_{$i}.xlsx");
                 }
                 $zip->close();
-                $files_generated[] = $zipFilename;
+                $files_generated[] = $zipFilePath;
 
-                $response = ['type' => 'zip', 'content' => file_get_contents($zipFilename)];
+                copy($zipFilePath, SaveReportLog::LOCAL_PATH."/REPORTE_CONSUMO_DETALLADO_{$str_time}.zip");
+
+                $this->reportLog($filePath, "REPORTE_CONSUMO_DETALLADO_{$str_time}.zip", $dt_start, new DateTime(), $reportInput, null);
+
+                $response = ['type' => 'zip', 'content' => file_get_contents($zipFilePath), 'filename' => $zipFilename];
 
                 foreach($files_generated as $file){
                     unlink($file);
                 }
             }else{
                 $this->exportService->reset();
-                $this->exportService->loadData($headers, $data);
-                // $this->reportLog($this->exportService, $dt_start, new DateTime());
-
-                $this->exportService->reset();
                 $this->exportService->loadData($headers, $data, $options);
 
+                $filename = "DETALLADO_".$ini->format('YmdHis').".xlsx";
+                $filePath = SaveReportLog::LOCAL_PATH.'/'.$filename;
+
+                $this->exportService->getWriter(WriterType::XLSX)->save($filePath);
+
+                $this->reportLog($filePath, $filename, $dt_start, new DateTime(), $reportInput, null);
+
                 $response['type'] = 'xlsx';
-                $response['content'] = $this->exportService->getWriter(WriterType::XLSX)->getOutput();
+                $response['filename'] = $filename;
+                $response['content'] = file_get_contents($filePath);
             }
+            */
 
             return $response;
         } catch (\Throwable $th) {
-            $this->reportLog(null, $dt_start, new DateTime(), ['mensaje' => $th->getMessage()]);
+            $this->reportLog(null, null, $dt_start, new DateTime(), $reportInput, $th);
             throw $th;
         }
     }
@@ -239,16 +265,22 @@ class ExportDetalleConsumoDetallado
         Excel::store($export, $exportFilename, 'public');
     }
 
-    private function reportLog(?string $local_file, DateTime $ini, DateTime $fin, array $extra_data = [])
+    private function reportLog(?string $local_file, ?string $filename, DateTime $ini, DateTime $fin, array $input, ?Throwable $error)
     {
-        $filename = "DETALLADO_".$ini->format('YmdHis');
-        $data = array_merge([
-            'name' => 'DETALLE_CONSUMO',
-            'ini' => $ini->format('Y-m-d H:i:s'),
-            'fin' => $fin->format('Y-m-d H:i:s'),
-            'trac_name' => 'detallle_consumo.detallado',
-        ], $extra_data);
-        $this->saveReportLog->__invoke($data, $local_file, 'DETALLE_CONSUMO');
+        $logDto = SaveReportDto::create(
+            'DETALLE_CONSUMO',
+            $filename,
+            $ini,
+            $fin,
+            $error === null ? ReportLogStatus::CORRECTO : ReportLogStatus::ERROR,
+            $error !== null ? $error->getMessage() : null,
+            'detallle_consumo.detallado',
+            json_encode($input)
+        );
+        $this->saveReportLog->create($logDto);
+        if ($local_file !== null) {
+            $this->saveReportLog->sendFileToRemoteServer($local_file, "DETALLE_CONSUMO/{$filename}");
+        }
     }
 
     public function paginate($count_data, $perPage){

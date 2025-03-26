@@ -4,6 +4,7 @@ namespace AMovil\Reports\RepDetConsumo\Infrastructure\Repository;
 
 use AMovil\Auth\AccessControl\Domain\AuthService;
 use DateTime;
+use Exception;
 use Illuminate\Support\Facades\DB;
 
 class LaravelDetalleConsumoRepository
@@ -809,6 +810,10 @@ class LaravelDetalleConsumoRepository
             if(count($data)>0){
                 $ciclo = $data[0]->cycle;
             }
+        }
+
+        if ($ciclo === null) {
+            throw new Exception("No se pudo obtener el ciclo para el cliente {$cliente}");
         }
 
         $fecha_ini = DateTime::createFromFormat("Y-m-d", $fecha1->format("Y-m")."-".$ciclo);

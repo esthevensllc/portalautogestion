@@ -75,12 +75,12 @@ class DetalleConsumoController
         $headers_by_type = [
             'xlsx' => [
                 'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                'Content-Disposition' => 'attachment;filename="REPORTE_CONSUMO_DETALLADO.xlsx"'
+                'Content-Disposition' => 'attachment;filename="'.$export['filename'].'"'
             ],
             'zip' => [
                 'Content-Type' => 'application/zip',
                 'Content-Transfer-Encoding' => 'Binary',
-                'Content-Disposition' => 'attachment;filename="REPORTE_CONSUMO_DETALLADO.zip"'
+                'Content-Disposition' => 'attachment;filename="'.$export['filename'].'"'
             ]
         ];
         return response($export['content'], 200, $headers_by_type[$export['type']]);
@@ -169,6 +169,7 @@ class DetalleConsumoController
 
         $this->userIdentifier = $this->authService->getUserIdentifier();
 
+        /*
         if(!$response['passes']){
             $errorMessage = $response['errors']['message'];
             // Guardar el archivo en una ruta específica en el servidor
@@ -176,6 +177,7 @@ class DetalleConsumoController
             $filePath = storage_path('app/rep_det_consumo/portalautogestion_Detalle_Consolidado/' . $fileName);
             file_put_contents($filePath, $errorMessage . PHP_EOL, FILE_APPEND);
         }
+        */
 
         return response()->json($response);
     }

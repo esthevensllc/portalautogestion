@@ -3,6 +3,8 @@
 namespace AMovil\Reports\RepDetConsumo\Services;
 
 use AMovil\Reports\RepDetConsumo\Infrastructure\Repository\LaravelDetalleConsumoRepository;
+use AMovil\Reports\ReportLog\Domain\ReportLogStatus;
+use AMovil\Reports\ReportLog\Services\SaveReportDto;
 use AMovil\Reports\ReportLog\Services\SaveReportLog;
 use AMovil\Shared\Exports\Domain\ExportService;
 use AMovil\Shared\Exports\Domain\WriterType;
@@ -10,6 +12,7 @@ use DateTime;
 use PhpOffice\PhpSpreadsheet\Style as SpreadsheetStyle;
 use DB;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use Throwable;
 
 class ExportDetalleConsumoConsolidado
 {
@@ -26,17 +29,22 @@ class ExportDetalleConsumoConsolidado
     public function __invoke(string $cliente, ?string $periodo, string $unidad_trafico_id, string $unidad_consumo_id, string $consumo_sin_cargo,$tipo_input, $fecha1, $fecha2)
     {
         $dt_start = new DateTime();
+        $reportInput = ['tipoInput' => $tipo_input, 'consumoSinCargo' => $consumo_sin_cargo];
         try {
             $dt_periodos = [];
             $periodos = [];
             if($tipo_input === '1'){
                 $periodos = explode(",", trim($periodo));
+                $reportInput["periodos"] = $periodos;
             }else{
                 $periodos = $this->repo->getPeriodosByFechas(
                     $cliente,
                     DateTime::createFromFormat("Y-m-d", $fecha1),
                     DateTime::createFromFormat("Y-m-d", $fecha2)
                 );
+                $reportInput["cliente"] = $cliente;
+                $reportInput["fechaInicio"] = $fecha1;
+                $reportInput["fechaFin"] = $fecha2;
             }
             // dd($periodos);
 
@@ -197,16 +205,19 @@ class ExportDetalleConsumoConsolidado
             foreach($columns_to_autosize as $col){
                 $sheet->getColumnDimension($col)->setAutoSize(true);
             }
-            
-            $excel_content = $this->exportService->getWriter(WriterType::XLSX)->getOutput();
 
-            $this->exportService->reset();
-            $this->exportService->loadData($headers, $data, []);
-            $this->reportLog($this->exportService, $dt_start, new DateTime());
+            $filename = "CONSOLIDADO_".$dt_start->format('YmdHis').".xlsx";
+            $filePath = SaveReportLog::LOCAL_PATH."/DETALLE_CONSUMO/{$filename}";
+            
+            $this->exportService->getWriter(WriterType::XLSX)->save($filePath);
+            
+            $this->reportLog($filePath, $filename, $dt_start, new DateTime(), $reportInput, null);
+            
+            $excel_content = file_get_contents($filePath);
 
             return $excel_content;
         } catch (\Throwable $th) {
-            $this->reportLog(null, $dt_start, new DateTime(), ['mensaje' => $th->getMessage()]);
+            $this->reportLog(null, null, $dt_start, new DateTime(), $reportInput, $th);
             throw $th;
         }
     }
@@ -220,15 +231,21 @@ class ExportDetalleConsumoConsolidado
         return $unidad_trafico_by_id[$id];
     }
 
-    private function reportLog(?ExportService $exportService, DateTime $ini, DateTime $fin, array $extra_data = [])
+    private function reportLog(?string $local_file, ?string $filename, DateTime $ini, DateTime $fin, array $input, ?Throwable $error)
     {
-        $filename = "CONSOLIDADO_".$ini->format('YmdHis');
-        $data = array_merge([
-            'name' => 'DETALLE_CONSUMO',
-            'ini' => $ini->format('Y-m-d H:i:s'),
-            'fin' => $fin->format('Y-m-d H:i:s'),
-            'trac_name' => 'detallado_consumo.consolidado',
-        ], $extra_data);
-        $this->saveReportLog->fromExport($exportService, $data, $filename, 'DETALLE_CONSUMO');
+        $logDto = SaveReportDto::create(
+            'DETALLE_CONSUMO',
+            $filename,
+            $ini,
+            $fin,
+            $error === null ? ReportLogStatus::CORRECTO : ReportLogStatus::ERROR,
+            $error !== null ? $error->getMessage() : null,
+            'detallado_consumo.consolidado',
+            json_encode($input)
+        );
+        $this->saveReportLog->create($logDto);
+        if ($local_file !== null) {
+            $this->saveReportLog->sendFileToRemoteServer($local_file, "DETALLE_CONSUMO/{$filename}");
+        }
     }
 }
