@@ -6,6 +6,8 @@ use AMovil\Auth\AccessControl\Domain\AuthService;
 use AMovil\Reports\RepDetLlamadas\Domain\DetalleLlamadasRepository;
 use AMovil\Reports\RepDetLlamadas\Domain\ReporteDetalleLlamada;
 use AMovil\Reports\RepDetLlamadas\Domain\TipoReporte;
+use AMovil\Reports\ReportLog\Domain\ReportLogStatus;
+use AMovil\Reports\ReportLog\Services\SaveReportDto;
 use AMovil\Reports\ReportLog\Services\SaveReportLog;
 use AMovil\Shared\Exports\Domain\ExportService;
 use AMovil\Shared\Exports\Domain\WriterType;
@@ -34,6 +36,7 @@ class ExportReporteLlamadas
     public function __invoke($tipo_reporte, $periodo1, $periodo2, $tipo_input, $lineas, $excel, $num_doc, $num_cuenta, $cod_cliente, $numeros_primarios)
     {
         $dt_start = new DateTime();
+        $reporteInput = ['tipo_reporte' => $tipo_reporte, 'periodo1' => $periodo1, 'periodo2' => $periodo2];
         try {
             $dt_periodo1 = DateTime::createFromFormat('Y-m-d', $periodo1);
             $dt_periodo2 = DateTime::createFromFormat('Y-m-d', $periodo2);
@@ -51,21 +54,27 @@ class ExportReporteLlamadas
             $data = [];
             switch ($tipo_input) {
                 case 'tab_lineas':
+                    $reporteInput['lineas'] = $lineas;
                     $data = $this->repo->getReporteByPeriodo_Lineas_tipo($dt_periodo1, $dt_periodo2, explode(",", trim($lineas)), $tipo_reporte);
                     break;
                 case 'tab_excel':
+                    $reporteInput['excel'] = $excel_data;
                     $data = $this->repo->getReporteByPeriodo_Lineas_tipo($dt_periodo1, $dt_periodo2, $excel_data, $tipo_reporte);
                     break;
                 case 'tab_numero_documento':
+                    $reporteInput['numero_documento'] = $num_doc;
                     $data = $this->repo->getReporteByPeriodo_NumDocumento_tipo($dt_periodo1, $dt_periodo2, [$num_doc], $tipo_reporte);
                     break;
                 case 'tab_numero_cuenta':
+                    $reporteInput['numero_cuenta'] = $num_cuenta;
                     $data = $this->repo->getReporteByPeriodo_NumCuenta_tipo($dt_periodo1, $dt_periodo2, [$num_cuenta], $tipo_reporte);
                     break;
                 case 'tab_cod_cliente':
+                    $reporteInput['cod_cliente'] = $cod_cliente;
                     $data = $this->repo->getReporteByPeriodo_CodCliente_tipo($dt_periodo1, $dt_periodo2, [$cod_cliente], $tipo_reporte);
                     break;
                 case 'tab_numeros_primarios':
+                    $reporteInput['numeros_primarios'] = $numeros_primarios;
                     $data = $this->repo->getReporteByPeriodo_Lineas_tipo($dt_periodo1, $dt_periodo2, explode(",", trim($numeros_primarios)), $tipo_reporte, true);
                     break;
                 default:
@@ -81,6 +90,7 @@ class ExportReporteLlamadas
                     $this->export($chunk, "{$periodo1} - {$periodo2}")->save("{$this->storagePath}/{$filename}");
                     $this->repo->saveLogReporteTemp($filename, new DateTime(), filesize("{$this->storagePath}/{$filename}"));
                 }
+                $this->reportLog($tipo_reporte, null, null, $dt_start, new DateTime(), $reporteInput, null);
                 return [
                     "message" => "El archivo supera el limite de registros se enviara los reportes al modulo de reportes y estaran disponibles solo por el resto del dia"
                 ];
@@ -89,10 +99,13 @@ class ExportReporteLlamadas
                 foreach ($data->getIterator() as $chunk) {
                     $allChunk = array_merge($allChunk, $chunk);
                 }
-                $excel_content = $this->export($allChunk, "{$periodo1} - {$periodo2}")->getOutput();
+                $filename = TipoReporte::getLabel($tipo_reporte)."_".$dt_start->format('YmdHis').".xlsx";
+                $filePath = SaveReportLog::LOCAL_PATH."/DETALLE_LLAMADAS/{$filename}";
+                $this->export($allChunk, "{$periodo1} - {$periodo2}")->save($filePath);
+                $excel_content = file_get_contents($filePath);
 
                 $this->exportService->reset();
-                $headers = [
+                /*$headers = [
                     "numero_origen" => ['label' => 'NUMERO_ORIGEN'],
                     "fecha" => ['label' => 'FECHA'],
                     "hora_inicio" => ['label' => 'HORA_INICIO'],
@@ -101,12 +114,12 @@ class ExportReporteLlamadas
                     "consumo" => ['label' => 'CONSUMO'],
                     "tipo" => ['label' => 'TIPO'],
                 ];
-                $this->exportService->loadData($headers, $allChunk, []);
-                $this->reportLog($tipo_reporte, $this->exportService, $dt_start, new DateTime());
+                $this->exportService->loadData($headers, $allChunk, []);*/
+                $this->reportLog($tipo_reporte, $filePath, $filename, $dt_start, new DateTime(), $reporteInput, null);
                 return $excel_content;
             }
         } catch (\Throwable $th) {
-            $this->reportLog($tipo_reporte, null, $dt_start, new DateTime(), ['mensaje' => $th->getMessage()]);
+            $this->reportLog($tipo_reporte, null, null, $dt_start, new DateTime(), $reporteInput, $th);
             throw $th;
         }
     }
@@ -169,16 +182,21 @@ class ExportReporteLlamadas
         return $values;
     }
 
-    private function reportLog($tipo_reporte, ?ExportService $exportService, DateTime $ini, DateTime $fin, array $extra_data = [])
+    private function reportLog($tipo_reporte, ?string $local_file, ?string $filename, DateTime $ini, DateTime $fin, array $input, ?\Throwable $error)
     {
-        $inicial = TipoReporte::getLabel($tipo_reporte);
-        $filename = "{$inicial}_".$ini->format('YmdHis');
-        $data = array_merge([
-            'name' => 'DETALLE_LLAMADAS',
-            'ini' => $ini->format('Y-m-d H:i:s'),
-            'fin' => $fin->format('Y-m-d H:i:s'),
-            'trac_name' => TipoReporte::getName($tipo_reporte),
-        ], $extra_data);
-        $this->saveReportLog->fromExport($exportService, $data, $filename, 'DETALLE_LLAMADAS');
+        $logDto = SaveReportDto::create(
+            'DETALLE_LLAMADAS',
+            $filename,
+            $ini,
+            $fin,
+            $error === null ? ReportLogStatus::CORRECTO : ReportLogStatus::ERROR,
+            $error !== null ? $error->getMessage() : null,
+            TipoReporte::getName($tipo_reporte),
+            json_encode($input)
+        );
+        $this->saveReportLog->create($logDto);
+        if ($local_file !== null) {
+            $this->saveReportLog->sendFileToRemoteServer($local_file, "DETALLE_LLAMADAS/{$filename}");
+        }
     }
 }
