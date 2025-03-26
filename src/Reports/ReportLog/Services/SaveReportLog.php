@@ -20,6 +20,9 @@ class SaveReportLog
     private $base_path1 = "/space/reportes";
     private $base_path2 = "/space/reportes";
 
+    const LOCAL_PATH = "/space/reportes";
+    const REMOTE_PATH = "/space/reportes";
+
     public function __construct(ReportLogRepository $repo, StorageService $storage, AuthService $authService, UserRepository $userRepository)
     {
         $this->repo = $repo;
@@ -128,4 +131,33 @@ class SaveReportLog
             $storage->put("{$this->base_path2}/{$path}/{$filename}.csv", $file_contents);
         }
     }
+
+    public function create(SaveReportDto $logDto){
+        $userIdentifier = $this->authService->getUserIdentifier();
+        $user = $this->userRepository->findByIdentifier($userIdentifier);
+
+        $this->repo->save(
+            $logDto->getName(),
+            $logDto->getDireccion() ?? $user->direccion,
+            $logDto->getArea() ?? $user->area,
+            "{$user->name} {$user->last_name}",
+            $userIdentifier,
+            $logDto->getResponsable() ?? "DIEGO MORENO",
+            $logDto->getFilename(),
+            $logDto->getFechaIni(),
+            $logDto->getFechaFin(),
+            0,
+            $logDto->getEstado(),
+            $logDto->getMensaje(),
+            $logDto->getTracName(),
+            $logDto->getInput(),
+        );
+    }
+
+    public function sendFileToRemoteServer(string $localFilePath, string $remoteFilePath){
+        $storage = $this->storage->getStorageSystemByName(StorageSystemName::REPORTS_LOG);
+        $storage->put(self::REMOTE_PATH."/{$remoteFilePath}", file_get_contents($localFilePath));
+    }
+
+
 }
