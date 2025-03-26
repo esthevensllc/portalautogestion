@@ -49,9 +49,9 @@ class EloquentReportLogRepository implements ReportLogRepository
             $strFechaFin = $fin->format('Y-m-d H:i:s');
             DB::transaction(function($conn) use ($strFechaFin, $codigo_c, $trac_name, $input){
                 $pdo = $conn->getPdo();
-                $sql = "UPDATE usraes.reporte_log SET input_blob = EMPTY_BLOB()
+                $sql = "UPDATE usraes.reporte_log SET input = EMPTY_BLOB()
                 where fin = to_date(:fin, 'yyyy-mm-dd hh24:mi:ss') and codigo_c = :codigo_c and trac_name = :trac_name
-                RETURNING input_blob INTO :blob";
+                RETURNING input INTO :blob";
                 $inputIni = null;
                 $stmt = $pdo->prepare($sql);
                 $stmt->bindParam(':fin', $strFechaFin, PDO::PARAM_STR);
