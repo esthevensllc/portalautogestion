@@ -3,6 +3,8 @@
 namespace AMovil\Reports\General\FacturacionAdelantada\Services;
 
 use AMovil\Reports\General\FacturacionAdelantada\Domain\FacturacionAdelantadaRepository;
+use AMovil\Reports\ReportLog\Domain\ReportLogStatus;
+use AMovil\Reports\ReportLog\Services\SaveReportDto;
 use AMovil\Reports\ReportLog\Services\SaveReportLog;
 use AMovil\Shared\Application\Response;
 use AMovil\Shared\Exports\Domain\ExportService;
@@ -11,6 +13,7 @@ use DateTime;
 use Exception;
 use PhpOffice\PhpSpreadsheet\Style as SpreadsheetStyle;
 use Ramsey\Uuid\Uuid;
+use Throwable;
 
 class ExportFacturacionAdelantadaConsolidado
 {
@@ -30,6 +33,14 @@ class ExportFacturacionAdelantadaConsolidado
     public function __invoke($tipoInput, $periodo, $fechaIni, $fechaFin, $cuenta, $numeroFactura, $unidad_trafico_id, $unidad_consumo_id, $consumo_sin_cargo): Response
     {
         $dt_start = new DateTime();
+        $reporteInput = [
+            'tipoInput' => $tipoInput,
+            'cuenta' => $cuenta,
+            'numeroFactura' => $numeroFactura,
+            'unidad_trafico_id' => $unidad_trafico_id,
+            'unidad_consumo_id' => $unidad_consumo_id,
+            'consumo_sin_cargo' => $consumo_sin_cargo,
+        ];
 
         $dtFechaIni = null;
         $dtFechaFin = null;
@@ -46,6 +57,8 @@ class ExportFacturacionAdelantadaConsolidado
             $dtFechaFin = (clone $dtPeriodo)->modify("-1 day");
             $title = $periodo;
             $title_periodo = $periodo;
+            $reporteInput['fechaInicio'] = $dtFechaIni->format("Y-m-d");
+            $reporteInput['fechaFin'] = $dtFechaFin->format("Y-m-d");
         }else{
             $dtFechaIni = DateTime::createFromFormat("Y-m-d", $fechaIni);
             $dtFechaFin = DateTime::createFromFormat("Y-m-d", $fechaFin);
@@ -54,6 +67,8 @@ class ExportFacturacionAdelantadaConsolidado
                 $title .= " - ".$dtFechaFin->format("Ym");
             }
             $title_periodo = $dtFechaIni->format("d/m/Y")." al ".$dtFechaFin->format("d/m/Y");
+            $reporteInput['fechaInicio'] = $fechaIni;
+            $reporteInput['fechaFin'] = $fechaFin;
         }
 
         $data = $this->repo->getReporteConsolidadoByDates(
@@ -69,17 +84,21 @@ class ExportFacturacionAdelantadaConsolidado
 
         try {
             $tempFilename = $this->exportExcel($title_periodo, $title, $customer_full_name, $cuenta, $unidad_trafico_id, $consumo_sin_cargo, $data);
-            $this->reportLog($tempFilename, $dt_start, new DateTime());
+            $filename = "FACTURACION_ADELANTADA_CONSOLIDADO_".$dt_start->format('YmdHis').".xlsx";
+            
+            copy($tempFilename, SaveReportLog::LOCAL_PATH."/{$filename}");
+            $this->reportLog($tempFilename, $filename, $dt_start, new DateTime(), $reporteInput, null);
             
             $content = file_get_contents($tempFilename);
+            unlink($tempFilename);
 
             return new Response([], [
-                "filename" => "FACTURACION_ADELANTADA_CONSOLIDADO.xlsx",
+                "filename" => $filename,
                 "type" => "xlsx",
                 "content" => $content,
             ]);
         } catch (\Throwable $th) {
-            $this->reportLog(null, $dt_start, new DateTime(), ['mensaje' => $th->getMessage()]);
+            $this->reportLog(null, null, $dt_start, new DateTime(), $reporteInput, $th);
             throw $th;
         }        
     }
@@ -216,16 +235,21 @@ class ExportFacturacionAdelantadaConsolidado
         return $unidad_trafico_by_id[$id];
     }
 
-    private function reportLog(?string $locaFile, DateTime $ini, DateTime $fin, array $extra_data = [])
+    private function reportLog(?string $local_file, ?string $filename, DateTime $ini, DateTime $fin, array $input, ?Throwable $error)
     {
-        $filename = "FA_CONSOLIDADO_".$ini->format('YmdHis').".xlsx";
-        $data = array_merge([
-            'name' => 'DETALLE_CONSUMO',
-            'ini' => $ini->format('Y-m-d H:i:s'),
-            'fin' => $fin->format('Y-m-d H:i:s'),
-            'trac_name' => 'detalle_consumo.fa_consolidado',
-            "filename" => $filename
-        ], $extra_data);
-        $this->saveReportLog->__invoke($data, $locaFile, 'DETALLE_CONSUMO');
+        $logDto = SaveReportDto::create(
+            'DETALLE_CONSUMO',
+            $filename,
+            $ini,
+            $fin,
+            $error === null ? ReportLogStatus::CORRECTO : ReportLogStatus::ERROR,
+            $error !== null ? $error->getMessage() : null,
+            'detalle_consumo.fa_consolidado',
+            json_encode($input)
+        );
+        $this->saveReportLog->create($logDto);
+        if ($local_file !== null) {
+            $this->saveReportLog->sendFileToRemoteServer($local_file, "DETALLE_CONSUMO/{$filename}");
+        }
     }
 }
