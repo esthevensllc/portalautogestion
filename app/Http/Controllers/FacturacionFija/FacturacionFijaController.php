@@ -2,6 +2,9 @@
 namespace App\Http\Controllers\FacturacionFija;
 
 use AMovil\Auth\AccessControl\Domain\AuthService;
+use AMovil\Reports\ReportLog\Domain\ReportLogStatus;
+use AMovil\Reports\ReportLog\Services\SaveReportDto;
+use AMovil\Reports\ReportLog\Services\SaveReportLog;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use DB;
@@ -14,14 +17,17 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use ZipArchive;
 use Carbon\Carbon;
+use DateTime;
 
 class FacturacionFijaController extends Controller {
     private $authService;
     private $userIdentifier;
+    private $saveReportLog;
 
-    public function __construct(AuthService $authService)
+    public function __construct(AuthService $authService, SaveReportLog $saveReportLog)
     {
         $this->authService = $authService;
+        $this->saveReportLog = $saveReportLog;
     }
 
     public function index(){
@@ -93,11 +99,10 @@ class FacturacionFijaController extends Controller {
 
         // Si no hay procesos pendientes, insertar un nuevo registro
         DB::statement("
-            INSERT INTO USRAES.TB_FIJA_FACTURADA_LOG (usuario, estado)
-            VALUES (?, ?)
+            INSERT INTO USRAES.TB_FIJA_FACTURADA_LOG (usuario, estado, cod_cliente, fecha_ini, fecha_fin)
+            VALUES (?, ?, ?, to_date(?, 'dd-mm-yyyy'), to_date(?, 'dd-mm-yyyy'))
         ", [
-            $this->userIdentifier, // Nombre del usuario autenticado
-            0                    // Estado 0
+            $this->userIdentifier, 0, $v_cod_clie, $v_fecha_ini, $v_fecha_fin
         ]);
 
         // Formatear código cliente
@@ -147,12 +152,15 @@ class FacturacionFijaController extends Controller {
     }
 
     public function generar_reporte_sf(Request $request){
+        $fechaIniExec = new DateTime();
         $this->userIdentifier = $this->authService->getUserIdentifier();
         //$now = Carbon::now();
         //$v_log_id = (int) $now->format('YmdHis');
         $v_cod_clie = $request->get('cod_cliente');
         $v_fecha_ini = $request->get('f_ini');
         $v_fecha_fin = $request->get('f_fin');
+
+        $reporteInput = ['cod_cliente' => $v_cod_clie, 'fechaInicio' => $v_fecha_ini, 'fechaFin' => $v_fecha_fin];
 
         while(strlen($v_cod_clie)<8){
             $v_cod_clie = '0'.$v_cod_clie;
@@ -194,36 +202,48 @@ class FacturacionFijaController extends Controller {
                     AND TO_CHAR(TRUNC(HORAINI),'YYYYMMDD') <= to_date('{$v_fecha_fin}','dd/mm/yyyy')
                 )";
 
-        $resp = [];
-        foreach($plsql as $sql){
-            $resp[] = DB::statement(DB::Raw($sql));
+        try {
+            $resp = [];
+            foreach($plsql as $sql){
+                $resp[] = DB::statement(DB::Raw($sql));
+            }
+
+            $result = DB::select(DB::RAW("select telefono_origen from USRAES.TB_FIJA_SIN_FACTURADA_{$this->userIdentifier} where rownum = 1"));
+            if(isset($result[0])){
+                $tel_fijo = $result[0]->telefono_origen;
+            }else{
+                $tel_fijo = '';
+            }
+
+            $now = Carbon::now(); 
+
+            /*logReport::insert([
+                'hostname' => 'limnwkdaswfv01',
+                'name' => 'FACTURACION FIJA',
+                'direccion' => '',
+                'area' => 'Control Regulatorio',
+                'contacto' => \Auth::guard(backpack_guard_name())->user()->name,
+                'responsable' => 'DIEGO MORENO',
+                'file' => 'Facturacion_Fija_'.$tel_fijo.'_'.$now->format('Ymd').$now->format('H:i:s'),
+                'ini' => $v_fecha_ini,
+                'fin' => $v_fecha_fin,
+                'lat' => 0,
+                'estado' => 1,
+                'mensaje' => 'se generó el archivo'
+            ]);*/
+
+            $filename = "FACTURACION_FIJA_".$fechaIniExec->format('YmdHis').".xlsx";
+            $filePath = SaveReportLog::LOCAL_PATH."/MICHAELL_CIA_NN/{$filename}";
+
+            Excel::store(new FacturacionFijaSFExport($this->authService), $filePath);
+
+            $this->reportLog($filePath, $filename, $fechaIniExec, new DateTime(), $reporteInput, null);
+
+            return Excel::download(new FacturacionFijaSFExport($this->authService), $filename);
+        } catch (\Throwable $th) {
+            $this->reportLog(null, null, $fechaIniExec, new DateTime(), $reporteInput, $th);
+            throw $th;
         }
-
-        $result = DB::select(DB::RAW("select telefono_origen from USRAES.TB_FIJA_SIN_FACTURADA_{$this->userIdentifier} where rownum = 1"));
-        if(isset($result[0])){
-            $tel_fijo = $result[0]->telefono_origen;
-        }else{
-            $tel_fijo = '';
-        }
-
-        $now = Carbon::now(); 
-
-        /*logReport::insert([
-            'hostname' => 'limnwkdaswfv01',
-            'name' => 'FACTURACION FIJA',
-            'direccion' => '',
-            'area' => 'Control Regulatorio',
-            'contacto' => \Auth::guard(backpack_guard_name())->user()->name,
-            'responsable' => 'DIEGO MORENO',
-            'file' => 'Facturacion_Fija_'.$tel_fijo.'_'.$now->format('Ymd').$now->format('H:i:s'),
-            'ini' => $v_fecha_ini,
-            'fin' => $v_fecha_fin,
-            'lat' => 0,
-            'estado' => 1,
-            'mensaje' => 'se generó el archivo'
-        ]);*/
-
-        return Excel::download(new FacturacionFijaSFExport($this->authService), 'facturacion_fija.xlsx');
     }
 
     public function reportes(){
@@ -254,9 +274,27 @@ class FacturacionFijaController extends Controller {
     }
 
     public function descargar_reporte($file){
-        $rutaArchivo = storage_path('app/facturacion-fija/'.$file);
-        $nombreArchivo = $file;
-        return response()->download($rutaArchivo, $nombreArchivo);
+        $log = DB::table('USRAES.TB_FIJA_FACTURADA_LOG')
+            ->where('usuario', $this->authService->getUserIdentifier())
+            ->where('archivo', $file)
+            ->first();
+
+        if ($log === null) {
+            return response()->json(['message' => "El reporte generado no existe"], 404);
+        }
+        $reporteInput = ['cod_cliente' => $log->cod_cliente, 'fechaInicio' => $log->fecha_ini, 'fechaFin' => $log->fecha_fin];
+        $fechaIniExec = new DateTime();
+        try {
+            $rutaArchivo = storage_path('app/facturacion-fija/'.$file);
+            $nombreArchivo = $file;
+            
+            $this->reportLog($rutaArchivo, $nombreArchivo, $fechaIniExec, new DateTime(), $reporteInput, null);
+
+            return response()->download($rutaArchivo, $nombreArchivo);
+        } catch (\Throwable $th) {
+            $this->reportLog(null, null, $fechaIniExec, new DateTime(), $reporteInput, $th);
+            throw $th;
+        }
     }
 
     public function test()
@@ -274,5 +312,23 @@ class FacturacionFijaController extends Controller {
         //$data = DB::connection('oracle_dwo')->select('select a.* from SIGRE_TEST_LOG a right join dual on 1=1');
         $data = DB::connection('oracle')->table('reporte_sigrei_tmp')->get();
         return response()->json($data);
+    }
+
+    private function reportLog(?string $local_file, ?string $filename, DateTime $ini, DateTime $fin, array $input, ?\Throwable $error)
+    {
+        $logDto = SaveReportDto::create(
+            'MICHAELL_CIA_NN',
+            $filename,
+            $ini,
+            $fin,
+            $error === null ? ReportLogStatus::CORRECTO : ReportLogStatus::ERROR,
+            $error !== null ? $error->getMessage() : null,
+            'michaell-cia-nn',
+            json_encode($input)
+        );
+        $this->saveReportLog->create($logDto);
+        // if ($local_file !== null) {
+        //     $this->saveReportLog->sendFileToRemoteServer($local_file, "MICHAELL_CIA_NN/{$filename}");
+        // }
     }
 }
