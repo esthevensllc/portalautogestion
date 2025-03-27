@@ -3,6 +3,8 @@
 namespace AMovil\Reports\General\RepMichaellCIANN\Services;
 
 use AMovil\Reports\General\RepMichaellCIANN\Domain\RepMichaellCIANNRepository;
+use AMovil\Reports\ReportLog\Domain\ReportLogStatus;
+use AMovil\Reports\ReportLog\Services\SaveReportDto;
 use AMovil\Reports\ReportLog\Services\SaveReportLog;
 use AMovil\Shared\Application\Response;
 use AMovil\Shared\Exports\Domain\ExportService;
@@ -30,6 +32,7 @@ class ExportRepMichaellCIANN
     public function __invoke($numCuenta, $periodo)
     {
         $dt_start = new DateTime();
+        $reporteInput = ["numCuenta" => $numCuenta, "periodo" => $periodo];
         try {
             $dtPeriodo = DateTime::createFromFormat("Ym", $periodo);
 
@@ -198,20 +201,20 @@ class ExportRepMichaellCIANN
             $this->exportService->loadData($headers, $data, $options);
             $this->setColumnAutoSize($options["sheetIndex"]);
 
-            $temp_filename = "{$this->storagePath}/".Uuid::uuid4()->toString().".xlsx";
-            $this->exportService->getWriter(WriterType::XLSX)->save($temp_filename);
+            $filename = "MICHAELL_CIA_NN_".$dt_start->format('YmdHis');
+            $filePath = SaveReportLog::LOCAL_PATH."/MICHAELL_CIA_NN/{$filename}";
+            $this->exportService->getWriter(WriterType::XLSX)->save($filePath);
 
-            $this->reportLog($temp_filename, $dt_start, new DateTime());
+            $this->reportLog($filePath, $filename, $dt_start, new DateTime(), $reporteInput, null);
 
             $response = new Response([], [
-                'content' => file_get_contents($temp_filename),
+                'content' => file_get_contents($filePath),
                 'type' => 'xlsx',
                 'filename' => "MICHAELL_CIA_NN_{$periodo}.xlsx"
             ]);
-            unlink($temp_filename);
             return $response;
         } catch (\Throwable $th) {
-            $this->reportLog(null, $dt_start, new DateTime(), ['mensaje' => $th->getMessage()]);
+            $this->reportLog(null, null, $dt_start, new DateTime(), $reporteInput, null);
             throw $th;
         }
     }
@@ -226,16 +229,21 @@ class ExportRepMichaellCIANN
         }
     }
 
-    private function reportLog($allFilename, DateTime $ini, DateTime $fin, array $extra_data = [])
+    private function reportLog(?string $local_file, ?string $filename, DateTime $ini, DateTime $fin, array $input, ?\Throwable $error)
     {
-        $filename = "MICHAELL_CIA_NN_".$ini->format('YmdHis');
-        $data = array_merge([
-            'name' => 'MICHAELL_CIA_NN',
-            'ini' => $ini->format('Y-m-d H:i:s'),
-            'fin' => $fin->format('Y-m-d H:i:s'),
-            'trac_name' => 'michaell-cia-nn',
-            "file" => $allFilename !== null ? $allFilename : $filename
-        ], $extra_data);
-        $this->saveReportLog->__invoke($data, $allFilename, 'MICHAELL_CIA_NN');
+        $logDto = SaveReportDto::create(
+            'MICHAELL_CIA_NN',
+            $filename,
+            $ini,
+            $fin,
+            $error === null ? ReportLogStatus::CORRECTO : ReportLogStatus::ERROR,
+            $error !== null ? $error->getMessage() : null,
+            'michaell-cia-nn',
+            json_encode($input)
+        );
+        $this->saveReportLog->create($logDto);
+        if ($local_file !== null) {
+            $this->saveReportLog->sendFileToRemoteServer($local_file, "MICHAELL_CIA_NN/{$filename}");
+        }
     }
 }
