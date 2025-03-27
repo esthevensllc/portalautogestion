@@ -7,10 +7,16 @@ use DB;
 
 class EloquentUserRepository implements UserRepository
 {
-    private $table = 'usraes.padm_user';
-    private $roles_table = 'usraes.padm_user_rol';
+    private $table = '';
+    private $roles_table = '';
 
     private $name_identifier = 'username';
+
+    public function __construct()
+    {
+        $this->table = config('app.auth_table_user');
+        $this->roles_table = config('app.auth_table_user_rol');
+    }
 
     private function builder(){
         return DB::table($this->table);

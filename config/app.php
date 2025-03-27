@@ -134,6 +134,17 @@ return [
     |
     */
 
+    'auth_table_user' => env('AUTH_TABLE_USER', 'usraes.padm_user'),
+
+    'auth_table_user_rol' => env('AUTH_TABLE_USER_ROL', 'usraes.padm_user_rol'),
+    
+    'auth_table_rol' => env('AUTH_TABLE_ROL', 'usraes.padm_rol'),
+    
+    'auth_table_rol_seguimiento' => env('AUTH_TABLE_ROL_SEGUIMIENTO', 'usraes.padm_rol_seguimiento'),
+    
+    'auth_table_seguimiento' => env('AUTH_TABLE_SEGUIMIENTO', 'usraes.prg_seguimiento'),
+    
+
     'providers' => [
 
         /*

@@ -7,8 +7,14 @@ use Illuminate\Support\Facades\DB;
 
 class EloquentRolRepository implements RolRepository
 {
-    private $table = "usraes.padm_rol";
-    private $table_modules = "usraes.padm_rol_seguimiento";
+    private $table = "";
+    private $table_modules = "";
+
+    public function __construct()
+    {
+        $this->table = config('app.auth_table_rol');
+        $this->table_modules = config('app.auth_table_rol_seguimiento');
+    }
 
     private function builder(){
         return DB::table($this->table);

@@ -7,8 +7,15 @@ use DB;
 
 class User extends Model
 {
-    protected $table = 'usraes.padm_user';
-    private $roles_table = 'usraes.padm_user_rol';
+    protected $table = '';
+    private $roles_table = '';
+
+    public function __construct(array $attributes = [])
+    {
+        $this->table = config('app.auth_table_user');
+        $this->roles_table = config('app.auth_table_user_rol');
+        parent::__construct($attributes);
+    }
 
     public function getRoles()
     {

@@ -7,7 +7,7 @@ use DB;
 
 class EloquentModuleRepository implements ModuleRepository
 {
-    private $table = 'usraes.prg_seguimiento';
+    private $table = '';
     private $fields = [
         'id_tracing',
         'trac_name as label',
@@ -19,6 +19,11 @@ class EloquentModuleRepository implements ModuleRepository
         'icon',
         'name'
     ];
+
+    public function __construct()
+    {
+        $this->table = config('app.auth_table_seguimiento');
+    }
 
     private function builder(){
        return DB::table($this->table);

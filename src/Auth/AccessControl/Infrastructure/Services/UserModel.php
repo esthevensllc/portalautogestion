@@ -11,6 +11,12 @@ class UserModel extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
-    protected $table = 'padm_user';
+    protected $table = '';
     protected $primaryKey = 'id';
+
+    public function __construct(array $attributes = [])
+    {
+        $this->table = config('app.auth_table_user');
+        parent::__construct($attributes);
+    }
 }

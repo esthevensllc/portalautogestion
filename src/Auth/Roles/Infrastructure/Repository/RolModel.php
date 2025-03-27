@@ -6,5 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class RolModel extends Model
 {
-    protected $table = 'usraes.padm_rol';
+    protected $table = '';
+
+    public function __construct(array $attributes = [])
+    {
+        $this->table = config('app.auth_table_rol');
+        parent::__construct($attributes);
+    }
 }
