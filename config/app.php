@@ -143,6 +143,8 @@ return [
     'auth_table_rol_seguimiento' => env('AUTH_TABLE_ROL_SEGUIMIENTO', 'usraes.padm_rol_seguimiento'),
     
     'auth_table_seguimiento' => env('AUTH_TABLE_SEGUIMIENTO', 'usraes.prg_seguimiento'),
+
+    'log_table_reporte' => env('LOG_TABLE_REPORTE', 'usraes.reporte_log'),
     
 
     'providers' => [

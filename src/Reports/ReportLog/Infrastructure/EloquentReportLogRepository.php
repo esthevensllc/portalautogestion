@@ -26,11 +26,17 @@ class EloquentReportLogRepository implements ReportLogRepository
         'estado' => ["label" => 'estado', "type" => 'string'],
         'trac_name' => ["label" => 'trac_name', "type" => 'string'],
     ];
+    private $table;
+
+    public function __construct()
+    {
+        $this->table = config('app.log_table_reporte');
+    }
 
     public function save($name, $direccion, $area, $contacto, $codigo_c, $responsable, $file, DateTime $ini, DateTime $fin, $lat, $estado, $mensaje, $trac_name, $input = null)
     {
-        DB::table('usraes.reporte_log')->insert([
-            'hostname' => 'limnwkdaswfv01',
+        DB::table($this->table)->insert([
+            'hostname' => gethostname(),
             'name' => $name,
             'direccion' => $direccion,
             'area' => $area,
@@ -49,7 +55,7 @@ class EloquentReportLogRepository implements ReportLogRepository
             $strFechaFin = $fin->format('Y-m-d H:i:s');
             DB::transaction(function($conn) use ($strFechaFin, $codigo_c, $trac_name, $input){
                 $pdo = $conn->getPdo();
-                $sql = "UPDATE usraes.reporte_log SET input = EMPTY_BLOB()
+                $sql = "UPDATE {$this->table} SET input = EMPTY_BLOB()
                 where fin = to_date(:fin, 'yyyy-mm-dd hh24:mi:ss') and codigo_c = :codigo_c and trac_name = :trac_name
                 RETURNING input INTO :blob";
                 $inputIni = null;
@@ -66,16 +72,16 @@ class EloquentReportLogRepository implements ReportLogRepository
 
     public function getByCriteria(array $filters, $sortBy = [], $offset=0, $limit=0)
     {
-        $builder = DB::table('usraes.reporte_log');
+        $builder = DB::table($this->table);
         EloquentCriteriaConverter::fromRawArray($builder, $this->fields, $filters, $sortBy);
 
         $response = [
-            'recordsTotal' => DB::table('usraes.reporte_log')->count(),
+            'recordsTotal' => DB::table($this->table)->count(),
             'recordsFiltered' => $builder->count(),
             'data' => []
         ];
 
-        $builder = DB::table('usraes.reporte_log');
+        $builder = DB::table($this->table);
         EloquentCriteriaConverter::fromRawArray($builder, $this->fields, $filters, $sortBy, $offset, $limit);
 
         $response['data'] = $builder->get();
