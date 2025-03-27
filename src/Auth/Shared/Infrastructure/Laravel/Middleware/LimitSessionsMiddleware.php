@@ -18,7 +18,7 @@ class LimitSessionsMiddleware
             if($this->isSessionTimeout()){
                 Auth::logout();
                 session()->flush();
-                return redirect()->route("login");
+                return redirect()->route("/");
             }
 
             $userId = Auth::id();

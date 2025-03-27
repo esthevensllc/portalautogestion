@@ -4,6 +4,7 @@ namespace AMovil\Auth\AccessControl\Infrastructure\Services;
 
 use AMovil\Auth\AccessControl\Domain\AuthService;
 use Datetime;
+use Illuminate\Support\Facades\Auth;
 
 class AuthCentral implements AuthService
 {
@@ -83,6 +84,11 @@ class AuthCentral implements AuthService
                     $this->session_name.'__username' => $result['userInfo']['username'],
                     $this->session_name.'__expireDate' => $result['expireDate']+(3600*20),
                 ]);
+                $user = UserModel::where("username", $result['userInfo']['username'])->first();
+                Auth::guard()->login($user);
+            } else {
+                Auth::guard()->logout();
+                session()->invalidate();
             }
             return $is_auth;
         }
@@ -99,7 +105,9 @@ class AuthCentral implements AuthService
 
     public function logout()
     {
+        Auth::guard()->logout();
         session()->invalidate();
+        session()->regenerateToken();
     }
 
     public function getUserIdentifier()

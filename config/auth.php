@@ -62,7 +62,7 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => App\Models\User::class,
+            'model' => \AMovil\Auth\AccessControl\Infrastructure\Services\UserModel::class,
         ],
 
         // 'users' => [

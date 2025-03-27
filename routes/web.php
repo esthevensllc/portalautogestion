@@ -19,7 +19,7 @@ Route::get('/', function () {
 });
 
 Route::group([
-    'middleware' => ['auth.cas'],
+    'middleware' => ['auth.cas', 'amovil.limit_sessions'],
 ], function () {
     Route::get('/', function(){
         return redirect('dashboard');
