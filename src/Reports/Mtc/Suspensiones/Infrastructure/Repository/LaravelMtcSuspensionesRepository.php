@@ -943,7 +943,9 @@ class LaravelMtcSuspensionesRepository implements MtcSuspensionesRepository
         DB::raw("to_char(ASND_FEC_INICONTRATO, 'dd/mm/yyyy') as ASND_FEC_INICONTRATO"),
         DB::raw("to_char(ASND_FEC_FINCONTRATO, 'dd/mm/yyyy') as ASND_FEC_FINCONTRATO"),
         'ASNV_DIRECCION',
-        'ASNV_UBIGEO')->get();
+        'ASNV_UBIGEO')
+        ->whereRaw("ASND_FECHA_BAJA IS NULL")
+        ->get();
     }
 
     public function getCountSuspensionesByAsncEstado($estado)
