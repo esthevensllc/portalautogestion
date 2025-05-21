@@ -58,6 +58,10 @@
                             <p class="d-inline input_meses"></p>
                         </div>
                         <div class="col-lg-12">
+                            <p class="mb-0 font-weight-bold d-inline">Compensación:</p>
+                            <p class="d-inline input_compensacion"></p>
+                        </div>
+                        <div class="col-lg-12">
                             <table class="table-distritos table table-sm table-bordered">
                                 <thead class="thead-light">
                                     <tr>
@@ -131,6 +135,7 @@ $(function() {
                     document.querySelector(".input_fecha_ini").innerHTML = data.fecha_ini;
                     document.querySelector(".input_fecha_fin").innerHTML = data.fecha_fin;
                     document.querySelector(".input_meses").innerHTML = data.meses;
+                    document.querySelector(".input_compensacion").innerHTML = Number(data.compensacion_id) === 1 ? 'Si aplica' : 'No aplica';
                     let distritosHtml = data.planos.map(row => `<tr>
                         <td>${row.departamento}</td>
                         <td>${row.provincia}</td>
@@ -145,6 +150,7 @@ $(function() {
                     document.querySelector(".input_fecha_ini").innerHTML = '';
                     document.querySelector(".input_fecha_fin").innerHTML = '';
                     document.querySelector(".input_meses").innerHTML = '';
+                    document.querySelector(".input_compensacion").innerHTML = '';
                     document.querySelector(".table-distritos tbody").innerHTML = '';
                 }
             })

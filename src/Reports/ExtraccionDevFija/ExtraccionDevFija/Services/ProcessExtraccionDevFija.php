@@ -20,26 +20,13 @@ class ProcessExtraccionDevFija
         $this->exportService = $exportService;
     }
 
-    public function __invoke($departamentos, $provincias, $distritos, $planos,
-    $ticket, $servicioAfectado, $fechaIni, $horaIni, $fechaFin, $horaFin, $mesesInteres): Response
-    {
+    public function processAndGetGruposUsuario($departamentos, $provincias, $distritos, $planos,
+    $ticket, $servicioAfectado, $fechaIni, $horaIni, $fechaFin, $horaFin, $mesesInteres){
         $arrayDistritos = [];
         foreach($departamentos as $index => $departemento){
             $arrayPlanos = explode(",", str_replace(" ", "", $planos[$index]));
             $arrayDistritos[] = [$departemento, $provincias[$index], $distritos[$index], $arrayPlanos];
         }
-
-        /*
-        $arrayTickets = [];
-        foreach($tickets as $index => $_){
-            $arrayTickets[] = [
-                $tickets[$index],
-                $servicioAfectado[$index],
-                $fechaIni[$index]." ".$horaIni[$index],
-                $fechaFin[$index]." ".$horaFin[$index]
-            ];
-        }*/
-        // dd(["dist" => $arrayDistritos, "ticket" => $arrayTickets, "int" => $mesesInteres]);
 
         $dtFechaIni = DateTime::createFromFormat("Y-m-d H:i:s", "{$fechaIni} {$horaIni}");
         $dtFechaFin = DateTime::createFromFormat("Y-m-d H:i:s", "{$fechaFin} {$horaFin}");
@@ -58,12 +45,26 @@ class ProcessExtraccionDevFija
             throw new Exception("Ya se tiene procesado el TK_{$ticket}");
         }
 
-        $data = $this->repo->process(
+        $usuarios = $this->repo->processAndGetGruposUsuario(
             $arrayDistritos,
             $ticket, $servicioAfectado, $dtFechaIni, $dtFechaFin,
             $mesesInteres
         );
-        //$data = [];
+        return new Response([], [
+            ["id" => 1, "label" => "{$usuarios->usuarios_activos} usuarios activos"],
+            ["id" => 2, "label" => "{$usuarios->usuarios_con_trafico} usuarios con trafico"],
+        ]);
+    }
+
+    public function processEnd($ticket, $grupoUsuarios): Response
+    {
+        // grupoUsuarios (1=usuarios activos, 2=usuarios con trafico)
+        $reportCount = $this->repo->countReportByTicketDepartamento($ticket);
+        if($reportCount > 0){
+            throw new Exception("Ya se tiene procesado el TK_{$ticket}");
+        }
+
+        $data = $this->repo->processEnd($ticket, $grupoUsuarios);
 
         $headers = [
             "ticket" => ["label" => "TICKET"],

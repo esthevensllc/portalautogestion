@@ -81,6 +81,7 @@
                                     <th>Hora ini</th>
                                     <th>Fecha Fin</th>
                                     <th>Hora Fin</th>
+                                    <th>Compensación</th>
                                     <th>#</th>
                                 </tr>
                             </thead>
@@ -99,6 +100,14 @@
                                     <th><input type="text" id="hora_ini" class="form-control form-control-sm" value="" placeholder="00:00:00"></th>
                                     <th><input type="date" id="fecha_fin" class="form-control form-control-sm" value=""></th>
                                     <th><input type="text" id="hora_fin" class="form-control form-control-sm" value="" placeholder="00:00:00"></th>
+                                    <th>
+                                        <select class="form-control form-control-sm" id="compensacion">
+                                            <option value="">Seleccione</option>
+                                            @foreach ($config["compensaciones"] as $row)
+                                                <option value="{{ $row->id }}">{{ $row->label }}</option>
+                                            @endforeach
+                                        </select>
+                                    </th>
                                     <th>
                                         <button type="button" class="btn btn-success btn-sm btn_add_servicio">Agregar</button>
                                     </th>
@@ -156,8 +165,12 @@ var id,name;
 //$(function() {
     const config = @json($config);
     let servicioAfectadoById = {};
+    let compensacionById = {};
     config.servicio_afectado.forEach(r => {
         servicioAfectadoById[r.id] = r;
+    });
+    config.compensaciones.forEach(r => {
+        compensacionById[r.id] = r;
     });
 
     // inicio
@@ -175,6 +188,8 @@ var id,name;
         hora_ini: {type: "time", readonly: true},
         fecha_fin: {type: "date", readonly: true},
         hora_fin: {type: "time", readonly: true},
+        compensacion_id: {type: "hidden"},
+        compensacion: {type: "string", readonly: true},
     });
 
     document.querySelector("#tbl_ubicacion .btn_add_plano")
@@ -214,6 +229,7 @@ var id,name;
         //let planosInput = distritos.map(row => `${row._plano.replaceAll("\n", "").replaceAll("\r", "")}`).join("\n");
 
         let servicio_afectado_id = document.querySelector("#servicio_afectado").value;
+        let compensacion_id = document.querySelector("#compensacion").value;
 
         let to_add = {
             servicio_afectado_id: servicio_afectado_id,
@@ -221,10 +237,15 @@ var id,name;
             fecha_ini: document.querySelector("#fecha_ini").value,
             hora_ini: document.querySelector("#hora_ini").value,
             fecha_fin: document.querySelector("#fecha_fin").value,
-            hora_fin: document.querySelector("#hora_fin").value
+            hora_fin: document.querySelector("#hora_fin").value,
+            compensacion_id: compensacion_id,
+            compensacion: '',
         };
         if(servicioAfectadoById[servicio_afectado_id] !== undefined){
             to_add.servicio_afectado = servicioAfectadoById[servicio_afectado_id].label;
+        }
+        if(compensacionById[compensacion_id] !== undefined){
+            to_add.compensacion = compensacionById[compensacion_id].label;
         }
         let isInvalid = Object.keys(to_add).some(name => to_add[name] === "");
         try {

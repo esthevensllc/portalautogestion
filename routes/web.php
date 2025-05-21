@@ -413,7 +413,8 @@ Route::group([
     });
     Route::group(['prefix' => 'extraccion-dev-fija/informes-falla/procesar', 'trac_name' => 'extraccion-dev-fija.informes-falla.process'], function(){
         Route::get('/', [\AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers\InformeFallasController::class, 'processView']);
-        Route::post('/', [\AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers\InformeFallasController::class, 'processFromInput']);
+        Route::post('grupos-usuario', [\AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers\InformeFallasController::class, 'processGruposUsuario']);
+        Route::post('/', [\AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers\InformeFallasController::class, 'processEnd']);
     });
     Route::group(['prefix' => 'extraccion-dev-fija/carga-reportes', 'trac_name' => 'extraccion-dev-fija.carga-reportes'], function(){
         Route::get('/', [\AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Controllers\ExtraccionDevFijaController::class, 'cargaReporteView']);

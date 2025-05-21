@@ -99,7 +99,7 @@ class ExtraccionDevFijaController
     {
         ini_set('max_execution_time', '7200');
         
-        $response = $this->process->__invoke(
+        $this->process->processAndGetGruposUsuario(
             $request->input("departamento", []),
             $request->input("provincia", []),
             $request->input("distrito", []),
@@ -111,6 +111,10 @@ class ExtraccionDevFijaController
             $request->input("fecha_fin"),
             $request->input("hora_fin"),
             $request->input("meses_interes")
+        )->data();
+        $response = $this->process->processEnd(
+            $request->input("ticket"),
+            1
         )->data();
         
         return response($response["content"], 200, [

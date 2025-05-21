@@ -36,6 +36,7 @@ class EloquentInformeFallasRepository implements InformeFallasRepository
                 "name_file" => $filename,
                 "username" => $username,
                 "servicio_afectado_id" => $row["servicioAfectadoId"],
+                "compensacion_id" => $row["compensacionId"],
                 "fecha_carga" => $now,
                 "revisado" => 0,
                 "aprobado" => 0,

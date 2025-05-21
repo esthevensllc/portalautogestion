@@ -131,6 +131,10 @@ class InformeFallasController
             ->get(),
             'tableTitle' => 'INFORMES DE FALLA',
             "servicio_afectado" => $this->finder->getServiciosAfectados(),
+            "compensaciones" => json_decode(json_encode([
+                ["label" => "No aplica", "id" => "0"],
+                ["label" => "Sí aplica", "id" => "1"]
+            ])),
             'searchApi' => url('extraccion-dev-fija/informes-falla/cargar/search'),
             'updateStatusApi' => url('extraccion-dev-fija/informes-falla/cargar/update-status'),
             'deleteApi' => url('extraccion-dev-fija/informes-falla/cargar/[numReporte]/[servicioAfectadoId]/delete'),
@@ -146,6 +150,7 @@ class InformeFallasController
         $horasIni = $request->input("hora_ini");
         $fechasFin = $request->input("fecha_fin");
         $horasFin = $request->input("hora_fin");
+        $compensaciones = $request->input("compensacion_id");
         
         $departamentos = $request->input("departamento");
         $provincias = $request->input("provincia");
@@ -170,6 +175,7 @@ class InformeFallasController
                 "horaIni" => $horasIni[$index],
                 "fechaFin" => $fechasFin[$index],
                 "horaFin" => $horasFin[$index],
+                "compensacionId" => $compensaciones[$index],
             ];
         }
         
@@ -183,13 +189,14 @@ class InformeFallasController
         $informesFalla = $this->finder->getPendientesProcesar()["data"];
         $config = [
             'title' => 'Procesar Extracción',
+            'processGruposUsuarioApi' => url('extraccion-dev-fija/informes-falla/procesar/grupos-usuario'),
             'processApi' => url('extraccion-dev-fija/informes-falla/procesar'),
             'informesFalla' => $informesFalla
         ];
         return view("extraccion_dev_fija.process_extraccion_fija", compact("config"));
     }
 
-    public function processFromInput(Request $request)
+    public function processGruposUsuario(Request $request)
     {
         ini_set('max_execution_time', '7200');
         $numReporte = $request->input("num_reporte");
@@ -222,7 +229,7 @@ class InformeFallasController
         $dtFechaIni = DateTime::createFromFormat("Y-m-d H:i:s", $input->fecha_ini);
         $dtFechaFin = DateTime::createFromFormat("Y-m-d H:i:s", $input->fecha_fin);
 
-        $this->process->__invoke(
+        $grupoUsuarios = $this->process->processAndGetGruposUsuario(
             $departamentos,
             $provincias,
             $distritos,
@@ -234,6 +241,25 @@ class InformeFallasController
             $dtFechaFin->format("Y-m-d"),
             $dtFechaFin->format("H:i:s"),
             $input->meses
+        )->data();
+
+        // $this->updater->updateStatusToProcesado($input->numero_reporte, $input->servicio_afectado_id);
+
+        // $this->notifyOnProcessed->__invoke($input->numero_reporte, $input->servicio_afectado_id);
+        
+        return response()->json($grupoUsuarios);
+    }
+
+    public function processEnd(Request $request){
+        $numReporte = $request->input("num_reporte");
+        $ticket = $request->input("ticket");
+        $grupoUsuarios = $request->input("grupo_usuarios");
+        
+        $input = $this->findReportInputs->__invoke($numReporte, $ticket)->data();
+
+        $this->process->processEnd(
+            $ticket,
+            $grupoUsuarios
         )->data();
 
         $this->updater->updateStatusToProcesado($input->numero_reporte, $input->servicio_afectado_id);

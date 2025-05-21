@@ -76,7 +76,8 @@ class CreateInformeFallas
                 $row["servicioAfectadoId"],
                 $dtFechaIni,
                 $dtFechaFin,
-                12
+                12,
+                $row["compensacionId"],
             );
         }
         

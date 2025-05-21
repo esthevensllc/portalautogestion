@@ -3,9 +3,11 @@
 namespace AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Services;
 
 use AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Domain\ExtraccionDevFijaRepository;
+use AMovil\Reports\ExtraccionDevFija\InformesFalla\Domain\InformeFallasRepository;
 use AMovil\Shared\Application\Response;
 use AMovil\Shared\Exports\Domain\ExportService;
 use AMovil\Shared\Exports\Domain\WriterType;
+use Exception;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use Ramsey\Uuid\Uuid;
 use ZipArchive;
@@ -13,16 +15,23 @@ use ZipArchive;
 class ExportExtraccionFijaPostpago
 {
     private $repo;
+    private $informeRepo;
     private $exportService;
 
-    public function __construct(ExtraccionDevFijaRepository $repo, ExportService $exportService)
+    public function __construct(ExtraccionDevFijaRepository $repo, InformeFallasRepository $informeRepo, ExportService $exportService)
     {
         $this->repo = $repo;
+        $this->informeRepo = $informeRepo;
         $this->exportService = $exportService;
     }
 
     public function __invoke($ticket)
     {
+        $informeFalla = $this->informeRepo->getByCriteria(["ticket.eq.{$ticket}"]);
+        if (count($informeFalla['data']) === 0) {
+            throw new Exception("No se encontro el informe de fallas para el ticket");
+        }
+        $informeFalla = $informeFalla['data'][0];
         $fuentes = $this->repo->getFuentesReportePostpago($ticket);
         $response = null;
         if(count($fuentes) > 1){
@@ -31,7 +40,7 @@ class ExportExtraccionFijaPostpago
             $tempfiles = [$zipTempfilename];
             $zip->open($zipTempfilename, ZipArchive::CREATE);
             foreach($fuentes as $row){
-                $data = $this->repo->getReportePostpago($ticket, $row->fuente);
+                $data = $this->repo->getReportePostpago($ticket, $row->fuente, $informeFalla->compensacion_id);
                 $tempfile = $this->getExportTempfile($data);
                 $zip->addFile($tempfile, "FIJA_POSTPAGO_{$row->fuente}.xlsx");
                 $tempfiles[] = $tempfile;
@@ -51,7 +60,7 @@ class ExportExtraccionFijaPostpago
             $data = [];
             if(count($fuentes) === 1) {
                 $fuente = $fuentes[0]->fuente;
-                $data = $this->repo->getReportePostpago($ticket, $fuente);
+                $data = $this->repo->getReportePostpago($ticket, $fuente, $informeFalla->compensacion_id);
             }
             $tempfile = $this->getExportTempfile($data);
             $content = file_get_contents($tempfile);

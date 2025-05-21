@@ -24,8 +24,13 @@
                         <option value="">Seleccione</option>
                     </select>
                 </div>
+                <div class="col-lg-12 form-group">
+                    <button type="submit" class="btn btn-secondary btn-sm btn_export">Calcular usuarios</button>
+                </div>
+                <div class="col-lg-12 mb-2 list-minutos">
+                </div>
                 <div class="col-lg-12">
-                    <button type="submit" class="btn btn-primary btn-sm btn-process">Procesar</button>
+                    <button type="button" class="btn btn-primary btn-sm btn-process" style="display: none;">Procesar</button>
                 </div>
             </div>
         </form>
@@ -62,8 +67,16 @@ $(function() {
         let htmlReports = (ticketsByNumReporte[e.target.value]??[])
         .map(row =>  `<option value="${row.ticket}">${row.ticket}</option>`);
         htmlReports = `<option value="">Seleccione</option>${htmlReports}`;
+        $(".list-minutos").html('');
+        $(".btn-process").hide();
         $("select[name=ticket]").html(htmlReports).select2({width: '100%'});
         $("select[name=ticket]").trigger("change");
+    });
+
+    $("select[name=ticket]")
+    .on("change", function(e){
+        $(".list-minutos").html('');
+        $(".btn-process").hide();
     });
 
     document.querySelector("#form_export")
@@ -73,6 +86,55 @@ $(function() {
             _token: $("*[name=_token]").val(),
             num_reporte: $("select[name=num_reporte]").val(),
             ticket: $("select[name=ticket]").val(),
+        };
+        const loader_component = document.querySelector('.loader_component');
+        loader_component.style.display = 'block';
+        utils.fetch(`${config.processGruposUsuarioApi}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            body: JSON.stringify(body)
+        })
+        .then(async(response) => {
+            let isOk = response.ok;
+            let json = await response.json();
+            if(isOk){
+                let html = json.map(row => `<div class="form-check">
+                    <input class="form-check-input" type="radio" name="grupo_usuarios" id="radio-grupousuarios-${row.id}" value="${row.id}">
+                    <label class="form-check-label" for="radio-grupousuarios-${row.id}">${row.label}</label>
+                </div>`).join('');
+                $(".list-minutos").html(html);
+                $(".btn-process").show();
+
+                /*new Noty({
+                    type: 'success',
+                    layout: 'topRight',
+                    text: "Procesado correctamente"
+                }).show();*/
+            }else{
+                new Noty({
+                    type: 'error',
+                    layout: 'topRight',
+                    text: json.message
+                }).show();
+            }
+            loader_component.style.display = 'none';
+        })
+        .catch(error => {
+            loader_component.style.display = 'none';
+            alert(error.message);
+        });
+    });
+
+    document.querySelector(".btn-process")
+    .addEventListener("click", function(e){
+        let body = {
+            _token: $("*[name=_token]").val(),
+            num_reporte: $("select[name=num_reporte]").val(),
+            ticket: $("select[name=ticket]").val(),
+            grupo_usuarios: $("*[name=grupo_usuarios]:checked").val(),
         };
         const loader_component = document.querySelector('.loader_component');
         loader_component.style.display = 'block';

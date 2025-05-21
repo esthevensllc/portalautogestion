@@ -22,7 +22,7 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
         $this->authService = $authService;
     }
 
-    public function process($distritos, $ticket, $servicioAfectado, DateTime $fechaIni, DateTime $fechaFin, $mesesInteres)
+    public function processAndGetGruposUsuario($distritos, $ticket, $servicioAfectado, DateTime $fechaIni, DateTime $fechaFin, $mesesInteres)
     {
         $this->userIdentifier = $this->authService->getUserIdentifier();
         $strFechaIniF1 = $fechaIni->format("Y-m-d H:i:s");
@@ -171,11 +171,16 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
             FOR V_ROW IN CUR_TICKETS
             LOOP
                 INSERT INTO USRAES.TMP_ABONADOS_NODOS_{$this->userIdentifier}(CODCLI, CODSUC, IDPLANO)
-                SELECT TRIM(CODCLI), TRIM(CODSUC), IDPLANO
-                FROM dws.sa_vtasuccli
-                WHERE IDPLANO IN (
-                    SELECT TRIM(PLANO) FROM USRAES.input_devo_fija_plano_{$this->userIdentifier} WHERE TICKET = V_ROW.TICKET
-                );
+                SELECT CODCLI,CODSUC,IDPLANO
+                FROM
+                (
+                    SELECT TRIM(CODCLI) CODCLI, TRIM(CODSUC) CODSUC, IDPLANO, ROW_NUMBER() OVER (PARTITION BY CODCLI ORDER BY FECULTACT DESC) ORDEN
+                    FROM dws.sa_vtasuccli
+                    WHERE IDPLANO IN (
+                        SELECT TRIM(PLANO) FROM USRAES.input_devo_fija_plano_{$this->userIdentifier} WHERE TICKET = V_ROW.TICKET
+                    )
+                ) X
+                WHERE ORDEN=1;
                 COMMIT;
             END LOOP;
 
@@ -1159,27 +1164,56 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
             }
         }
 
+        DB::connection($this->connection)
+        ->statement("BEGIN
+            DELETE FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier}
+            WHERE to_number(CICFAC_DEVOL) in (
+                29, 3, 6, 11, 21, 37, 114, 39, 26, 36, 12, 20
+            );
+            COMMIT;
+        END;");
+
+        $cantidadUsuarios = DB::connection($this->connection)
+        ->select("SELECT
+        count(distinct a.codcli) usuarios_activos,
+        count(distinct case when b.customer_id is not null then a.codcli end) usuarios_con_trafico
+        from USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier} a
+        left join USRAES.base_ext_cod_cli_{$this->userIdentifier} b
+        on b.customer_id = a.customer_id
+        where a.MONTO_PRINCIPAL is not null
+        AND a.ESTADO_CONTRATO = 'A'
+        AND (CASE a.FUENTE
+            WHEN 'BSCS' THEN (CASE WHEN a.ESTADO_CONTRATO != 'D' THEN 1 ELSE 0 END)
+            WHEN 'SGA' THEN (CASE WHEN a.CICFAC_DEVOL IS NOT NULL AND FCHFIN_INST IS NULL THEN 1 ELSE 0 END)
+            ELSE 0 END
+        ) = 1");
+
+        return $cantidadUsuarios[0];
+    }
+
+    public function processEnd($ticket, int $gruposUsuario){
+        $this->userIdentifier = $this->authService->getUserIdentifier();
 
         $queries = [];
-        
         $queries[] = ["sql" => "BEGIN
             DELETE FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST
             WHERE (TICKET) IN (
                 SELECT TICKET FROM USRAES.INPUT_DEVO_FIJA_TMP_{$this->userIdentifier} GROUP BY TICKET
             );
             COMMIT;
+        END;"];
 
-            DELETE FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier}
-            WHERE customer_id in (
-                select customer_id from USRAES.base_ext_cod_cli_{$this->userIdentifier}
-            );
-            COMMIT;
-
-            DELETE FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier}
-            WHERE to_number(CICFAC_DEVOL) not in (
-                29, 3, 6, 11, 21, 37, 114, 39, 26, 36, 12, 20
-            );
-            COMMIT;
+        if ($gruposUsuario === 2) {
+            $queries[] = ["sql" => "BEGIN
+                DELETE FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier}
+                WHERE customer_id not in (
+                    select b.customer_id from USRAES.base_ext_cod_cli_{$this->userIdentifier} b
+                );
+                COMMIT;
+            END;"];
+        }
+        
+        $queries[] = ["sql" => "BEGIN
 
             INSERT INTO USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST(
                 TICKET, CODCLI, NOMCLI, NRO_DOC, TIPDOC, NUMERO, CID, FAMILIA, IDPLANO,
@@ -1389,7 +1423,7 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
 
     public function getReporteUsuariosAfectados($ticket)
     {
-        return DB::connection($this->connection)->table("USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST")
+        return DB::connection($this->connection)->table("USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST a")
         ->selectRaw("rownum item,ticket,CODCLI CODIGO_CLIENTE,
         CASE
             WHEN LENGTH(NRO_DOC) <= 8 AND regexp_replace(NRO_DOC, '[0-9]*') IS NOT NULL THEN LPAD(NRO_DOC, 12, '0')
@@ -1407,15 +1441,15 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
             WHEN 'BSCS' THEN (CASE WHEN ESTADO_CONTRATO != 'D' THEN 1 ELSE 0 END)
             WHEN 'SGA' THEN (CASE WHEN CICFAC_DEVOL IS NOT NULL AND FCHFIN_INST IS NULL THEN 1 ELSE 0 END)
             ELSE 0 END
-            ) = 1");
+            ) = 1
+            AND to_number(a.CICFAC_DEVOL) not in (29, 3, 6, 11, 21, 37, 114, 39, 26, 36, 12, 20)");
         })
-        ->whereNotIn('CICFAC_DEVOL', [29, 3, 6, 11, 21, 37, 114, 39, 26, 36, 12, 20])
         ->get();
     }
 
-    public function getReportePostpago($ticket, $fuente)
+    public function getReportePostpago($ticket, $fuente, int $compensacionId)
     {
-        return DB::connection($this->connection)->table("USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST")
+        return DB::connection($this->connection)->table("USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST a")
         ->selectRaw("TICKET,
         NUMERO MSISDN,
         NUMERO MSISDN_DEVOLVER,
@@ -1423,20 +1457,25 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
         round(CR_NETO * 1.18, 2) CARGO_LINEA_IGV,
         MONTO_PRINCIPAL MTO_DEV,
         ROUND(MONTO_PRINCIPAL * 1.18, 2) MTO_DEV_IGV,
+        CASE {$compensacionId}
+        WHEN 1 THEN
         ROUND(CASE
             WHEN MINUTOS_AFECTACION >= 1440 THEN (ROUND(MONTO_PRINCIPAL * 1.18, 2) + INTERES) * 4
             WHEN MINUTOS_AFECTACION >= 700 AND MINUTOS_AFECTACION < 1440 THEN (ROUND(MONTO_PRINCIPAL * 1.18, 2) + INTERES) * 3.5
             WHEN MINUTOS_AFECTACION >= 300 AND MINUTOS_AFECTACION < 700 THEN (ROUND(MONTO_PRINCIPAL * 1.18, 2) + INTERES) * 3
             WHEN MINUTOS_AFECTACION >= 60 AND MINUTOS_AFECTACION < 300 THEN (ROUND(MONTO_PRINCIPAL * 1.18, 2) + INTERES) * 2.5
             ELSE 0
-        END, 2) AS COMPENSACION,
+        END, 2) ELSE NULL END AS COMPENSACION,
+        CASE {$compensacionId}
+        WHEN 1 THEN
         ROUND((CASE
             WHEN MINUTOS_AFECTACION >= 1440 THEN (ROUND(MONTO_PRINCIPAL * 1.18, 2) + INTERES) * 4
             WHEN MINUTOS_AFECTACION >= 700 AND MINUTOS_AFECTACION < 1440 THEN (ROUND(MONTO_PRINCIPAL * 1.18, 2) + INTERES) * 3.5
             WHEN MINUTOS_AFECTACION >= 300 AND MINUTOS_AFECTACION < 700 THEN (ROUND(MONTO_PRINCIPAL * 1.18, 2) + INTERES) * 3
             WHEN MINUTOS_AFECTACION >= 60 AND MINUTOS_AFECTACION < 300 THEN (ROUND(MONTO_PRINCIPAL * 1.18, 2) + INTERES) * 2.5
             ELSE 0
-        END) / (ROUND(MONTO_PRINCIPAL * 1.18, 2) + INTERES), 1) AS FACTOR_MULTIPLICATIVO,
+        END) / (ROUND(MONTO_PRINCIPAL * 1.18, 2) + INTERES), 1)
+        ELSE NULL END AS FACTOR_MULTIPLICATIVO,
         INTERES,
         TASA,
         ROUND(ROUND(MONTO_PRINCIPAL * 1.18, 2) + INTERES, 2) MTO_TOTAL_DEV_IGV,
@@ -1459,9 +1498,9 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
             WHEN 'BSCS' THEN (CASE WHEN ESTADO_CONTRATO != 'D' THEN 1 ELSE 0 END)
             WHEN 'SGA' THEN (CASE WHEN CICFAC_DEVOL IS NOT NULL AND FCHFIN_INST IS NULL THEN 1 ELSE 0 END)
             ELSE 0 END
-            ) = 1");
+            ) = 1
+            AND to_number(a.CICFAC_DEVOL) not in (29, 3, 6, 11, 21, 37, 114, 39, 26, 36, 12, 20)");
         })
-        ->whereNotIn('CICFAC_DEVOL', [29, 3, 6, 11, 21, 37, 114, 39, 26, 36, 12, 20])
         ->get();
     }
 
@@ -1470,6 +1509,16 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
         return DB::connection($this->connection)->table("USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST")
         ->select("fuente")
         ->where("ticket", $ticket)
+        ->whereNotNull("MONTO_PRINCIPAL")
+        ->where("ESTADO_CONTRATO", "=", "A")
+        ->where(function($query) {
+            $query->whereRaw("(CASE FUENTE
+            WHEN 'BSCS' THEN (CASE WHEN ESTADO_CONTRATO != 'D' THEN 1 ELSE 0 END)
+            WHEN 'SGA' THEN (CASE WHEN CICFAC_DEVOL IS NOT NULL AND FCHFIN_INST IS NULL THEN 1 ELSE 0 END)
+            ELSE 0 END
+            ) = 1
+            AND to_number(CICFAC_DEVOL) not in (29, 3, 6, 11, 21, 37, 114, 39, 26, 36, 12, 20)");
+        })
         ->groupBy("fuente")
         ->get();
     }
@@ -1538,7 +1587,8 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
         int $servicioAfectadoId,
         DateTime $fechaIni,
         DateTime $fechaFin,
-        int $mesesInteres
+        int $mesesInteres,
+        int $compensacionId
     ) {
         DB::table("USRAES.INPUT_DEVO_FIJA")
         ->insert([
@@ -1551,6 +1601,7 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
             "fecha_ini" => $fechaIni,
             "fecha_fin" => $fechaFin,
             "meses" => $mesesInteres,
+            "compensacion_id" => $compensacionId,
         ]);
     }
 

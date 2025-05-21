@@ -6,12 +6,13 @@ use DateTime;
 
 interface ExtraccionDevFijaRepository
 {
-    public function process($distritos, $ticket, $servicioAfectado, DateTime $fechaIni, DateTime $fechaFin, $mesesInteres);
+    public function processAndGetGruposUsuario($distritos, $ticket, $servicioAfectado, DateTime $fechaIni, DateTime $fechaFin, $mesesInteres);
+    public function processEnd($ticket, int $gruposUsuario);
     public function countReportByTicketDepartamento($ticket);
     public function findInputsByNumReporteAndTicket($numReporte, $ticket);
     public function getInputs();
     public function getReporteUsuariosAfectados($ticket);
-    public function getReportePostpago($ticket, $fuente);
+    public function getReportePostpago($ticket, $fuente, int $compensacionId);
     public function getFuentesReportePostpago($ticket);
     public function createInput(
         string $numReporte,
@@ -38,7 +39,8 @@ interface ExtraccionDevFijaRepository
         int $servicioAfectadoId,
         DateTime $fechaIni,
         DateTime $fechaFin,
-        int $mesesInteres
+        int $mesesInteres,
+        int $compensacionId
     );
     public function updateTicketServicioInputByNumReporte(string $numReporte, int $servicioAfectadoId, ?string $ticket);
     public function deleteServicioInput(string $numReporte, int $servicioAfectadoId);
