@@ -110,6 +110,10 @@ class ProcessExtraccion
                 throw new Exception("La fecha de interes no es válida");
             }
 
+            if (!$this->tablaInteresRepo->existsIn($dtFechaInteres) && !$this->tablaInteresRepo->existsIn($dtCorteFechaIni)) {
+                throw new Exception("La tabla de interes no esta actualizada");
+            }
+
             if($step === 1){
                 $informe = $this->repo2->getInputByTicket($ticketOsiptel);
                 $usuariosAfectados = null;
