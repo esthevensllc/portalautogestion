@@ -661,4 +661,9 @@ Route::group([
         Route::post('/centrales/registro', [\AMovil\Reports\Retenciones\Controllers\ListadoController::class, 'setCentrales'])->name("centrales.registro");
     });
 
+    Route::group(['prefix' => 'trafico-demo', 'trac_name' => 'trafico-demo'], function(){
+        Route::get('/', [\AMovil\Reports\TraficoDemo\Controllers\TraficoDemoController::class, 'view']);
+        Route::post('export', [\AMovil\Reports\TraficoDemo\Controllers\TraficoDemoController::class, 'export']);
+    });
+
 });
