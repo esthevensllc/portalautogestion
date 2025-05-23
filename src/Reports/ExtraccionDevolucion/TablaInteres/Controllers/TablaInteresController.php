@@ -31,12 +31,15 @@ class TablaInteresController
 
     public function create(Request $request)
     {
-        $this->registerTasaInteres->__invoke(
+        $response = $this->registerTasaInteres->__invoke(
             $request->input("fecha"),
             $request->input("tasa"),
             $request->input("factorDiario"),
             $request->input("factorAcumulado")
         );
+        if ($response->fails()) {
+            return response()->json($response->errors(), 400);
+        }
         return response()->json([]);
     }
     

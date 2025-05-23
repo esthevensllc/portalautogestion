@@ -9,4 +9,5 @@ interface TablaInteresRepository
     public function insert(DateTime $fecha, $tasa, $factorDiario, $factorAcumulado);
     public function getMaxFechaInteres();
     public function getFactorAcumuladoByFecha(int $limit = 10);
+    public function existsIn(DateTime $fecha): bool;
 }

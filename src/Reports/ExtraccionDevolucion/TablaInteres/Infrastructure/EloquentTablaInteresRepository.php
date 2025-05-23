@@ -38,4 +38,11 @@ class EloquentTablaInteresRepository implements TablaInteresRepository
         ->select(DB::raw("select fecha,FACTORACUMULADO from USRAES.DWH_TASAINTERES_SBS
         group by fecha,FACTORACUMULADO order by fecha desc fetch first {$limit} rows only"));
     }
+
+    public function existsIn(DateTime $fecha): bool {
+        return DB::connection($this->connection)
+        ->table("USRAES.DWH_TASAINTERES_SBS")
+        ->where("fecha", $fecha->format("Y-m-d")." 00:00:00")
+        ->exists();
+    }
 }
