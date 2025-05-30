@@ -19,9 +19,11 @@ class TraficoDemoExporter
         $this->authService = $authService;
     }
 
-    public function __invoke($anio, $mes, ?FileInput $file)
+    public function __invoke(string $fechaIni, string $fechaFin, ?FileInput $file)
     {
-        $responseFile = $this->repo->getReportBy($this->authService->getUserIdentifier(), $anio, $mes, $file);
+        $dtFechaIni = DateTime::createFromFormat('Y-m-d', $fechaIni);
+        $dtFechaFin = DateTime::createFromFormat('Y-m-d', $fechaFin);
+        $responseFile = $this->repo->getReportBy($this->authService->getUserIdentifier(), $dtFechaIni, $dtFechaFin, $file);
         $strNow = (new DateTime())->format("YmdHis");
         return Response::respData([
             "filename" => "trafico_demo_{$strNow}.xlsx",

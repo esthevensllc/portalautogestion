@@ -4,12 +4,15 @@ namespace AMovil\Reports\TraficoDemo\Infrastructure;
 
 use AMovil\Reports\TraficoDemo\Domain\TraficoDemoRepository;
 use AMovil\Shared\Application\FileInput;
+use DateTime;
 use Exception;
 
 class ScriptTraficoDemoRepository implements TraficoDemoRepository
 {
-    public function getReportBy(string $username, int $year, int $month, FileInput $file): FileInput {
-        $script = "/space/scripts/portalautogestion/hfc_ftth_traffic.py -u {$username} -m {$month} -y {$year} -f {$file->getFilePath()}";
+    public function getReportBy(string $username, DateTime $fechaIni, DateTime $fechaFin, FileInput $file): FileInput {
+        $strFechaIni = $fechaIni->format("Y-m-d");
+        $strFechaFin = $fechaFin->format("Y-m-d");
+        $script = "/space/scripts/portalautogestion/hfc_ftth_traffic.py -u {$username} -fd {$strFechaIni} -ld {$strFechaFin} -f {$file->getFilePath()}";
         $this->execPython($script);
         return new FileInput("/space/scripts/portalautogestion/tmp/hfc_ftth_traffic_{$username}.xlsx");
     }

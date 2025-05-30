@@ -8,13 +8,13 @@
         <form id="form_export">
             @csrf
             <div class="row">
-                <div class="form-group col-lg-2">
-                    <label for="">Año</label>
-                    <input type="number" class="form-control form-control-sm" name="anio" min="0" max="9999">
+                <div class="form-group col-lg-2 col-md-4">
+                    <label for="">Fecha Inicio</label>
+                    <input type="date" class="form-control form-control-sm" name="fecha_ini">
                 </div>
-                <div class="form-group col-lg-2">
-                    <label for="">Mes</label>
-                    <input type="number" class="form-control form-control-sm" name="mes" min="0" max="12">
+                <div class="form-group col-lg-2 col-md-4">
+                    <label for="">Fecha Fin</label>
+                    <input type="date" class="form-control form-control-sm" name="fecha_fin">
                 </div>
                 <div class="form-group col-12">
                     <label for="">Excel</label>

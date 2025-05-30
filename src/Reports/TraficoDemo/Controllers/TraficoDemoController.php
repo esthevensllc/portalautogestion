@@ -34,8 +34,8 @@ class TraficoDemoController
             );
         }
         $response = $this->exporter->__invoke(
-            $request->input("anio"),
-            $request->input("mes"),
+            $request->input("fecha_ini"),
+            $request->input("fecha_fin"),
             $file
         )->data();
         return response()->download($response['content'], $response['filename']);
