@@ -32,7 +32,10 @@ class ExportModevLog
         }
         $tipoReporte = null;
         if (count($tickets) > 0) {
-            $informe = $this->informeRepo->getInputByTicket($ticket[0]);
+            $informe = $this->informeRepo->getInputByTicket($tickets[0]);
+            if ($informe === null) {
+                return new Response(["message" => "El ticket no existe"]);
+            }
             $tipoReporte = $informe->tipo_reporte;
         }
         $data = $this->repo->getReporteModev($tipoReporte, $tickets);

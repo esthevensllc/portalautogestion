@@ -26,7 +26,11 @@ class ModelLogController
 
     public function export(Request $request){
         $ticket = $request->input("ticket");
-        $response = $this->exporter->__invoke($ticket)->data();
+        $response = $this->exporter->__invoke($ticket);
+        if ($response->fails()) {
+            return response()->json($response->errors(), 400);
+        }
+        $response = $response->data();
         return Response::stream($response["content"], 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition' => 'attachment;filename="'.$response["filename"].'"'
