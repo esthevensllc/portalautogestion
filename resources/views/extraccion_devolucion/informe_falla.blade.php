@@ -40,6 +40,7 @@
 
 <div class="modal" id="update-status-modal" tabindex="-1" role="dialog">
     <form id="frm-update-status">
+        @csrf
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">

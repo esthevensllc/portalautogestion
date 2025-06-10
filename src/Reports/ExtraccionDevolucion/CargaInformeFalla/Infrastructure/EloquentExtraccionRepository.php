@@ -1463,6 +1463,11 @@ class EloquentExtraccionRepository implements ExtraccionRepository
         ->where("num_reporte", $numero)
         ->delete();
 
+        DB::connection($this->connection)
+        ->table("usraes.base_ext_dev_msisdn")
+        ->where("num_reporte", $numero)
+        ->delete();
+
         return DB::table("usraes.noc_informe_de_fallas")
         ->where('numero_de_reporte',$numero)
         ->delete();
