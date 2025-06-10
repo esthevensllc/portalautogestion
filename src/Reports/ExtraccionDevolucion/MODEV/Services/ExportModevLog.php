@@ -30,7 +30,12 @@ class ExportModevLog
         foreach($validation as $row){
             $this->repo->saveRecargasNoCorrectas($row['ticket']);
         }
-        $data = $this->repo->getReporteModev($tickets);
+        $tipoReporte = null;
+        if (count($tickets) > 0) {
+            $informe = $this->informeRepo->getInputByTicket($ticket[0]);
+            $tipoReporte = $informe->tipo_reporte;
+        }
+        $data = $this->repo->getReporteModev($tipoReporte, $tickets);
 
         $headers = [
             "ticket" => ["label" => "TICKET"],

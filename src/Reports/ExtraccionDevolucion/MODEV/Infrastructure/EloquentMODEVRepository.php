@@ -144,8 +144,12 @@ class EloquentMODEVRepository implements MODEVRepository
         $this->db->write($query, ["p_ticket" => $ticket]);
     }
 
-    public function getReporteModev(array $ticket){
+    public function getReporteModev($tipoReporte, array $ticket){
         $this->userIdentifier = $this->authService->getUserIdentifier();
+        $extraFilter = "";
+        if (in_array($tipoReporte, [InformeTipoReporte::BY_MSISDN, InformeTipoReporte::BY_MSISDN2])) {
+            $extraFilter = "or aa.modalidad_dev like '%WEB%'";
+        }
 
         $ticketBinds = $this->getQueryBinds($ticket);
 
@@ -254,7 +258,7 @@ class EloquentMODEVRepository implements MODEVRepository
         /* where aa.ticket='202322137' and (modalidad_dev like '%POSTPAGO%' or modalidad_dev like '%PREPAGO%')*/
 
         where aa.ticket in ({$ticketBinds['str_binds']})
-        and (aa.modalidad_dev like '%POSTPAGO%' or aa.modalidad_dev like '%PREPAGO%')
+        and (aa.modalidad_dev like '%POSTPAGO%' or aa.modalidad_dev like '%PREPAGO%' {$extraFilter})
         group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19.20,21,22,23,24,25,26,27,28";
 
         $result = $this->db->select($query, $ticketBinds['values'])->rows();
