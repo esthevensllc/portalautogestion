@@ -78,6 +78,7 @@
             {data: 'acreditados_pre'},
             {data: 'no_acreditados_pre'},
         ],
+        order: [[2, 'desc']],
         //serverSide: true,
         scrollX: true
     });

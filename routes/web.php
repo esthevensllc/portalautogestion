@@ -373,6 +373,10 @@ Route::group([
         Route::get('search', [\AMovil\Reports\ExtraccionDevolucion\InformesCCPP\Controllers\InformeCCPPController::class, 'search']);
         Route::get('{id}/download', [\AMovil\Reports\ExtraccionDevolucion\InformesCCPP\Controllers\InformeCCPPController::class, 'download']);
     });
+    Route::group(['prefix' => 'extraccion-devolucion/msisdn', 'trac_name' => 'extraccion-devolucion.msisdn'], function(){
+        Route::get('/', [\AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Controllers\ExtraccionDevolucionController::class, 'processByMsisdnView']);
+        Route::post('process', [\AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Controllers\ExtraccionDevolucionController::class, 'processByMsisdn']);
+    });
 
     Route::group(['prefix' => 'michaell-cia-nn', 'trac_name' => 'michaell-cia-nn'], function(){
         Route::get('/', [\AMovil\Reports\General\RepMichaellCIANN\Controllers\RepMichaellCIANNController::class, 'view']);

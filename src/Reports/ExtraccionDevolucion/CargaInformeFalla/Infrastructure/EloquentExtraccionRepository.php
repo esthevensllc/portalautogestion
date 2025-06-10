@@ -1685,8 +1685,22 @@ class EloquentExtraccionRepository implements ExtraccionRepository
                 "provincia" => $row["provincia"],
                 "distrito" => $row["distrito"],
                 "comentario" => $row["comentario"],
+                "cod_cliente" => array_key_exists("cod_cliente", $row) ? $row["cod_cliente"] : null,
+                "num_documento" => array_key_exists("num_documento", $row) ? $row["num_documento"] : null,
+                "nombres" => array_key_exists("nombres", $row) ? $row["nombres"] : null,
+                "apellidos" => array_key_exists("apellidos", $row) ? $row["apellidos"] : null,
+                "monto_dev_igv" => array_key_exists("monto_dev_igv", $row) ? $row["monto_dev_igv"] : null,
             ]);
         }
+    }
+
+    public function updateTicketForInputMsisdn($num_reporte, $ticket){
+        DB::connection("oracle_reptdm")
+        ->table("usraes.base_ext_dev_msisdn")
+        ->where("num_reporte", $num_reporte)
+        ->update([
+            "ticket" => $ticket,
+        ]);
     }
 
     public function getInputByTicket($ticket) {

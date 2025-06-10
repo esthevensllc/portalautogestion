@@ -143,6 +143,13 @@ $(function() {
                     let corte_fecha2 = new Date(data.corte_fecha_fin);
                     let corte_diff = ((corte_fecha2.getTime() - corte_fecha1.getTime())/1000/60).toFixed(0);
                     document.querySelector(".input_periodo_corte").innerHTML += ` (${corte_diff} minutos)`;
+
+                    if(document.querySelector(".input_celda").innerHTML === '0'){
+                        document.querySelector(".input_celda").innerHTML = '';
+                    }
+                    if(document.querySelector(".input_distrito").innerHTML === '-,-,-'){
+                        document.querySelector(".input_distrito").innerHTML = '';
+                    }
                 }else{
                     document.querySelector(".input_celda").innerHTML = '';
                     document.querySelector(".input_distrito").innerHTML = '';
@@ -193,13 +200,19 @@ $(function() {
     $("select[name=ticket]")
     .on("change", function(e){
         console.log(e.target.value);
-        let _html = config.departamentos
-        .filter(r => `${r.ticket}` === e.target.value)
-        .map(r => `<option data-ticket="${r.ticket}">${r.departamento}</option>`)
+        let departamentos = config.departamentos
+        .filter(r => `${r.ticket}` === e.target.value);
+        
+        
+        let _html = departamentos.map(r => `<option data-ticket="${r.ticket}">${r.departamento}</option>`)
         .join("");
 
         document.querySelector("select[name=departamento]").innerHTML = `<option value="">Seleccione</option>` + _html;
         $("select[name=departamento]").select2({width: '100%'});
+
+        if(departamentos.length === 1){
+            $("select[name=departamento]").val(departamentos[0].departamento).trigger('change');
+        }
     });
 });
 </script>

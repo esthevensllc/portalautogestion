@@ -39,6 +39,7 @@ interface ExtraccionRepository
     public function saveAcreditacionPrepago($ticket, $departamento, $data);
     public function saveReportInputs($num_reporte, $tipoReporte, array $celdas, array $provincias, DateTime $fechaIni, DateTime $fechaFin, $ticketOsiptel, DateTime $fechaInteres, DateTime $corteFechaIni, Datetime $corteFechaFin);
     public function saveInputMsisdn($num_reporte, $data);
+    public function updateTicketForInputMsisdn($num_reporte, $ticket);
     public function getInputByTicket($ticket);
     public function getInputByNumReporte_Departamento($num_reporte, $departamento);
     public function getDepartamentosByNumReporte($num_reporte);

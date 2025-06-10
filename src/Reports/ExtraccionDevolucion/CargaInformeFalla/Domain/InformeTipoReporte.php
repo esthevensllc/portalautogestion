@@ -6,4 +6,5 @@ class InformeTipoReporte
 {
     const DEFAULT = 1;
     const BY_MSISDN = 2;
+    const BY_MSISDN2 = 3;
 }

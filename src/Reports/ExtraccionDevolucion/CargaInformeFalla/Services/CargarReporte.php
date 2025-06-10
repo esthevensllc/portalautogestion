@@ -46,24 +46,27 @@ class CargarReporte
             if((int) $tipoReporte === InformeTipoReporte::BY_MSISDN){
                 $this->repo->saveInputMsisdn($numero, $this->getMsisdnDataFromCsv($excel));
             }
-            $correo = new NotificacionCarga($reportes);
-            $correo->setSubject("CARGA DE INFORMES DE FALLAS - {$filename}");
-            
-            try {
-                // Envío del correo
-                Mail::to([
-                    'C19884@claro.com.pe',
-                    'lizeth.moya@claro.com.pe',
-                    'carlos.malpartida@claro.com.pe',
-                    'bryan.robles@claro.com.pe',
-                    'Noc-claro@claro.com.pe',
-                    'cpalacios@claro.com.pe',
-                    'cdiazb@claro.com.pe',
-                ])->send($correo);
-                // Mail::to(['cclinarez@indracompany.com'])->send($correo);
-            } catch (\Exception $e) {
-                // Captura cualquier excepción generada durante el envío del correo
-                return response()->json(['message' => 'Error al enviar el correo: '.$e->getMessage()], 500);
+            if((int) $tipoReporte === InformeTipoReporte::BY_MSISDN2){
+                $this->repo->saveInputMsisdn($numero, $this->getMsisdn2DataFromCsv($detalleExtraccion[0]["corteFechaFin"], $excel));
+            } else {
+                $correo = new NotificacionCarga($reportes);
+                $correo->setSubject("CARGA DE INFORMES DE FALLAS - {$filename}");
+                
+                try {
+                    // Envío del correo
+                    Mail::to([
+                        'C19884@claro.com.pe',
+                        'lizeth.moya@claro.com.pe',
+                        'carlos.malpartida@claro.com.pe',
+                        'bryan.robles@claro.com.pe',
+                        'Noc-claro@claro.com.pe',
+                        'cpalacios@claro.com.pe',
+                        'cdiazb@claro.com.pe',
+                    ])->send($correo);
+                } catch (\Exception $e) {
+                    // Captura cualquier excepción generada durante el envío del correo
+                    return response()->json(['message' => 'Error al enviar el correo: '.$e->getMessage()], 500);
+                }
             }
         }
         return $reporte;
@@ -129,6 +132,35 @@ class CargarReporte
             $row["fecha_carga"] = $row["fecha_carga"] ? $row["fecha_carga"]->format("Y-m-d") : null;
             $row["fecha_corte"] = DateTime::createFromFormat("d/m/Y", $row["fecha_corte"]);
             $row["fecha_corte"] = $row["fecha_corte"] ? $row["fecha_corte"]->format("Y-m-d") : null;
+            $data[] = $row;
+        }
+        return $data;
+    }
+
+    public function getMsisdn2DataFromCsv($fechaCorteFin, $file){
+        $reader = IOFactory::createReader('Xlsx');
+        $spreedsheet = $reader->load($file->getPathname());
+        $sheet = $spreedsheet->getSheet(0);
+        $highestRow = $sheet->getHighestRow();
+        $data = [];
+        for ($i=2; $i <= $highestRow; $i++) {
+            $now = new DateTime();
+            $row = [
+                "ticket" => null,
+                "msisdn" => $sheet->getCellByColumnAndRow(1, $i)->getValue(),
+                "fecha_carga" => $now,
+                "celda" => null,
+                "fecha_corte" => $fechaCorteFin,
+                "departamento" => null,
+                "provincia" => null,
+                "distrito" => null,
+                "comentario" => null,
+                "cod_cliente" => $sheet->getCellByColumnAndRow(2, $i)->getValue(),
+                "num_documento" => $sheet->getCellByColumnAndRow(3, $i)->getValue(),
+                "nombres" => $sheet->getCellByColumnAndRow(4, $i)->getValue(),
+                "apellidos" => $sheet->getCellByColumnAndRow(5, $i)->getValue(),
+                "monto_dev_igv" => $sheet->getCellByColumnAndRow(6, $i)->getValue(),
+            ];
             $data[] = $row;
         }
         return $data;

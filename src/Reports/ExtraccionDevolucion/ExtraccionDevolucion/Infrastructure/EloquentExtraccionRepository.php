@@ -441,7 +441,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
 
         $informInput = $this->getInputByTicket($ticketOsiptel);
 
-        if($informInput !== null && (int) $informInput->tipo_reporte === InformeTipoReporte::BY_MSISDN){
+        if($informInput !== null && ((int) $informInput->tipo_reporte === InformeTipoReporte::BY_MSISDN || (int) $informInput->tipo_reporte === InformeTipoReporte::BY_MSISDN2)){
             $queries[] = ["sql" => "CREATE TABLE USRAES.TMP_USER_DEP_PRO_DIS_{$this->userIdentifier}(
             TICKET VARCHAR2(20),
             MSISDN VARCHAR2(25),
@@ -530,6 +530,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
         WHEN OTHERS THEN
         IF SQLCODE != -942 THEN RAISE; END IF;
         END;"];
+        // SE REDUCEN LINEAS POR CLIENTES DE BAJA
         $queries[] = ["sql" => "CREATE TABLE USRAES.TMP_DEV_USER_{$this->userIdentifier} AS
         SELECT
         TICKET TICKET,
@@ -986,7 +987,15 @@ class EloquentExtraccionRepository implements ExtraccionRepository
             UPDATE USRAES.USER_BASE_PREV_{$this->userIdentifier} A
             SET A.MONTO_DEVOLVER_IGV=ROUND((1.18*cargo_linea/(28*24*60))*{$corteDiffMinutos}, 2);
             COMMIT;
-        END;"];
+
+            MERGE INTO USRAES.USER_BASE_PREV_{$this->userIdentifier} A
+            USING (
+                SELECT * FROM usraes.base_ext_dev_msisdn WHERE TICKET = :ticket AND MONTO_DEV_IGV IS NOT NULL
+            ) B ON (B.TICKET = A.TICKET AND B.MSISDN = A.MSISDN)
+            WHEN MATCHED THEN UPDATE SET
+                A.MONTO_DEVOLVER_IGV = B.MONTO_DEV_IGV;
+            COMMIT;
+        END;", "params" => ["ticket" => $ticketOsiptel]];
 
         $queries[] = ["sql" => "BEGIN
             EXECUTE IMMEDIATE 'DROP TABLE USRAES.USER_BASE_BFIN_{$this->userIdentifier} PURGE';
@@ -994,6 +1003,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
             WHEN OTHERS THEN
             IF SQLCODE != -942 THEN RAISE; END IF;
         END;"];
+        // SE REDUCEN LINEAS POR CARGO FIJO DIFERENTES DE CERO
         $queries[] = ["sql" => "CREATE TABLE USRAES.USER_BASE_BFIN_{$this->userIdentifier} AS
         SELECT * FROM USRAES.USER_BASE_PREV_{$this->userIdentifier} A
         WHERE A.CARGO_LINEA_IGV<>0 -- <-- CAMBIAR POR EL CAMPO cargo_linea

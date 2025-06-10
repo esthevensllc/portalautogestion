@@ -10,6 +10,7 @@ use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services\ExportRepP
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services\ExportRepPrepago;
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services\ExportUsuarioAfectados;
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services\ProcessExtraccion;
+use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services\ProcessExtraccionMsisdn;
 use AMovil\Reports\ExtraccionDevolucion\TicketReports\Services\GetTicketReports;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +27,7 @@ class ExtraccionDevolucionController
     private $exportRepMsisdn;
     private $cargarReporte;
     private $getTicketReports;
+    private $processExtraccionMsisdn;
 
     public function __construct(
         ExportExtraccion $service,
@@ -37,6 +39,7 @@ class ExtraccionDevolucionController
         ExportReporteMsisdn $exportRepMsisdn,
         CargarReporte $cargarReporte,
         GetTicketReports $getTicketReports,
+        ProcessExtraccionMsisdn $processExtraccionMsisdn,
     ){
         $this->service = $service;
         $this->exportRepMontoDevolucion = $exportRepMontoDevolucion;
@@ -47,6 +50,7 @@ class ExtraccionDevolucionController
         $this->exportRepMsisdn = $exportRepMsisdn;
         $this->cargarReporte = $cargarReporte;
         $this->getTicketReports = $getTicketReports;
+        $this->processExtraccionMsisdn = $processExtraccionMsisdn;
     }
 
     public function view()
@@ -226,5 +230,30 @@ class ExtraccionDevolucionController
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition' => 'attachment;filename="'.$response["filename"].'"'
         ]);
+    }
+
+    public function processByMsisdnView()
+    {
+        $tickets = $this->getTicketReports->getTickets();
+        $departamentos = $this->getTicketReports->getDepartamentos();
+        $config = [
+            "title" => "EXTRACCION POR MSISDN",
+            "api" => asset("extraccion-devolucion/msisdn/process"),
+        ];
+        return view("extraccion_devolucion.process_extraccion_msisdn", compact("config"));
+    }
+
+    public function processByMsisdn(Request $request){
+        $response = $this->processExtraccionMsisdn->__invoke(
+            $request->input("numero_reporte"),
+            // $request->input("ticket"),
+            $request->file("excel"),
+            $request->input('corte_fecha1_date'), $request->input('corte_fecha1_time'),
+            $request->input('corte_fecha2_date'), $request->input('corte_fecha2_time')
+        );
+        if ($response->fails()) {
+            return response()->json($response->errors(), 400);
+        }
+        return response()->json([]);
     }
 }
