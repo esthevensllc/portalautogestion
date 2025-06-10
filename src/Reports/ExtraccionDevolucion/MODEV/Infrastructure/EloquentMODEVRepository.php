@@ -3,6 +3,7 @@
 namespace AMovil\Reports\ExtraccionDevolucion\MODEV\Infrastructure;
 
 use AMovil\Auth\AccessControl\Domain\AuthService;
+use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Domain\InformeTipoReporte;
 use AMovil\Reports\ExtraccionDevolucion\MODEV\Domain\MODEVRepository;
 use AMovil\Shared\Infrastructure\Repository\ClickhouseDB;
 use Illuminate\Support\Facades\DB;
@@ -19,10 +20,14 @@ class EloquentMODEVRepository implements MODEVRepository
         $this->authService = $authService;
     }
     
-    public function getReporteByTicketAndDepartamento($ticket, $departamento)
+    public function getReporteByTicketAndDepartamento($tipoReporte, $ticket, $departamento)
     {
+        $extraFilter = "";
+        if (in_array($tipoReporte, [InformeTipoReporte::BY_MSISDN, InformeTipoReporte::BY_MSISDN2])) {
+            $extraFilter = " or aa.MODALIDAD_DEV LIKE '%WEB%'";
+        }
         return DB::connection("oracle_reptdm")
-        ->select(DB::raw("select aa.ticket,
+        ->select(DB::raw("SELECT aa.ticket,
             aa.NRO_DOCUMENTO,
             aa.ID_CLIENTE,
             aa.MSISDN,
@@ -60,7 +65,7 @@ class EloquentMODEVRepository implements MODEVRepository
             FROM usraes.base_prev_basedev_input where ticket=:p1 and departamento= :p2  
             ) bb 
         on aa.ticket=bb.ticket and aa.FECHA_CORTE=bb.corte_fecha_ini
-        where (aa.MODALIDAD_DEV LIKE '%POSTPAGO%' or aa.MODALIDAD_DEV LIKE '%PREPAGO%') and aa.ticket= :p3 and departamento= :p4"), [
+        where (aa.MODALIDAD_DEV LIKE '%POSTPAGO%' or aa.MODALIDAD_DEV LIKE '%PREPAGO%' {$extraFilter}) and aa.ticket= :p3 and departamento= :p4"), [
             "p1" => $ticket, "p2" => $departamento,
             "p3" => $ticket, "p4" => $departamento
         ]);

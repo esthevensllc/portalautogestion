@@ -2,26 +2,34 @@
 
 namespace AMovil\Reports\ExtraccionDevolucion\MODEV\Services;
 
+use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Domain\ExtraccionRepository;
 use AMovil\Reports\ExtraccionDevolucion\MODEV\Domain\MODEVRepository;
 use AMovil\Shared\Application\Response;
 use AMovil\Shared\Exports\Domain\ExportService;
 use AMovil\Shared\Exports\Domain\WriterType;
+use Exception;
 use PhpOffice\PhpSpreadsheet\Style as SpreadsheetStyle;
 
 class ExportMODEV
 {
     private $repository;
+    private $informeRepository;
     private $exportService;
 
-    public function __construct(MODEVRepository $repository, ExportService $exportService)
+    public function __construct(MODEVRepository $repository, ExtraccionRepository $informeRepository, ExportService $exportService)
     {
         $this->repository = $repository;
+        $this->informeRepository = $informeRepository;
         $this->exportService = $exportService;
     }
 
     public function __invoke($ticket, $departamento)
     {
-        $data = $this->repository->getReporteByTicketAndDepartamento($ticket, $departamento);
+        $informe = $this->informeRepository->getInputByTicket($ticket);
+        if ($informe === null) {
+            throw new Exception("El ticket no existe");
+        }
+        $data = $this->repository->getReporteByTicketAndDepartamento($informe->tipo_reporte, $ticket, $departamento);
 
         $default_alignment = [
             'horizontal' => SpreadsheetStyle\Alignment::HORIZONTAL_CENTER,
