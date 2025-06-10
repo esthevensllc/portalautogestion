@@ -157,9 +157,8 @@ class CargarReporte
                 "comentario" => null,
                 "cod_cliente" => $sheet->getCellByColumnAndRow(2, $i)->getValue(),
                 "num_documento" => $sheet->getCellByColumnAndRow(3, $i)->getValue(),
-                "nombres" => $sheet->getCellByColumnAndRow(4, $i)->getValue(),
-                "apellidos" => $sheet->getCellByColumnAndRow(5, $i)->getValue(),
-                "monto_dev_igv" => $sheet->getCellByColumnAndRow(6, $i)->getValue(),
+                "nombres_apellidos" => $sheet->getCellByColumnAndRow(4, $i)->getValue(),
+                "monto_dev_igv" => $sheet->getCellByColumnAndRow(5, $i)->getValue(),
             ];
             $data[] = $row;
         }

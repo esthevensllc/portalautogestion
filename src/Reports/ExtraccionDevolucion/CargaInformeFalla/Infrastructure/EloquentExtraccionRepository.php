@@ -1687,8 +1687,8 @@ class EloquentExtraccionRepository implements ExtraccionRepository
                 "comentario" => $row["comentario"],
                 "cod_cliente" => array_key_exists("cod_cliente", $row) ? $row["cod_cliente"] : null,
                 "num_documento" => array_key_exists("num_documento", $row) ? $row["num_documento"] : null,
-                "nombres" => array_key_exists("nombres", $row) ? $row["nombres"] : null,
-                "apellidos" => array_key_exists("apellidos", $row) ? $row["apellidos"] : null,
+                "nombres_apellidos" => array_key_exists("nombres_apellidos", $row) ? $row["nombres_apellidos"] : null,
+                // "apellidos" => array_key_exists("apellidos", $row) ? $row["apellidos"] : null,
                 "monto_dev_igv" => array_key_exists("monto_dev_igv", $row) ? $row["monto_dev_igv"] : null,
             ]);
         }
