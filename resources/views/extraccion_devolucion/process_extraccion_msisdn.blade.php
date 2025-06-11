@@ -83,7 +83,7 @@ $(function() {
         .then(response => response.json())
         .then(response => {
             let n = new Noty({
-                type: 'warning',
+                type: 'success',
                 layout: 'center',
                 text:  `<div>
                     <p class="text-dark font-weight-bold">Procesado correctamente con el ticket: ${response.ticket}</p>
