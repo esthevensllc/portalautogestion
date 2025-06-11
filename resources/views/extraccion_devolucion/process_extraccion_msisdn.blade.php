@@ -38,7 +38,7 @@
                     <label for="">Comentario / N° De Reporte:</label>
                     <input type="text" class="form-control" name="numero_reporte" placeholder="Ingrese número de reporte" required/>
                     <div class="invalid-feedback d-block text-dark">
-                        Ingrese un comentario sobre la extracción a realizar
+                        Ingrese un breve comentario sobre la extracción a realizar
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-4 form-group">
