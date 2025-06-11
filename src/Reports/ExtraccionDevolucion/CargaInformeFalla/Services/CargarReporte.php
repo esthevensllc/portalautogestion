@@ -56,6 +56,7 @@ class CargarReporte
                     // Envío del correo
                     Mail::to([
                         'C19884@claro.com.pe',
+                        'jose.ramosm@claro.com.pe',
                         'lizeth.moya@claro.com.pe',
                         'carlos.malpartida@claro.com.pe',
                         'bryan.robles@claro.com.pe',

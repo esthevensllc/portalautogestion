@@ -93,7 +93,7 @@ class ProcessExtraccionMsisdn
             $input->corte_fecha_fin,
             $minutos_usuarios
         )->toArray();
-        return Response::respData();
+        return Response::respData(["ticket" => $ticket]);
     }
 
     private function reportLog($allFilename, DateTime $ini, DateTime $fin, array $extra_data = [])

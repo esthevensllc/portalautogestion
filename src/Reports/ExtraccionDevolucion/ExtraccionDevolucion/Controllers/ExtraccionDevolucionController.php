@@ -237,7 +237,7 @@ class ExtraccionDevolucionController
         $tickets = $this->getTicketReports->getTickets();
         $departamentos = $this->getTicketReports->getDepartamentos();
         $config = [
-            "title" => "EXTRACCION POR MSISDN",
+            "title" => "DEVOLUCIONES EXCEPCIONALES",
             "api" => asset("extraccion-devolucion/msisdn/process"),
         ];
         return view("extraccion_devolucion.process_extraccion_msisdn", compact("config"));
@@ -254,6 +254,6 @@ class ExtraccionDevolucionController
         if ($response->fails()) {
             return response()->json($response->errors(), 400);
         }
-        return response()->json([]);
+        return response()->json($response->data());
     }
 }

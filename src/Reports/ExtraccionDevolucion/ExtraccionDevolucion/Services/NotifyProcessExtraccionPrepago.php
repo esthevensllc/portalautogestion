@@ -38,6 +38,7 @@ class NotifyProcessExtraccionPrepago
 
         Mail::to([
             'C19884@claro.com.pe',
+            'jose.ramosm@claro.com.pe',
             'soporteprepagofactory@claro.com.pe',
             'edward.granados@claro.com.pe',
             'ayskel.guevara@claro.com.pe',
