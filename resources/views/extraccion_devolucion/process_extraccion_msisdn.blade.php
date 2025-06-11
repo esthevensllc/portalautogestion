@@ -4,6 +4,28 @@
 @include('includes.select2_css')
 @endsection
 
+@section('header')
+<div class="modal fade" id="notification_modal" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title font-weight-bold" id="staticBackdropLabel" style="color: var(--green);">Procesado Correctamente</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h4>Se proceso correctamente la extracción con el ticket</h4>
+                <h2 class="ticket_generado"></h2>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
 @section('content')
 
 <h4 style="">{{ $config["title"] }}</h4>
@@ -82,21 +104,8 @@ $(function() {
         .then(utils.fetchErrorMiddleware)
         .then(response => response.json())
         .then(response => {
-            let n = new Noty({
-                type: 'success',
-                layout: 'center',
-                text:  `<div>
-                    <p class="text-dark font-weight-bold">Procesado correctamente con el ticket: ${response.ticket}</p>
-                    <button class='btn btn-secondary btn-sm' id='close-noty-btn'>Cerrar</button>
-                </div>`,
-                closeWith: 'button',
-                timeout: false
-            }).show();
-            setTimeout(() => {
-                document.querySelector('#close-noty-btn')?.addEventListener('click', function(){
-                    n.close();
-                });
-            }, 150);
+            document.querySelector(".ticket_generado").innerHTML = response.ticket;
+            $("#notification_modal").modal("show");
             loader_component.style.display = 'none';
         })
         .catch(error => {
