@@ -13,8 +13,11 @@
             @csrf
             <div class="row">
                 <div class="col-lg-3 col-md-4 form-group">
-                    <label for="">N° De Reporte:</label>
+                    <label for="">Comentario / N° De Reporte:</label>
                     <input type="text" class="form-control" name="numero_reporte" placeholder="Ingrese número de reporte" required/>
+                    <div class="invalid-feedback d-block text-dark">
+                        Ingrese un comentario sobre la extracción a realizar
+                    </div>
                 </div>
                 <div class="col-lg-3 col-md-4 form-group">
                     <label for="">Subir Excel <a href="{{ asset('resources/plantilla_ext_msisdn.xlsx') }}" class="btn btn-secondary btn-sm ml-2">Plantilla</a></label>
@@ -79,11 +82,21 @@ $(function() {
         .then(utils.fetchErrorMiddleware)
         .then(response => response.json())
         .then(response => {
-            new Noty({
-                type: 'success',
-                layout: 'topRight',
-                text: "Procesado correctamente"
+            let n = new Noty({
+                type: 'warning',
+                layout: 'center',
+                text:  `<div>
+                    <p class="text-dark font-weight-bold">Procesado correctamente con el ticket: ${response.ticket}</p>
+                    <button class='btn btn-secondary btn-sm' id='close-noty-btn'>Cerrar</button>
+                </div>`,
+                closeWith: 'button',
+                timeout: false
             }).show();
+            setTimeout(() => {
+                document.querySelector('#close-noty-btn')?.addEventListener('click', function(){
+                    n.close();
+                });
+            }, 150);
             loader_component.style.display = 'none';
         })
         .catch(error => {
