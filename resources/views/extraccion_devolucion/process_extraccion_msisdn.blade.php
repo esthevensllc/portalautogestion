@@ -46,9 +46,12 @@
                     <input type="file" class="form-control-file" name="excel" accept=".xlsx" required>
                 </div>
                 <div class="col-12"></div>
-                <div class="col-lg-3 col-md-4 form-group d-none">
+                <div class="col-lg-3 col-md-4 form-group">
                     <label for="">Ticket</label>
                     <input type="text" class="form-control form-control-sm" name="ticket">
+                    <div class="invalid-feedback d-block text-dark">
+                        Ingresar el ticket de devolución si se tiene, si no se ingresa se va a generar uno aleatorio
+                    </div>
                 </div>
                 <div class="col-lg-3 col-md-4">
                     <div class="form-group">

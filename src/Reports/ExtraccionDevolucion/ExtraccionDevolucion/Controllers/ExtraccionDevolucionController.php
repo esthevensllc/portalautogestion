@@ -246,7 +246,7 @@ class ExtraccionDevolucionController
     public function processByMsisdn(Request $request){
         $response = $this->processExtraccionMsisdn->__invoke(
             $request->input("numero_reporte"),
-            // $request->input("ticket"),
+            $request->input("ticket"),
             $request->file("excel"),
             $request->input('corte_fecha1_date'), $request->input('corte_fecha1_time'),
             $request->input('corte_fecha2_date'), $request->input('corte_fecha2_time')

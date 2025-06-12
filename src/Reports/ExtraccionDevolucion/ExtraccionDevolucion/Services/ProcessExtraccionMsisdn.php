@@ -36,9 +36,9 @@ class ProcessExtraccionMsisdn
         $this->saveReportLog = $saveReportLog;
     }
 
-    public function __invoke($num_reporte, $excel, $corteFechaIni, $corteHoraIni, $corteFechaFin, $corteHoraFin)
+    public function __invoke($num_reporte, $ticket, $excel, $corteFechaIni, $corteHoraIni, $corteFechaFin, $corteHoraFin)
     {
-        $ticket = (new DateTime())->getTimestamp();
+        $ticket = $ticket !== null ? $ticket : (new DateTime())->getTimestamp();
         if (count($this->informeFallasrepo->findInputFor($num_reporte)) > 0) {
             return new Response(["message" => "El numero de reporte ya existe"]);
         }
