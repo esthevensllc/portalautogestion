@@ -284,5 +284,9 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\TraficoDemo\Domain\TraficoDemoRepository::class,
             \AMovil\Reports\TraficoDemo\Infrastructure\ScriptTraficoDemoRepository::class
         );
+        $this->app->bind(
+            \AMovil\Reports\DetalleLineas\Domain\DetalleLineasRepository::class,
+            \AMovil\Reports\DetalleLineas\Infrastructure\ScriptDetalleLineasRepository::class
+        );
     }
 }
