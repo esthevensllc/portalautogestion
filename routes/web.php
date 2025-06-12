@@ -670,4 +670,8 @@ Route::group([
         Route::post('export', [\AMovil\Reports\TraficoDemo\Controllers\TraficoDemoController::class, 'export']);
     });
 
+    Route::group(['prefix' => 'detalle-lineas', 'trac_name' => 'detalle-lineas'], function(){
+        Route::get('/', [\AMovil\Reports\DetalleLineas\Controllers\DetalleLineasController::class, 'view']);
+        Route::post('export', [\AMovil\Reports\DetalleLineas\Controllers\DetalleLineasController::class, 'export']);
+    });
 });
