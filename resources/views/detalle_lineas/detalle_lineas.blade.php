@@ -9,11 +9,14 @@
             @csrf
             <div class="row">
                 <div class="form-group col-12">
-                    <label for="">Excel</label>
-                    <input type="file" class="d-block" name="excel">
+                    <label for="">Csv</label>
+                    <input type="file" class="d-block" name="excel" accept=".csv,.txt">
                 </div>
                 <div class="form-group col-12">
                     <button type="submit" class="btn btn-primary btn-sm btn_export">Exportar</button>
+                </div>
+                <div class="text-danger">
+                    *El archivo csv o txt que se sube no debe superar el 1,000,000 de filas
                 </div>
             </div>
         </form>

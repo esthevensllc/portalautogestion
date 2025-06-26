@@ -30,7 +30,11 @@ class DetalleLineasController
                 $request->file("excel")->getPathname(),
                 $request->file("excel")->getClientOriginalName()
             );
-            $response = $this->exporter->__invoke($file)->data();
+            $response = $this->exporter->__invoke($file);
+            if ($response->fails()) {
+                return response()->json($response->errors(), 400);
+            }
+            $response = $response->data();
             return response()->download($response['content'], $response['filename']);
         }
         return response()->json([
