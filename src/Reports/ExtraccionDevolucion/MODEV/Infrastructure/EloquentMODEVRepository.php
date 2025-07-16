@@ -139,7 +139,8 @@ class EloquentMODEVRepository implements MODEVRepository
                         where date_diff('days',aa.fecha_carga,bb.recharge_date)<90 group by aa.*,bb.* 
                     ) yy  
         on xx.ticket=yy.ticket and xx.msisdn=yy.msisdn and xx.msisdn_devolver=yy.msisdn_devolver 
-        and xx.mto_total_dev_igv=yy.mto_total_dev_igv  and yy.flag=1 having served_number is NULL";
+        and xx.mto_total_dev_igv=yy.mto_total_dev_igv  and yy.flag=1 having served_number is NULL
+        )";
 
         $this->db->write($query, ["p_ticket" => $ticket]);
     }
