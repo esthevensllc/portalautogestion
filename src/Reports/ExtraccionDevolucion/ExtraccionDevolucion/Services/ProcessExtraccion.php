@@ -57,6 +57,12 @@ class ProcessExtraccion
             if($strMaxFechaInteres < $strMinFechaInteres){
                 throw new Exception("No es posible procesar porque la tabla de interes no esta actualizada");
             }
+            
+            $dtLastDay = new DateTime();
+            $dtLastDay->modify("-1 day");
+            if (!$this->tablaInteresRepo->existsIn($dtLastDay)) {
+                throw new Exception("La tabla de interes no esta actualizada");
+            }
             // $dtFechaIni = DateTime::createFromFormat("Y-m-d H:i:s", $fechaIni);
             // $dtFechaFin = DateTime::createFromFormat("Y-m-d H:i:s", $fechaFin);
             $dtFechaFin = DateTime::createFromFormat("Y-m-d H:i:s", $corteFechaIni);
