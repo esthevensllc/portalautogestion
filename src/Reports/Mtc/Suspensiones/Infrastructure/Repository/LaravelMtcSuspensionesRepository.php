@@ -443,14 +443,39 @@ class LaravelMtcSuspensionesRepository implements MtcSuspensionesRepository
         $array_sql[] = [
             'sql' => "BEGIN
                 MERGE INTO USRAES.TMP_PLANTILLA_{$this->userIdentifier} TF USING USRAES.TMP_SUSPENSIONES_1_{$this->userIdentifier} TMP
-                ON (to_char(to_number(TF.ASNV_NUMERO_LINEA))=TMP.MSISDN)
-                WHEN MATCHED THEN UPDATE SET
-        
+                ON (to_char(to_number(TF.ASNV_NUMERO_LINEA))=TMP.MSISDN AND TMP.ESTADO_SUBS<>'D')
+                WHEN MATCHED THEN UPDATE SET 
                 TF.ASNC_ESTADO=TMP.ESTADO,
                 TF.ASND_FECHA_INI_SUSPENSION = TRUNC(SYSDATE, 'DD'),
                 TF.ASND_FECHA_FIN_SUSPENSION = TRUNC(SYSDATE + TO_NUMBER(TF.ASNN_NUM_DIAS_SUSPENDE), 'DD'),
                 TF.ASNC_FLAG_REACTIVADO=TMP.ESTADO_REACTIVACION,
                 TF.ASND_FECHA_REACTIVACION = TRUNC(SYSDATE + TO_NUMBER(TF.ASNN_NUM_DIAS_SUSPENDE) + 1, 'DD'),
+                TF.ASNC_MOTIVO_NOSUSPENSION=TMP.MOTIVO_NO_SUSPENSION,
+                TF.ASND_FECHA_BAJA=TMP.FECHA_BAJA_LINEA,
+                TF.ASNC_TIPO_TITULAR=TMP.TIPO_TITULAR,
+                TF.ASNC_TIPO_CONTRATO=TMP.TIP_CONTRATO_LINEA,
+                TF.ASNC_TIPO_DOCTITULAR=TMP.TIPO_DOC,
+                TF.ASNV_NUM_DOCTITULAR=TMP.NRO_DOCUMENTO,
+                TF.ASNV_NOMBRETITULAR=TMP.NOMBRES,
+                TF.ASND_FEC_INICONTRATO=TMP.FECHA_INICIO_CONTRATO,
+                TF.ASND_FEC_FINCONTRATO=TMP.FECHA_FIN_CONTRATO,
+                TF.ASNV_DIRECCION=TMP.DIRECCION_CLIENT,
+                TF.ASNV_UBIGEO=TMP.CODIGO_UBIGEO;
+
+                COMMIT;
+            END;"
+        ];
+
+	$array_sql[] = [
+            'sql' => "BEGIN
+                MERGE INTO USRAES.TMP_PLANTILLA_{$this->userIdentifier} TF USING USRAES.TMP_SUSPENSIONES_1_{$this->userIdentifier} TMP
+                ON (to_char(to_number(TF.ASNV_NUMERO_LINEA))=TMP.MSISDN AND TMP.ESTADO_SUBS='D')
+                WHEN MATCHED THEN UPDATE SET
+                TF.ASNC_ESTADO=TMP.ESTADO,
+                TF.ASND_FECHA_INI_SUSPENSION = NULL,
+                TF.ASND_FECHA_FIN_SUSPENSION = NULL,
+                TF.ASNC_FLAG_REACTIVADO=TMP.ESTADO_REACTIVACION,
+                TF.ASND_FECHA_REACTIVACION = NULL,
                 TF.ASNC_MOTIVO_NOSUSPENSION=TMP.MOTIVO_NO_SUSPENSION,
                 TF.ASND_FECHA_BAJA=TMP.FECHA_BAJA_LINEA,
                 TF.ASNC_TIPO_TITULAR=TMP.TIPO_TITULAR,
@@ -944,7 +969,7 @@ class LaravelMtcSuspensionesRepository implements MtcSuspensionesRepository
         DB::raw("to_char(ASND_FEC_FINCONTRATO, 'dd/mm/yyyy') as ASND_FEC_FINCONTRATO"),
         'ASNV_DIRECCION',
         'ASNV_UBIGEO')
-        ->whereRaw("ASND_FECHA_BAJA IS NULL")
+        //->whereRaw("ASND_FECHA_BAJA IS NULL")
         ->get();
     }
 
