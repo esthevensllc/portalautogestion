@@ -100,7 +100,7 @@ class EloquentMODEVRepository implements MODEVRepository
             ) as aa 
             left join recargas.recargas_dwo_osip as bb 
             on aa.msisdn_devolver=bb.served_number and bb.recharge_qty>0 and round(toFloat64(aa.mto_total_dev_igv)*100,2)=round(bb.recharge_qty,2)
-            where date_diff('days',aa.fecha_carga,bb.recharge_date)<90
+            where date_diff('days',aa.fecha_carga,bb.recharge_date)<90 and date_diff('days',aa.fecha_carga,bb.recharge_date)>=0
             group by aa.*,bb.*
             ) yy 
             on xx.ticket=yy.ticket and xx.msisdn=yy.msisdn and xx.msisdn_devolver=yy.msisdn_devolver and xx.mto_total_dev_igv=yy.mto_total_dev_igv 
@@ -114,7 +114,7 @@ class EloquentMODEVRepository implements MODEVRepository
 
     public function saveRecargasNoCorrectas($ticket){
         $query = "INSERT INTO recargas.recargas_dwo_osip
-        select date_add(fecha_carga,INTERVAL toUInt64(randUniform(0,0)) day) recharge_date,
+        select date_add(fecha_carga,1) recharge_date,
         msisdn_devolver served_number,
         round(toFloat64(mto_total_dev_igv)*100,2) recharge_qty,
         '92000559;Prepago_Devolucion_Interrupciones_Osiptel' usage_str3 
@@ -125,6 +125,7 @@ class EloquentMODEVRepository implements MODEVRepository
                     select ticket,msisdn,msisdn_devolver,modalidad_dev,mto_total_dev_igv,toDate(substring(fecha_carga,1,10)) fecha_carga 
                     from  reptdm.base_prev_basedev 
                     where   ticket= :p_ticket and modalidad_dev like '%PREPAGO%' and length(ticket)=9
+		            and load_date=(select toString(max(parseDateTimeBestEffort(load_date))) from reptdm.base_prev_basedev)
                     ) xx  
             left join ( 
                         select aa.*,bb.*,row_number() over(partition by aa.ticket,aa.msisdn,aa.msisdn_devolver,aa.mto_total_dev_igv  order by bb.recharge_date asc) flag 
@@ -132,11 +133,13 @@ class EloquentMODEVRepository implements MODEVRepository
                                 select ticket,msisdn,msisdn_devolver,modalidad_dev,mto_total_dev_igv,toDate(substring(fecha_carga,1,10)) fecha_carga
                                 from  reptdm.base_prev_basedev 
                                 where   ticket= :p_ticket and modalidad_dev like '%PREPAGO%' and length(ticket)=9
+				                and load_date=(select toString(max(parseDateTimeBestEffort(load_date))) from reptdm.base_prev_basedev)
                                 ) aa  
                         left join recargas.recargas_dwo_osip bb  
                         on aa.msisdn_devolver=bb.served_number 
                             and bb.recharge_qty>0 and round(toFloat64(aa.mto_total_dev_igv)*100,2)=round(bb.recharge_qty,2) 
-                        where date_diff('days',aa.fecha_carga,bb.recharge_date)<90 group by aa.*,bb.* 
+                        where date_diff('days',aa.fecha_carga,bb.recharge_date)<90 and date_diff('days',aa.fecha_carga,bb.recharge_date)>=0 
+			            group by aa.*,bb.* 
                     ) yy  
         on xx.ticket=yy.ticket and xx.msisdn=yy.msisdn and xx.msisdn_devolver=yy.msisdn_devolver 
         and xx.mto_total_dev_igv=yy.mto_total_dev_igv  and yy.flag=1 having served_number is NULL
@@ -228,7 +231,7 @@ class EloquentMODEVRepository implements MODEVRepository
         bb.usage_str3 usage_str3,
         /*VALIDAR FECHA DE CARGA DEL REPORTE*/
         aa.fecha_carga fecha_carga
-        from reptdm.base_prev_basedev aa 
+        from (select * from reptdm.base_prev_basedev where load_date=(select toString(max(parseDateTimeBestEffort(load_date))) from reptdm.base_prev_basedev)) aa 
         left join default.base_extraccion_modev_input_{$this->userIdentifier} as tinput
         on tinput.ticket = aa.ticket
         left join (
@@ -236,7 +239,8 @@ class EloquentMODEVRepository implements MODEVRepository
             (
                 select ticket,msisdn,msisdn_devolver,modalidad_dev,mto_total_dev_igv,toDate(substring(fecha_carga,1,10)) fecha_carga
                 from  reptdm.base_prev_basedev
-                where ticket in ({$ticketBinds['str_binds']}) and  modalidad_dev like '%PREPAGO%' and length(ticket)=9 
+                where ticket in ({$ticketBinds['str_binds']}) and  modalidad_dev like '%PREPAGO%' and length(ticket)=9
+		        and load_date=(select toString(max(parseDateTimeBestEffort(load_date))) from reptdm.base_prev_basedev) 
             ) xx 
             left join (
                 select aa.*,bb.*,row_number() over(partition by aa.ticket,aa.msisdn,aa.msisdn_devolver,aa.mto_total_dev_igv 
@@ -246,10 +250,11 @@ class EloquentMODEVRepository implements MODEVRepository
                     select ticket,msisdn,msisdn_devolver,modalidad_dev,mto_total_dev_igv,toDate(substring(fecha_carga,1,10)) fecha_carga
                     from  reptdm.base_prev_basedev
                     where  ticket in ({$ticketBinds['str_binds']}) and  modalidad_dev like '%PREPAGO%' and length(ticket)=9
+		            and load_date=(select toString(max(parseDateTimeBestEffort(load_date))) from reptdm.base_prev_basedev)
                 ) as aa 
                 left join recargas.recargas_dwo_osip as bb 
                 on aa.msisdn_devolver=bb.served_number and bb.recharge_qty>0 and round(toFloat64(aa.mto_total_dev_igv)*100,2)=round(bb.recharge_qty,2)
-                where date_diff('days',aa.fecha_carga,bb.recharge_date)<90
+                where date_diff('days',aa.fecha_carga,bb.recharge_date)<90 and date_diff('days',aa.fecha_carga,bb.recharge_date)>=0
                 group by aa.*,bb.*
             ) yy 
             on xx.ticket=yy.ticket and xx.msisdn=yy.msisdn and xx.msisdn_devolver=yy.msisdn_devolver and xx.mto_total_dev_igv=yy.mto_total_dev_igv 
