@@ -30,9 +30,7 @@ class ExportBloqueoImei
         $dtFechaIni = DateTime::createFromFormat("d/m/Y H:i:s", $fechaIni);
         $dtFechaFin = DateTime::createFromFormat("d/m/Y H:i:s", $fechaFin);
 
-        if($dtFechaIni->format("Ymd") !== $dtFechaFin->format("Ymd")){
-            throw new Exception("No se puede consultar un rango de fechas con dias diferentes");
-        }
+        $this->validateDateRage($dtFechaIni, $dtFechaFin);
 
         if($file !== null){
             $filename = $file->getClientOriginalName();
@@ -126,6 +124,15 @@ class ExportBloqueoImei
             "type" => "xlsx",
             "content" => $content
         ]);
+    }
+
+    private function validateDateRage(DateTime $fechaIni, DateTime $fechaFin){
+        $fechaFinVal = clone $fechaFin;
+        $fechaFinVal->modify("-1 minute");
+        $diff = $fechaIni->diff($fechaFinVal);
+        if ($diff->days > 5) {
+            throw new Exception("No se puede consultar un rango de fechas de mas de 5 dias");
+        }
     }
 
     private function getDataFromFile($file)

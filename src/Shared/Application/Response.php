@@ -17,6 +17,10 @@ class Response
         return new self([], $data);
     }
 
+    public static function respError(array $errors){
+        return new self($errors, null);
+    }
+
     public function data(){
         return $this->data;
     }
