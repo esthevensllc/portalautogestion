@@ -63,6 +63,9 @@ class CargarReporte
                         'Noc-claro@claro.com.pe',
                         'cpalacios@claro.com.pe',
                         'cdiazb@claro.com.pe',
+                        'C26131@claro.com.pe',
+                        'C27727@claro.com.pe',
+                        'C27689@claro.com.pe',
                     ])->send($correo);
                 } catch (\Exception $e) {
                     // Captura cualquier excepción generada durante el envío del correo
