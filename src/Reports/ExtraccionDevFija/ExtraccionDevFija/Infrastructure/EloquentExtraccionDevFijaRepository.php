@@ -482,7 +482,7 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
             EXECUTE IMMEDIATE STR;
 
             STR:='CREATE TABLE USRAES.TMP_BSCS_CF_{$this->userIdentifier} NOLOGGING AS
-            select co_id,sncode,spcode,accessfee,ovw_acc_prd,ovw_access,tmcode,fecha,costo from (
+            select /*+ PARALLEL(16)*/ co_id,sncode,spcode,accessfee,ovw_acc_prd,ovw_access,tmcode,fecha,costo from (
                 SELECT DH.*,DECODE(DH.OVW_ACC_PRD,0,TMB.ACCESSFEE,-2,TMB.ACCESSFEE,DECODE(DH.OVW_ACCESS,NULL,
                 TMB.ACCESSFEE, ''R'',NVL((TMB.ACCESSFEE * DH.ACCESSFEE),0),NVL(DH.ACCESSFEE,0))) COSTO
                 FROM USRAES.TABLA_DWH_{$this->userIdentifier} DH, dws.sa_MPULKTMB TMB
