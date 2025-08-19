@@ -18,7 +18,7 @@ class DetalleLineasController
     public function view()
     {
         $config = [
-            "title" => "DETALLE LINEAS",
+            "title" => "Reporte de Análisis de Líneas",
             "url" => url("detalle-lineas/export"),
         ];
         return view("detalle_lineas.detalle_lineas", compact("config"));
