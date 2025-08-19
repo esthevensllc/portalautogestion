@@ -411,7 +411,8 @@ $(function() {
     $(document).on('click', '#descargar', function() {
         id = $(this).data('id');
         name = $(this).data('name');
-        window.open(`http://172.19.192.170/portalautogestion/storage/app/carga_informe_falla/${id}_${name}`,"_blank");
+        let downloadApi = "{{ url('extraccion-devolucion/informe-fallas/[numReporte]/download') }}";
+        window.open(downloadApi.replace('[numReporte]', id),"_blank");
     });
 
     $('#input-modal').on('input', function() {

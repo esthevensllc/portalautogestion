@@ -90,6 +90,7 @@ class CargaInformeFallaController
         $config = [
             "title" => "CARGAR INFORME DE FALLAS",
             "api" => asset("extraccion-devolucion/carga-informe-fallas/import"),
+            "downloadApi" => asset("extraccion-devolucion/carga-informe-fallas/[numReporte]/download"),
             "numero_reportes" => DB::table("usraes.noc_informe_de_fallas")
             ->select("numero_de_reporte")
             ->orderBy("numero_de_reporte")
@@ -234,6 +235,20 @@ class CargaInformeFallaController
     {
         $this->updateReportStatus->__invoke($request->input('status'), $request->input('id'));
         return response()->json(["passes" => true]);
+    }
+
+    public function download($numReporte)
+    {
+        $response = $this->findReportInput->downloadInformeFalla($numReporte);
+        if ($response->fails()) {
+            return response($response->errors(), 404);
+        }
+        
+        $response = $response->data();
+        return response($response["content"], 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment;filename="'.$response["filename"].'"'
+        ]);
     }
 
     public function updateView()

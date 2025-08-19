@@ -22,6 +22,7 @@ class CargaInformeFallaMsisdnController
         $config = [
             "title" => "INFORME DE FALLAS - MSISDN",
             "api" => asset("extraccion-devolucion/carga-informe-fallas-msisdn/import"),
+            "downloadApi" => asset("extraccion-devolucion/carga-informe-fallas-msisdn/[numReporte]/download"),
             "fileFormat" => ".csv",
             "numero_reportes" => DB::table("usraes.noc_informe_de_fallas")
             ->select("numero_de_reporte")
