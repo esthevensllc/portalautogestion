@@ -795,7 +795,7 @@ class LaravelDetalleConsumoRepository
         // buscar un periodo antes
         if($ciclo === null){
             $fecha_periodo = clone $fecha2;
-            $fecha_periodo->modify("-1 month");
+            $fecha_periodo->modify("last day of previous month");
             $data = DB::connection('oracle_dbtodb')->select(DB::raw("SELECT max(cycle) cycle FROM TEMP_TAG_11 WHERE CLIENTACCTNO in (?) and PERIODO = ?"), [$cliente, $fecha_periodo->format("Ym")]);
             if(count($data)>0){
                 $ciclo = $data[0]->cycle;
@@ -805,7 +805,7 @@ class LaravelDetalleConsumoRepository
         // buscar un periodo despues
         if($ciclo === null){
             $fecha_periodo = clone $fecha2;
-            $fecha_periodo->modify("+1 month");
+            $fecha_periodo->modify("last day of next month");
             $data = DB::connection('oracle_dbtodb')->select(DB::raw("SELECT max(cycle) cycle FROM TEMP_TAG_11 WHERE CLIENTACCTNO in (?) and PERIODO = ?"), [$cliente, $fecha_periodo->format("Ym")]);
             if(count($data)>0){
                 $ciclo = $data[0]->cycle;
