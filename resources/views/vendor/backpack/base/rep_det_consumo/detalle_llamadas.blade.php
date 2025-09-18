@@ -107,7 +107,8 @@ $(function() {
         const fecha2 = $("#form_export input[name=fecha2]").val();
         const consumo_sin_cargo = $("#form_export select[name=consumo_sin_cargo]").val();
         utils.fetch("{{asset($data['url_validator'])}}"+`?cod_cliente=${cod_cliente}&periodo=${periodo}&tipo_input=${tipo_input}&fecha1=${fecha1}&fecha2=${fecha2}`, {
-            method: 'GET'
+            method: 'GET',
+            headers: {"Accept": "application/json"}
         })
         .then(response => {
             if(!response.ok){
