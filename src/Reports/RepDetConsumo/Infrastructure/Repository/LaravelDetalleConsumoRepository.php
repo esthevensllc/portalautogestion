@@ -826,10 +826,10 @@ class LaravelDetalleConsumoRepository
             $periodos[] = $periodo->format("Ym");
         }
         while ($fecha_ini->format("Ymd") <= $fecha_fin->format("Ymd")) {
-            $periodo = (clone $fecha_ini)->modify("+1 month");
+            $periodo = (clone $fecha_ini)->modify("last day of next month");
             //$periodo->modify("-1 day");
             $periodos[] = $periodo->format("Ym");
-            $fecha_ini->modify("+1 month");
+            $fecha_ini->modify("last day of next month");
         }
         return $periodos;
     }
