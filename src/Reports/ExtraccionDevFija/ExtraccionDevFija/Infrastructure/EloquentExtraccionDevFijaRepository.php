@@ -4,6 +4,7 @@ namespace AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Infrastructure;
 
 use AMovil\Auth\AccessControl\Domain\AuthService;
 use AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Domain\ExtraccionDevFijaRepository;
+use AMovil\Reports\ExtraccionDevFija\InformesFalla\Domain\InformeFijaTipoReporte;
 use AMovil\Shared\Infrastructure\Repository\ClickhouseDB;
 use DateTime;
 use Illuminate\Support\Facades\DB;
@@ -164,64 +165,119 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
             NUMSEC VARCHAR2(50),
             CUSTOMER_ID NUMBER
         )"];
-        $queries[] = ["sql" => "DECLARE
-            CURSOR CUR_TICKETS IS
-            SELECT TICKET, SERVICIO_AFECTADO FROM USRAES.INPUT_DEVO_FIJA_TMP_{$this->userIdentifier} GROUP BY TICKET, SERVICIO_AFECTADO;
-        BEGIN
-            FOR V_ROW IN CUR_TICKETS
-            LOOP
-                INSERT INTO USRAES.TMP_ABONADOS_NODOS_{$this->userIdentifier}(CODCLI, CODSUC, IDPLANO)
-                SELECT CODCLI,CODSUC,IDPLANO
-                FROM
-                (
-                    SELECT TRIM(CODCLI) CODCLI, TRIM(CODSUC) CODSUC, IDPLANO, ROW_NUMBER() OVER (PARTITION BY CODCLI ORDER BY FECULTACT DESC) ORDEN
-                    FROM dws.sa_vtasuccli
-                    WHERE IDPLANO IN (
-                        SELECT TRIM(PLANO) FROM USRAES.input_devo_fija_plano_{$this->userIdentifier} WHERE TICKET = V_ROW.TICKET
-                    )
-                ) X
-                WHERE ORDEN=1;
-                COMMIT;
-            END LOOP;
 
-            FOR V_ROW IN CUR_TICKETS
-            LOOP
+        $informeFalla = DB::table("usraes.noc_informe_de_fallas_fija")
+        ->where("ticket", $ticket)
+        ->first();
 
-                INSERT INTO USRAES.TMP_INSSRV_SERVAFEC_{$this->userIdentifier}(
-                CID, NUMERO, ESTINSSRV, CODINSSRV, CODCLI, TIPSRV, FCHINI_INST, FCHFIN_INST,
-                DIRECCION, SEDE, CODUBI, CODSUC, IDPLANO, CO_ID, NUMSEC, CUSTOMER_ID
-                )
-                SELECT I.CID,I.NUMERO,I.ESTINSSRV,I.CODINSSRV,I.CODCLI,I.TIPSRV,
-                I.FECINI FCHINI_INST,I.FECFIN FCHFIN_INST,
-                I.DIRECCION,I.DESCRIPCION SEDE,I.CODUBI,
-                J.CODSUC,J.IDPLANO,I.CO_ID,
-                    I.NUMSEC,I.CUSTOMER_ID
-                FROM dws.sa_inssrv I
-                JOIN USRAES.TMP_ABONADOS_NODOS_{$this->userIdentifier} J
-                ON J.CODCLI = I.CODCLI
-                AND J.CODSUC = I.CODSUC
-                WHERE I.TIPSRV IN (
-                    SELECT DISTINCT E.TIPSRV
-                    FROM USRAES.SA_DEVOLUCION_EQUIVALENCIAS E
-                    WHERE OSIPTEL LIKE '%'|| V_ROW.SERVICIO_AFECTADO ||'%'
-                );
-                COMMIT;
-            END LOOP;
-        END;"];
         $queries[] = ["sql" => "BEGIN
             EXECUTE IMMEDIATE 'DROP TABLE USRAES.TMP_INSSRV_SRVAF_TYP_{$this->userIdentifier}';
         EXCEPTION
         WHEN OTHERS THEN
             IF SQLCODE != -942 THEN RAISE; END IF;
         END;"];
-        $queries[] = ["sql" => "CREATE TABLE  USRAES.TMP_INSSRV_SRVAF_TYP_{$this->userIdentifier}  NOLOGGING   AS
-        SELECT i.*, Y.DSCTIPSRV   SERVICIO,
-               U.NOMPVC,U.NOMEST,U.NOMDST
-        FROM USRAES.TMP_INSSRV_SERVAFEC_{$this->userIdentifier} i
-          LEFT JOIN dws.sa_tystipsrv Y
-            ON I.TIPSRV = Y.TIPSRV
-          LEFT JOIN dws.sa_v_ubicaciones U
-            ON I.CODUBI = U.CODUBI"];
+
+        if ($informeFalla !== null && (int) $informeFalla->tipo_reporte === InformeFijaTipoReporte::BY_CODCLI) {
+            $queries[] = ["sql" => "BEGIN
+                INSERT INTO USRAES.TMP_ABONADOS_NODOS_{$this->userIdentifier}(CODCLI)
+                SELECT CODCLI FROM usraes.noc_informe_de_fallas_fija_codcli
+                where num_reporte = :num_reporte;
+                commit;
+            END;", "params" => ["num_reporte" => $informeFalla->numero_reporte]];
+
+            $queries[] = ["sql" => "DECLARE
+                CURSOR CUR_TICKETS IS
+                SELECT TICKET, SERVICIO_AFECTADO FROM USRAES.INPUT_DEVO_FIJA_TMP_{$this->userIdentifier} GROUP BY TICKET, SERVICIO_AFECTADO;
+            BEGIN
+                FOR V_ROW IN CUR_TICKETS
+                LOOP
+                    INSERT INTO USRAES.TMP_INSSRV_SERVAFEC_{$this->userIdentifier}(
+                    CID, NUMERO, ESTINSSRV, CODINSSRV, CODCLI, TIPSRV, FCHINI_INST, FCHFIN_INST,
+                    DIRECCION, SEDE, CODUBI, CODSUC, IDPLANO, CO_ID, NUMSEC, CUSTOMER_ID
+                    )
+                    SELECT I.CID,I.NUMERO,I.ESTINSSRV,I.CODINSSRV,I.CODCLI,I.TIPSRV,
+                    I.FECINI FCHINI_INST,I.FECFIN FCHFIN_INST,
+                    I.DIRECCION,I.DESCRIPCION SEDE,I.CODUBI,
+                    J.CODSUC,J.IDPLANO,I.CO_ID,
+                        I.NUMSEC,I.CUSTOMER_ID
+                    FROM dws.sa_inssrv I
+                    JOIN USRAES.TMP_ABONADOS_NODOS_{$this->userIdentifier} J
+                    ON J.CODCLI = I.CODCLI
+                    WHERE I.TIPSRV IN (
+                        SELECT DISTINCT E.TIPSRV
+                        FROM USRAES.SA_DEVOLUCION_EQUIVALENCIAS E
+                        WHERE OSIPTEL LIKE '%'|| V_ROW.SERVICIO_AFECTADO ||'%'
+                    );
+                    COMMIT;
+                END LOOP;
+            END;"];
+
+            $queries[] = ["sql" => "CREATE TABLE  USRAES.TMP_INSSRV_SRVAF_TYP_{$this->userIdentifier}  NOLOGGING   AS
+            SELECT i.*, Y.DSCTIPSRV   SERVICIO,
+                '-' NOMPVC, '-' NOMEST, '-' NOMDST
+            FROM USRAES.TMP_INSSRV_SERVAFEC_{$this->userIdentifier} i
+            LEFT JOIN dws.sa_tystipsrv Y
+                ON I.TIPSRV = Y.TIPSRV"];
+            $queries[] = ["sql" => "BEGIN
+                UPDATE USRAES.TMP_INSSRV_SRVAF_TYP_{$this->userIdentifier} SET
+                NOMPVC='', NOMEST='', NOMDST='';
+                COMMIT;
+            END;"];
+        } else {
+            $queries[] = ["sql" => "DECLARE
+                CURSOR CUR_TICKETS IS
+                SELECT TICKET, SERVICIO_AFECTADO FROM USRAES.INPUT_DEVO_FIJA_TMP_{$this->userIdentifier} GROUP BY TICKET, SERVICIO_AFECTADO;
+            BEGIN
+                FOR V_ROW IN CUR_TICKETS
+                LOOP
+                    INSERT INTO USRAES.TMP_ABONADOS_NODOS_{$this->userIdentifier}(CODCLI, CODSUC, IDPLANO)
+                    SELECT CODCLI,CODSUC,IDPLANO
+                    FROM
+                    (
+                        SELECT TRIM(CODCLI) CODCLI, TRIM(CODSUC) CODSUC, IDPLANO, ROW_NUMBER() OVER (PARTITION BY CODCLI ORDER BY FECULTACT DESC) ORDEN
+                        FROM dws.sa_vtasuccli
+                        WHERE IDPLANO IN (
+                            SELECT TRIM(PLANO) FROM USRAES.input_devo_fija_plano_{$this->userIdentifier} WHERE TICKET = V_ROW.TICKET
+                        )
+                    ) X
+                    WHERE ORDEN=1;
+                    COMMIT;
+                END LOOP;
+
+                FOR V_ROW IN CUR_TICKETS
+                LOOP
+
+                    INSERT INTO USRAES.TMP_INSSRV_SERVAFEC_{$this->userIdentifier}(
+                    CID, NUMERO, ESTINSSRV, CODINSSRV, CODCLI, TIPSRV, FCHINI_INST, FCHFIN_INST,
+                    DIRECCION, SEDE, CODUBI, CODSUC, IDPLANO, CO_ID, NUMSEC, CUSTOMER_ID
+                    )
+                    SELECT I.CID,I.NUMERO,I.ESTINSSRV,I.CODINSSRV,I.CODCLI,I.TIPSRV,
+                    I.FECINI FCHINI_INST,I.FECFIN FCHFIN_INST,
+                    I.DIRECCION,I.DESCRIPCION SEDE,I.CODUBI,
+                    J.CODSUC,J.IDPLANO,I.CO_ID,
+                        I.NUMSEC,I.CUSTOMER_ID
+                    FROM dws.sa_inssrv I
+                    JOIN USRAES.TMP_ABONADOS_NODOS_{$this->userIdentifier} J
+                    ON J.CODCLI = I.CODCLI
+                    AND J.CODSUC = I.CODSUC
+                    WHERE I.TIPSRV IN (
+                        SELECT DISTINCT E.TIPSRV
+                        FROM USRAES.SA_DEVOLUCION_EQUIVALENCIAS E
+                        WHERE OSIPTEL LIKE '%'|| V_ROW.SERVICIO_AFECTADO ||'%'
+                    );
+                    COMMIT;
+                END LOOP;
+            END;"];
+
+            $queries[] = ["sql" => "CREATE TABLE  USRAES.TMP_INSSRV_SRVAF_TYP_{$this->userIdentifier}  NOLOGGING   AS
+            SELECT i.*, Y.DSCTIPSRV   SERVICIO,
+                U.NOMPVC,U.NOMEST,U.NOMDST
+            FROM USRAES.TMP_INSSRV_SERVAFEC_{$this->userIdentifier} i
+            LEFT JOIN dws.sa_tystipsrv Y
+                ON I.TIPSRV = Y.TIPSRV
+            LEFT JOIN dws.sa_v_ubicaciones U
+                ON I.CODUBI = U.CODUBI"];
+        }
         
         $queries[] = ["sql" => "BEGIN
             EXECUTE IMMEDIATE 'DROP TABLE USRAES.TMP_SERVAFEC_INSPRD_{$this->userIdentifier}';
@@ -1713,11 +1769,22 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
     private function exec_sql(array $queries)
     {
         foreach($queries as $row){
+            $query = strlen($row['sql']) > 4000 ? substr($row['sql'], 0, 4000) : $row['sql'];
+            $params = null;
             if(array_key_exists('params', $row)){
+                $params = json_encode($row['params']);
                 DB::connection($this->connection)->statement(DB::Raw($row['sql']), $row['params']);
             }else{
                 DB::connection($this->connection)->statement(DB::Raw($row['sql']));
             }
+            DB::table('prg_seguimiento_dblog')
+            ->insert([
+                'username' => $this->userIdentifier,
+                'modulo' => 'extraccion-fija',
+                'process_id' => getmygid(),
+                'query' => $query,
+                'params' => $params,
+            ]);
         }
     }
 }

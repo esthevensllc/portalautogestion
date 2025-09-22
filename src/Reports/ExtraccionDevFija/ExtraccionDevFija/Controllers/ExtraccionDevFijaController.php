@@ -7,6 +7,7 @@ use AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Services\ExportExtraccion
 use AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Services\FindReportInputs;
 use AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Services\GetReportInputs;
 use AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Services\ProcessExtraccionDevFija;
+use AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Services\ProcessExtraccionDevFijaMsisdn;
 use AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Services\UploadReportExtraccionFija;
 use AMovil\Reports\ExtraccionDevFija\InformesFalla\Services\InformeFallasFinder;
 use AMovil\Reports\ExtraccionDevFija\TicketReports\Services\FijaTicketReportFinder;
@@ -24,6 +25,8 @@ class ExtraccionDevFijaController
     private $ticketReportFinder;
     private $informeFallasFinder;
     private $reporteExtraccionUploader;
+    private $finder;
+    private $processExtraccionMsisdn;
 
     public function __construct(
         ProcessExtraccionDevFija $process,
@@ -33,7 +36,9 @@ class ExtraccionDevFijaController
         ExportExtraccionFijaPostpago $exportRepPostpago,
         FijaTicketReportFinder $ticketReportFinder,
         InformeFallasFinder $informeFallasFinder,
-        UploadReportExtraccionFija $reporteExtraccionUploader
+        UploadReportExtraccionFija $reporteExtraccionUploader,
+        InformeFallasFinder $finder,
+        ProcessExtraccionDevFijaMsisdn $processExtraccionMsisdn
     ) {
         $this->process = $process;
         $this->getReportInputs = $getReportInputs;
@@ -43,6 +48,8 @@ class ExtraccionDevFijaController
         $this->ticketReportFinder = $ticketReportFinder;
         $this->informeFallasFinder = $informeFallasFinder;
         $this->reporteExtraccionUploader = $reporteExtraccionUploader;
+        $this->finder = $finder;
+        $this->processExtraccionMsisdn = $processExtraccionMsisdn;
     }
 
     public function view()
@@ -173,5 +180,61 @@ class ExtraccionDevFijaController
             $file
         );
         return response()->json([]);
+    }
+
+    public function processByMsisdnView()
+    {
+        $config = [
+            'title' => 'TRABAJO DE MANTENIMIENTO',
+            'api' => url('extraccion-dev-fija/msisdn/process'),
+            // 'tableTitle' => 'INFORMES DE FALLA',
+            "servicio_afectado" => $this->finder->getServiciosAfectados(),
+            "compensaciones" => json_decode(json_encode([
+                ["label" => "No aplica", "id" => "0"],
+                ["label" => "Sí aplica", "id" => "1"]
+            ])),
+        ];
+        return view("extraccion_dev_fija.process_extraccion_msisdn", compact("config"));
+    }
+
+    public function processByMsisdn(Request $request)
+    {
+        $serviciosAfectados = $request->input("servicio_afectado_id");
+        $fechasIni = $request->input("fecha_ini");
+        $horasIni = $request->input("hora_ini");
+        $fechasFin = $request->input("fecha_fin");
+        $horasFin = $request->input("hora_fin");
+        $compensaciones = $request->input("compensacion_id");
+        $tickets = $request->input("ticket");
+
+        $detalleServicios = [];
+        foreach($serviciosAfectados as $index => $row){
+            $detalleServicios[] = [
+                "servicioAfectadoId" => $serviciosAfectados[$index],
+                "fechaIni" => $fechasIni[$index],
+                "horaIni" => $horasIni[$index],
+                "fechaFin" => $fechasFin[$index],
+                "horaFin" => $horasFin[$index],
+                "compensacionId" => $compensaciones[$index],
+                "ticket" => $tickets[$index],
+            ];
+        }
+
+        $response = $this->processExtraccionMsisdn->__invoke(
+            $request->input("numero_reporte"),
+            $request->file("excel"),
+            // $request->input("ticket"),
+            $detalleServicios
+            // $request->input("servicio_afectado_id"),
+            // $request->input("fecha_ini"),
+            // $request->input("hora_ini"),
+            // $request->input("fecha_fin"),
+            // $request->input("hora_fin"),
+            // $request->input("compensacion_id")
+        );
+        if ($response->fails()) {
+            return response()->json($response->errors(), 400);
+        }
+        return response()->json($response->data());
     }
 }

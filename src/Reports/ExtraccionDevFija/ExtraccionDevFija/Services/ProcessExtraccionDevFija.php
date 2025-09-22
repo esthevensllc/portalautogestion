@@ -3,6 +3,7 @@
 namespace AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Services;
 
 use AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Domain\ExtraccionDevFijaRepository;
+use AMovil\Reports\ExtraccionDevolucion\TablaInteres\Domain\TablaInteresRepository;
 use AMovil\Shared\Application\Response;
 use AMovil\Shared\Exports\Domain\ExportService;
 use AMovil\Shared\Exports\Domain\WriterType;
@@ -14,14 +15,22 @@ class ProcessExtraccionDevFija
 {
     private $repo;
     private $exportService;
-    public function __construct(ExtraccionDevFijaRepository $repo, ExportService $exportService)
+    private $tablaInteresRepo;
+    public function __construct(ExtraccionDevFijaRepository $repo, ExportService $exportService, TablaInteresRepository $tablaInteresRepo)
     {
         $this->repo = $repo;
         $this->exportService = $exportService;
+        $this->tablaInteresRepo = $tablaInteresRepo;
     }
 
     public function processAndGetGruposUsuario($departamentos, $provincias, $distritos, $planos,
     $ticket, $servicioAfectado, $fechaIni, $horaIni, $fechaFin, $horaFin, $mesesInteres){
+        $dtLastDay = new DateTime();
+        $dtLastDay->modify("-1 day");
+        if (!$this->tablaInteresRepo->existsIn($dtLastDay)) {
+            throw new Exception("La tabla de interes no esta actualizada");
+        }
+
         $arrayDistritos = [];
         foreach($departamentos as $index => $departemento){
             $arrayPlanos = explode(",", str_replace(" ", "", $planos[$index]));
