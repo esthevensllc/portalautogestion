@@ -4,7 +4,8 @@ namespace AMovil\Reports\ExtraccionDevFija\InformesFalla\Domain;
 
 interface InformeFallasRepository
 {
-    public function createInformeFallas(string $numReporte, string $filename, string $username, array $servicios);
+    public function createInformeFallas(string $numReporte, int $tipoReporte, string $filename, string $username, array $servicios);
+    public function createInformeFallasCodcli(string $numReporte, array $codcli);
     public function getByCriteria(array $filters, $sortBy = [], $offset=0, $limit=0);
     public function updateStatusToRevisado(string $numReporte, int $servicioAfectadoId);
     public function updateStatusToAprobado(string $numReporte, int $servicioAfectadoId, string $ticket);
