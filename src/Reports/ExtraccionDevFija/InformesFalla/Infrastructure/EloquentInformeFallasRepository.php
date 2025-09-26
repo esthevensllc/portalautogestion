@@ -25,7 +25,7 @@ class EloquentInformeFallasRepository implements InformeFallasRepository
         "acreditado" => ["label" => 'acreditado', "type" => 'number'],
     ];
     
-    public function createInformeFallas(string $numReporte, string $filename, string $username, array $servicios)
+    public function createInformeFallas(string $numReporte, int $tipoReporte, string $filename, string $username, array $servicios)
     {
         $now = new DateTime();
         foreach($servicios as $row){
@@ -33,6 +33,7 @@ class EloquentInformeFallasRepository implements InformeFallasRepository
             ->table("usraes.noc_informe_de_fallas_fija")
             ->insert([
                 "numero_reporte" => $numReporte,
+                "tipo_reporte" => $tipoReporte,
                 "name_file" => $filename,
                 "username" => $username,
                 "servicio_afectado_id" => $row["servicioAfectadoId"],
@@ -43,6 +44,18 @@ class EloquentInformeFallasRepository implements InformeFallasRepository
                 "procesado" => 0,
                 "en_ejecucion" => 0,
                 "acreditado" => 0,
+            ]);
+        }
+    }
+
+    public function createInformeFallasCodcli(string $numReporte, array $codcli)
+    {
+        foreach($codcli as $row){
+            DB::connection($this->connection)
+            ->table("usraes.noc_informe_de_fallas_fija_codcli")
+            ->insert([
+                "num_reporte" => $numReporte,
+                "codcli" => $row["codcli"],
             ]);
         }
     }

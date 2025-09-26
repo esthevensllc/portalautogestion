@@ -5,10 +5,13 @@ namespace AMovil\Reports\ExtraccionDevFija\InformesFalla\Services;
 use AMovil\Auth\AccessControl\Domain\AuthService;
 use AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Domain\ExtraccionDevFijaRepository;
 use AMovil\Reports\ExtraccionDevFija\InformesFalla\Domain\InformeFallasRepository;
+use AMovil\Reports\ExtraccionDevFija\InformesFalla\Domain\InformeFijaTipoReporte;
+use AMovil\Shared\Application\FileInput;
 use AMovil\Shared\FileStorage\Domain\StorageService;
 use AMovil\Shared\FileStorage\Domain\StorageSystemName;
 use DateTime;
 use Exception;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class CreateInformeFallas
 {
@@ -33,7 +36,7 @@ class CreateInformeFallas
         $this->notifyUsers = $notifyUsers;
     }
 
-    public function __invoke(string $numReporte, $file, array $planos, array $serviciosAfectados)
+    public function __invoke(string $numReporte, int $tipoReporte, $file, array $planos, array $serviciosAfectados)
     {
         $filename = $numReporte.'_'.$file->getClientOriginalName();
         $tempFilePath = $file->getPathname();
@@ -49,7 +52,7 @@ class CreateInformeFallas
 
         $username = $this->authService->getUserIdentifier();
 
-        $this->repo->createInformeFallas($numReporte, $filename, $username, $serviciosAfectados);
+        $this->repo->createInformeFallas($numReporte, $tipoReporte, $filename, $username, $serviciosAfectados);
         foreach($planos as $row){
             // $dtFechaIni = DateTime::createFromFormat("Y-m-d H:i:s", $row["fechaIni"]." ".$row["horaIni"]);
             // $dtFechaFin = DateTime::createFromFormat("Y-m-d H:i:s", $row["fechaFin"]." ".$row["horaFin"]);
@@ -79,6 +82,11 @@ class CreateInformeFallas
                 12,
                 $row["compensacionId"],
             );
+        }
+
+        if ($tipoReporte === InformeFijaTipoReporte::BY_CODCLI) {
+            $codcli_list = $this->getCodCliDataFromCsv($tempFilePath);
+            $this->repo->createInformeFallasCodcli($numReporte, $codcli_list);
         }
         
         /*
@@ -159,5 +167,20 @@ class CreateInformeFallas
                 throw new Exception("La fecha y hora de inicio no puede ser mayor a la fecha y hora final");
             }
         }
+    }
+
+    private function getCodCliDataFromCsv(string $filepath){
+        $reader = IOFactory::createReader('Xlsx');
+        $spreedsheet = $reader->load($filepath);
+        $sheet = $spreedsheet->getSheet(0);
+        $highestRow = $sheet->getHighestRow();
+        $data = [];
+        for ($i=2; $i <= $highestRow; $i++) {
+            $row = [
+                "codcli" => $sheet->getCellByColumnAndRow(1, $i)->getValue(),
+            ];
+            $data[] = $row;
+        }
+        return $data;
     }
 }

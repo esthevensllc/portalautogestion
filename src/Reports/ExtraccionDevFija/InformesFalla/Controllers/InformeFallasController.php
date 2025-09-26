@@ -4,6 +4,7 @@ namespace AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers;
 
 use AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Services\FindReportInputs;
 use AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Services\ProcessExtraccionDevFija;
+use AMovil\Reports\ExtraccionDevFija\InformesFalla\Domain\InformeFijaTipoReporte;
 use AMovil\Reports\ExtraccionDevFija\InformesFalla\Services\CreateInformeFallas;
 use AMovil\Reports\ExtraccionDevFija\InformesFalla\Services\DeleteInformeFallas;
 use AMovil\Reports\ExtraccionDevFija\InformesFalla\Services\InformeFallasFinder;
@@ -179,7 +180,7 @@ class InformeFallasController
             ];
         }
         
-        $this->creator->__invoke($request->input("num_reporte"), $request->file("excel"), $detallePlanos, $detalleServicios);
+        $this->creator->__invoke($request->input("num_reporte"), InformeFijaTipoReporte::BY_CODCLI, $request->file("excel"), $detallePlanos, $detalleServicios);
         // $this->creator->__invoke($request->input("num_reporte"), $request->file("excel"), $detallesExtraccion);
         return response()->json([]);
     }
