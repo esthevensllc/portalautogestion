@@ -27,7 +27,7 @@ class NotifyUsersOnInformeFallasProcessed
         $this->extraccionFijaRepo = $extraccionFijaRepo;
         $this->notificationUserRepo = $notificationUserRepo;
         $this->emailNotification = $emailNotification;
-        $this->groupId = env("APP_ENV")."/extfija_cargado";
+        $this->groupId = env("APP_ENV")."/extfija_procesado";
     }
 
     public function __invoke($numReporte, $servicioAfectadoId)
