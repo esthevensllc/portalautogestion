@@ -87,11 +87,13 @@
                         <th>LINEA</th>
                         <th>PRODUCTO</th>
                         <th>TIPO_DOC</th>
-                        <th>NUM_DOC</th>
+                        <th>NRO_DOC</th>
                         <th>NOMBRE</th>
-                        <th>AGREEMENT_MODE</th>
-                        <th>AGREEMENT_SERVICE_GROUP</th>
-                        <th>STATUS</th>
+                        <th>MAIL</th>
+                        <th>MODALIDAD</th>
+                        <th>TIPO</th>
+                        <th>ESTADO</th>
+                        <th>MOTIVO_ESTADO</th>
                         <th style="min-width: 145px;">F_INICIO</th>
                         <th style="min-width: 145px;">F_FIN</th>
                         <th>DIRECCION</th>
@@ -144,11 +146,13 @@ document.getElementById('form_export')
                 <td>${row.linea??''}</td>
                 <td>${row.producto??''}</td>
                 <td>${row.tipo_doc??''}</td>
-                <td>${row.num_doc??''}</td>
+                <td>${row.nro_doc??''}</td>
                 <td>${row.nombre??''}</td>
-                <td>${row.agreement_mode??''}</td>
-                <td>${row.agreement_service_group??''}</td>
-                <td>${row.status??''}</td>
+                <td>${row.mail??''}</td>
+                <td>${row.modalidad??''}</td>
+                <td>${row.tipo??''}</td>
+                <td>${row.estado??''}</td>
+                <td>${row.motivo_estado??''}</td>
                 <td>${row.f_inicio??''}</td>
                 <td>${row.f_fin??''}</td>
                 <td>${row.direccion??''}</td>
