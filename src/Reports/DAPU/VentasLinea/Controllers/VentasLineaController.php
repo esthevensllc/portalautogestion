@@ -20,23 +20,26 @@ class VentasLineaController
     public function view()
     {
         $config = [
-            "title" => "VENTAS DE LINEA",
+            "title" => "VENTAS DE LINEA POSTPAGO",
             "url" => asset("dapu/ventas-linea/json"),
             "url_export" => asset("dapu/ventas-linea/export"),
             "fields" => [
                 "fecha_venta" => ["label" => "FECHA_VENTA"],
+                "num_sec" => ["label" => "NUM_SEC"],
+                "linea" => ["label" => "LINEA"],
+                "tipo_doc_cliente" => ["label" => "TIPO_DOC_CLIENTE"],
+                "documento_cliente" => ["label" => "DOCUMENTO_CLIENTE"],
+                "nombres_cliente" => ["label" => "NOMBRES_CLIENTE"],
+                "apellidos_cliente" => ["label" => "APELLIDOS_CLIENTE"],
                 "imei" => ["label" => "IMEI"],
-                "n_doc" => ["label" => "N_DOC"],
-                "cliente" => ["label" => "CLIENTE"],
-                "fono" => ["label" => "FONO"],
-                "producto" => ["label" => "PRODUCTO"],
-                "plan_producto" => ["label" => "PLAN_PRODUCTO"],
-                "sales_person_name" => ["label" => "SALES_PERSON_NAME"],
-                "pdv_desc" => ["label" => "PDV_DESC"],
-                "pdv_razon_social_desc" => ["label" => "PDV_RAZON_SOCIAL_DESC"],
-                "pdv_channel_desc" => ["label" => "PDV_CHANNEL_DESC"],
-                "canal" => ["label" => "CANAL"],
-                "sales_reason_desc" => ["label" => "SALES_REASON_DESC"],
+                "codigo_vendedor" => ["label" => "CODIGO_VENDEDOR"],
+                "nombres_vendedor" => ["label" => "NOMBRES_VENDEDOR"],
+                "apellido_paterno_vendedor" => ["label" => "APELLIDO_PATERNO_VENDEDOR"],
+                "apellido_materno_vendedor" => ["label" => "APELLIDO_MATERNO_VENDEDOR"],
+                "documento_vendedor" => ["label" => "DOCUMENTO_VENDEDOR"],
+                "canal_venta" => ["label" => "CANAL_VENTA"],
+                "codigo_oficina_venta" => ["label" => "CODIGO_OFICINA_VENTA"],
+                "desc_oficina_venta" => ["label" => "DESC_OFICINA_VENTA"],
             ],
             "form_view" => "dapu.ventas_linea_form",
         ];
@@ -48,7 +51,6 @@ class VentasLineaController
         $response = $this->get->__invoke(
             $request->input('dni'),
             $request->input('fono'),
-            $request->input('periodo')
         )->data();
         return response()->json($response);
     }
@@ -59,7 +61,6 @@ class VentasLineaController
             $request->input('type'),
             $request->input('dni'),
             $request->input('fono'),
-            $request->input('periodo'),
         )->data();
 
         $headers_type = [

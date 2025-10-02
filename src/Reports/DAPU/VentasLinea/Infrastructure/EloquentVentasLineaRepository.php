@@ -7,30 +7,53 @@ use Illuminate\Support\Facades\DB;
 
 class EloquentVentasLineaRepository implements VentasLineaRepository
 {
-    public function getByDni_Fono_Periodo($dni, $fono, $periodo)
+    public function getByDni_Fono_Periodo($dni, $fono)
     {
-        $query = "select sale_date fecha_venta,
-        SERIAL_NUMBER imei,
-        id_card_value as N_DOC,
-        customer_name as CLIENTE,
-        PRODUCT_NUMBER fono,
-        PROD_OFFER_ITEM_NAME producto,
-        PROD_OFFER_PLAN_DESC plan_producto,
-        SALES_PERSON_NAME,
-        PDV_DESC,
-        PDV_RAZON_SOCIAL_DESC,
-        PDV_CHANNEL_DESC,
-        PDV_PVU_CHANNEL_DESC canal,
-        sales_reason_desc
-        from dwa.dw_t_sales 
-        where product_number='51'||? and id_card_value=?";
+        $query = "SELECT /*+ PARALLEL(8) */ 
+        C.CONTD_FECHA_CONTRATO FECHA_VENTA,
+        C.CONTN_NUMERO_SEC NUM_SEC,
+        CD.TELEFONO LINEA,
+        CASE C.CONTC_TIPO_DOC_CLIENTE
+        WHEN '01' THEN 'DNI'
+        WHEN '02' THEN 'RUC'
+        WHEN '03' THEN 'CE'
+        WHEN '04' THEN 'PASAPORTE'
+        WHEN '05' THEN 'SNM'
+        ELSE ''  END TIPO_DOC_CLIENTE,
+        C.CONTV_NRO_DOC_CLIENTE DOCUMENTO_CLIENTE,
+        UPPER(C.CONTV_NOMBRE) NOMBRES_CLIENTE,
+        UPPER(C.CONTV_APE_PAT) || ' ' || UPPER(C.CONTV_APE_MAT) APELLIDOS_CLIENTE,
+        SUBSTR(CD.IMEI19, 0, 14) IMEI,
+        P.PEDIV_CODVENDEDOR CODIGO_VENDEDOR,
+        PER.PERSV_NOMBRES NOMBRES_VENDEDOR,
+        PER.PERSV_APELLIDOPATERNO APELLIDO_PATERNO_VENDEDOR,
+        PER.PERSV_APELLIDOMATERNO APELLIDO_MATERNO_VENDEDOR,
+        PER.PERSV_DNI DOCUMENTO_VENDEDOR,
+        DECODE(PER.PERSN_IDCANAL, 1, 'DAC', 2, 'CAC', 3, 'CADENA', 4, 'PVA', 5, 'SMARTCENTER', 6, 'CCE', 7, 'TELEVENTAS', 8, 'TIENDA VIRTUAL', 9, 'CONSULTORES', 10, 'FFVV') CANAL_VENTA,
+        C.CONTC_OFICINA_VENTA CODIGO_OFICINA_VENTA,
+        C.CONTV_OFICINA_VENTA_DESC DESC_OFICINA_VENTA
+        FROM DWS.SA_SISACT_AP_CONTRATO_DET CD
+        INNER JOIN DWS.SA_SISACT_AP_CONTRATO C
+        ON C.CONTN_NUMERO_CONTRATO = CD.ID_CONTRATO
+        LEFT JOIN DWS.SA_SECT_OFICINA_VENTA V
+        ON V.OVENC_CODIGO = C.CONTC_OFICINA_VENTA
+        LEFT JOIN DWS.SA_SISACT_INFO_VENTA_SAP SAP
+        ON SAP.ID_CONTRATO = C.CONTN_NUMERO_CONTRATO
+        AND SAP.TIPO_DOCUMENTO = 'F'
+        LEFT JOIN DWS.SA_SSAPT_PEDIDO P
+        ON P.PEDIN_NROPEDIDO = SAP.NRO_DOCUMENTO
+        LEFT JOIN DWS.SA_PDV_PERSONAL PER
+        ON LPAD(PER.PERSV_IDVENDEDOR,15,'0') = LPAD(P.PEDIV_CODVENDEDOR,15,'0')
+        WHERE CD.TELEFONO = ? --Linea sin 51
+        AND C.CONTV_NRO_DOC_CLIENTE = ? --Documento
+        ";
 
         $values = [$fono, $dni];
 
-        if($periodo !== null){
+        /*if($periodo !== null){
             $query .= " and to_char(sale_date, 'yyyymm') = ?";
             $values[] = $periodo;
-        }
+        }*/
 
         return DB::select(DB::raw($query), $values);
     }

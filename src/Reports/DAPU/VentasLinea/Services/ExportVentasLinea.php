@@ -18,23 +18,26 @@ class ExportVentasLinea
         $this->exportService = $exportService;
     }
 
-    public function __invoke($type, $dni, $fono, $periodo)
+    public function __invoke($type, $dni, $fono)
     {
-        $data = $this->repo->getByDni_Fono_Periodo($dni, $fono, $periodo);
+        $data = $this->repo->getByDni_Fono_Periodo($dni, $fono);
         $headers = [
             "fecha_venta" => ["label" => "FECHA_VENTA"],
+            "num_sec" => ["label" => "NUM_SEC"],
+            "linea" => ["label" => "LINEA"],
+            "tipo_doc_cliente" => ["label" => "TIPO_DOC_CLIENTE"],
+            "documento_cliente" => ["label" => "DOCUMENTO_CLIENTE"],
+            "nombres_cliente" => ["label" => "NOMBRES_CLIENTE"],
+            "apellidos_cliente" => ["label" => "APELLIDOS_CLIENTE"],
             "imei" => ["label" => "IMEI"],
-            "n_doc" => ["label" => "N_DOC"],
-            "cliente" => ["label" => "CLIENTE"],
-            "fono" => ["label" => "FONO"],
-            "producto" => ["label" => "PRODUCTO"],
-            "plan_producto" => ["label" => "PLAN_PRODUCTO"],
-            "sales_person_name" => ["label" => "SALES_PERSON_NAME"],
-            "pdv_desc" => ["label" => "PDV_DESC"],
-            "pdv_razon_social_desc" => ["label" => "PDV_RAZON_SOCIAL_DESC"],
-            "pdv_channel_desc" => ["label" => "PDV_CHANNEL_DESC"],
-            "canal" => ["label" => "CANAL"],
-            "sales_reason_desc" => ["label" => "SALES_REASON_DESC"],
+            "codigo_vendedor" => ["label" => "CODIGO_VENDEDOR"],
+            "nombres_vendedor" => ["label" => "NOMBRES_VENDEDOR"],
+            "apellido_paterno_vendedor" => ["label" => "APELLIDO_PATERNO_VENDEDOR"],
+            "apellido_materno_vendedor" => ["label" => "APELLIDO_MATERNO_VENDEDOR"],
+            "documento_vendedor" => ["label" => "DOCUMENTO_VENDEDOR"],
+            "canal_venta" => ["label" => "CANAL_VENTA"],
+            "codigo_oficina_venta" => ["label" => "CODIGO_OFICINA_VENTA"],
+            "desc_oficina_venta" => ["label" => "DESC_OFICINA_VENTA"],
         ];
 
         $options = [

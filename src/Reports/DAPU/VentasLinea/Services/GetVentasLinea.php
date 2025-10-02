@@ -14,9 +14,9 @@ class GetVentasLinea
         $this->repo = $repo;
     }
 
-    public function __invoke($dni, $fono, $periodo)
+    public function __invoke($dni, $fono)
     {    
-        $data = $this->repo->getByDni_Fono_Periodo($dni, $fono, $periodo);
+        $data = $this->repo->getByDni_Fono_Periodo($dni, $fono);
         return new Response([], $data);
     }
 }
