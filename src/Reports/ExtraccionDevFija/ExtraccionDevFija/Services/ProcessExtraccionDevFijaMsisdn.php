@@ -49,7 +49,7 @@ class ProcessExtraccionDevFijaMsisdn
     }
 
     // public function __invoke($numReporte, $excel, $ticket, $servicioAfectadoId, $fechasIni, $horasIni, $fechasFin, $horasFin, $compensacionId)
-    public function __invoke($numReporte, $excel, $detalleServicios)
+    public function __invoke($numReporte, $excel, $detalleServicios, $userIpAddress)
     {
         $validationTablaInteres = $this->validateTablaInteres();
         if ($validationTablaInteres !== null) {
@@ -84,7 +84,7 @@ class ProcessExtraccionDevFijaMsisdn
             $this->informeFallasrepo->updateStatusToAprobado($numReporte, $servicioAfectadoId, $ticket);
             $this->extraccionFijaRepo->updateTicketServicioInputByNumReporte($numReporte, $servicioAfectadoId, $ticket);
 
-            $this->process($numReporte, $ticket);
+            $this->process($numReporte, $ticket, $userIpAddress);
         }
 
         return Response::respData(["tickets" => $tickets]);
@@ -138,7 +138,7 @@ class ProcessExtraccionDevFijaMsisdn
         $this->creator->__invoke($numReporte, InformeFijaTipoReporte::BY_CODCLI, $excel, $detallePlanos, $detalleServicios);
     }
 
-    private function process($numReporte, $ticket){
+    private function process($numReporte, $ticket, $userIpAddress){
         $serviciosById = [];
         $serviciosAfectados = $this->finder->getServiciosAfectados();
         foreach($serviciosAfectados as $row){
@@ -182,10 +182,11 @@ class ProcessExtraccionDevFijaMsisdn
 
         $this->extraccion->processEnd(
             $input->ticket,
-            1
+            1,
+            $userIpAddress
         )->data();
 
-        $this->updater->updateStatusToProcesado($input->numero_reporte, $input->servicio_afectado_id);
+        $this->updater->updateStatusToProcesado($input->numero_reporte, $input->servicio_afectado_id, $userIpAddress);
 
         $this->notifyOnProcessed->__invoke($input->numero_reporte, $input->servicio_afectado_id);
     }

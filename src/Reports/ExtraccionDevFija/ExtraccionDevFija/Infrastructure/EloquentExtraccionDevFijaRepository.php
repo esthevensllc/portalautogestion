@@ -137,7 +137,7 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
             IF SQLCODE != -942 THEN RAISE; END IF;
         END;"];
         $queries[] = ["sql" => "CREATE TABLE USRAES.TMP_ABONADOS_NODOS_{$this->userIdentifier} (
-            CODCLI VARCHAR2(8),
+            CODCLI VARCHAR2(20),
             CODSUC VARCHAR2(10),
             IDPLANO VARCHAR2(10)
         )"];
@@ -418,8 +418,7 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
             V_SERV VARCHAR2(60);
             V_SQL  VARCHAR2(4000);
         BEGIN
-            SELECT DISTINCT UPPER(TRANSLATE('{$servicioAfectado}','áéíóúÁÉÍÓÚñÑ','aeiouAEIOUnN')) INTO V_SERV
-            FROM USRAES.TMP_DEVOLUCION_MASIVO_{$this->userIdentifier};
+            V_SERV := UPPER(TRANSLATE('{$servicioAfectado}','áéíóúÁÉÍÓÚñÑ','aeiouAEIOUnN'));
         
             IF (V_SERV <> 'TELEFONIA FIJA LOCAL') THEN
                 V_SQL:='

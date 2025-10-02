@@ -121,7 +121,8 @@ class ExtraccionDevFijaController
         )->data();
         $response = $this->process->processEnd(
             $request->input("ticket"),
-            1
+            1,
+            $request->ip()
         )->data();
         
         return response($response["content"], 200, [
@@ -224,7 +225,8 @@ class ExtraccionDevFijaController
             $request->input("numero_reporte"),
             $request->file("excel"),
             // $request->input("ticket"),
-            $detalleServicios
+            $detalleServicios,
+            $request->ip()
             // $request->input("servicio_afectado_id"),
             // $request->input("fecha_ini"),
             // $request->input("hora_ini"),

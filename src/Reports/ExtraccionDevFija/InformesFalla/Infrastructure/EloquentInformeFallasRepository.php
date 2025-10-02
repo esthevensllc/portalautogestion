@@ -78,6 +78,19 @@ class EloquentInformeFallasRepository implements InformeFallasRepository
         return $response;
     }
 
+    public function registerStatusChanges(string $numReporte, string $servicioAfectadoId, string $username, string $ipAddress, string $status, DateTime $fecha)
+    {
+        DB::table("usraes.noc_informe_de_fallas_fija_status_log")
+        ->insert([
+            "numero_reporte" => $numReporte,
+            "servicio_afectado_id" => $servicioAfectadoId,
+            "username" => $username,
+            "ip_address" => $ipAddress,
+            "status" => $status,
+            "fecha" => $fecha,
+        ]);
+    }
+
     public function updateStatusToRevisado(string $numReporte, int $servicioAfectadoId) {
         DB::table('usraes.noc_informe_de_fallas_fija')
         ->where("numero_reporte", $numReporte)

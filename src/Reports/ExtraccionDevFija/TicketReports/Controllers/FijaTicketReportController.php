@@ -45,6 +45,6 @@ class FijaTicketReportController
 
     public function deleteTicket(Request $request)
     {
-        $this->deleter->__invoke($request->input("ticket"));
+        $this->deleter->__invoke($request->input("ticket"), $request->ip());
     }
 }

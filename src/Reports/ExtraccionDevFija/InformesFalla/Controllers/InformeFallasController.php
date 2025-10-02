@@ -71,22 +71,22 @@ class InformeFallasController
         $ticket = $request->input("ticket");
         switch ($status) {
             case 'revisado':
-                $this->updater->updateStatusToRevisado($numReporte, $servicioAfectadoId);
+                $this->updater->updateStatusToRevisado($numReporte, $servicioAfectadoId, $request->ip());
                 break;
             case 'aprobar':
-                $this->updater->updateStatusToAprobado($numReporte, $servicioAfectadoId, $ticket);
+                $this->updater->updateStatusToAprobado($numReporte, $servicioAfectadoId, $ticket, $request->ip());
                 break;
             case 'desaprobar':
-                $this->updater->updateStatusToDesaprobado($numReporte, $servicioAfectadoId);
+                $this->updater->updateStatusToDesaprobado($numReporte, $servicioAfectadoId, $request->ip());
                 break;
             case 'enEspera':
-                $this->updater->updateStatusToEnEspera($numReporte, $servicioAfectadoId);
+                $this->updater->updateStatusToEnEspera($numReporte, $servicioAfectadoId, $request->ip());
                 break;
             case 'enEjecucion':
-                $this->updater->updateStatusToEnEjecucion($numReporte, $servicioAfectadoId);
+                $this->updater->updateStatusToEnEjecucion($numReporte, $servicioAfectadoId, $request->ip());
                 break;
             case 'enEsperaEjecucion':
-                $this->updater->updateStatusToEnEsperaEjecucion($numReporte, $servicioAfectadoId);
+                $this->updater->updateStatusToEnEsperaEjecucion($numReporte, $servicioAfectadoId, $request->ip());
                 break;
             default:
                 throw new Exception("Estado de informe de fallas no valido");
@@ -263,7 +263,7 @@ class InformeFallasController
             $grupoUsuarios
         )->data();
 
-        $this->updater->updateStatusToProcesado($input->numero_reporte, $input->servicio_afectado_id);
+        $this->updater->updateStatusToProcesado($input->numero_reporte, $input->servicio_afectado_id, $request->ip());
 
         $this->notifyOnProcessed->__invoke($input->numero_reporte, $input->servicio_afectado_id);
         
