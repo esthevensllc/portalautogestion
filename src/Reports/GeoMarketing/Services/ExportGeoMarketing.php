@@ -27,6 +27,7 @@ class ExportGeoMarketing
         "9" => ["name" => "COUNTRY_CLUB_VILLA_DE_GOLF"],
         "10" => ["name" => "PARQUE_DE_LA_EXPOSICION_ANFITEATRO"],
         "11" => ["name" => "GRAN_TEATRO_NACIONAL"],
+        "12,13,14,15" => ["name" => "MALL_PLAZA_AREQUIPA"],
     ];
     private $repository;
     private $saveReportLog;

@@ -32,6 +32,8 @@ class EloquentGeoMarketingRepository implements GeoMarketingRepository
 
     public function getReport($baseFlag, DateTime $fechaIni, DateTime $fechaFin, int $whiteList)
     {
+        $arrayBaseFlag = explode(",", $baseFlag);
+        $strBaseFlag = "'".implode("','", $arrayBaseFlag)."'";
         $this->userIdentifier = $this->authService->getUserIdentifier();
         $strDay = $fechaIni->format("Ymd");
         $strFechaIni = $fechaIni->format("Y-m-d H:i").":00";
@@ -84,7 +86,7 @@ class EloquentGeoMarketingRepository implements GeoMarketingRepository
                 FROM cdrdatos.cdr{$strDay} a
                 INNER JOIN mlac.base_place_celdas_pap b
                 ON toInt64(a.uli_sac+a.uli_ci+a.uli_ecgi) = toInt64(b.cellid) AND  toInt64(a.uli_lac+a.uli_tai) = toInt64(b.lac_tac)  
-                WHERE a.record_opening_time >='{$strLoopDateIni}' and a.record_opening_time < '{$strLoopDateFin}' and b.flag_place = '{$baseFlag}'
+                WHERE a.record_opening_time >='{$strLoopDateIni}' and a.record_opening_time < '{$strLoopDateFin}' and b.flag_place in ({$strBaseFlag})
                 group by 1"
             ];
             $queries[] = [
@@ -102,11 +104,11 @@ class EloquentGeoMarketingRepository implements GeoMarketingRepository
                 INNER JOIN  mlac.base_place_celdas_pap y
                 ON toInt64(x.cellid) = toInt64(y.cellid) AND  toInt64(x.lac) = toInt64(y.lac_tac)
                 where x.msisdn2 not in (select msisdn from cdrdatos.usuarios_estadio_{$this->userIdentifier} group by 1)
-                and y.flag_place = '{$baseFlag}'
+                and y.flag_place in ({$strBaseFlag})
                 group by 1"
             ];
 
-            if((int) $baseFlag === 1){
+            if(in_array('1', $arrayBaseFlag)){
                 $queries[] = [
                     "sql" => "TRUNCATE TABLE cdrdatos.lineas_5g_{$this->userIdentifier}"
                 ];
