@@ -57,4 +57,43 @@ class EloquentVentasLineaRepository implements VentasLineaRepository
 
         return DB::select(DB::raw($query), $values);
     }
+
+    public function getPrepagoByDni_Fono_Periodo($dni, $fono)
+    {
+        $query = "SELECT /*+ PARALLEL(8) */ 
+        P.VEPR_FECHA_REG FECHA_VENTA,
+        V.DVPR_LINEA LINEA,
+        CASE P.VEPR_TIPO_DOC
+            WHEN '01' THEN 'DNI'
+            WHEN '02' THEN 'RUC'
+            WHEN '03' THEN 'CE'
+            WHEN '04' THEN 'PASAPORTE'
+            WHEN '05' THEN 'SNM'
+            ELSE ''  END TIPO_DOC_CLIENTE,
+        P.VEPR_NUM_DOC DOCUMENTO_CLIENTE,
+        UPPER(P.VEPR_NOM_CLIE) NOMBRES_CLIENTE,
+        UPPER(P.VEPR_APE_CLIE) APELLIDOS_CLIENTE,
+        P.VEPR_PEDIDO_SINERGIA PEDIDO,
+        SUBSTR(V.DVPR_SERIE, 0, 14) IMEI,
+        V.DVPR_COD_MATERIAL CODIGO_EQUIPO,
+        P.VEPR_COD_VEN CODIGO_VENDEDOR,
+        PER.PERSV_NOMBRES NOMBRES_VENDEDOR,
+        PER.PERSV_APELLIDOPATERNO APELLIDO_PATERNO_VENDEDOR,
+        PER.PERSV_APELLIDOMATERNO APELLIDO_MATERNO_VENDEDOR,
+        PER.PERSV_DNI DOCUMENTO_VENDEDOR,
+        DECODE(PERSN_IDCANAL, 1, 'DAC', 2, 'CAC', 3, 'CADENA', 4, 'PVA', 5, 'SMARTCENTER', 6, 'CCE', 7, 'TELEVENTAS', 8, 'TIENDA VIRTUAL', 9, 'CONSULTORES', 10, 'FFVV') CANAL_VENTA,
+        P.VEPR_DES_PDV DESC_OFICINA_VENTA
+        FROM DWS.SA_SISACT_VENTA_PREPAGO P
+        INNER JOIN DWS.SA_SISACT_DETALLE_VENTA_PREPAGO V
+        ON V.DVPR_ID = P.VEPR_ID
+        LEFT JOIN DWS.SA_PDV_PERSONAL PER
+        ON LPAD(PER.PERSV_IDVENDEDOR,15,'0') = LPAD(P.VEPR_COD_VEN,15,'0')
+        WHERE P.VEPR_ESTADO = 'P'
+        AND V.DVPR_ESTADO = 'P'
+        AND SUBSTR(V.DVPR_LINEA, -9) = ?
+        AND P.VEPR_NUM_DOC = ?
+        ";
+        $values = [$fono, $dni];
+        return DB::select(DB::raw($query), $values);
+    }
 }
