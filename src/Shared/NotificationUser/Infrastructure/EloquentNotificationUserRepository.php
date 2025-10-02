@@ -14,4 +14,17 @@ class EloquentNotificationUserRepository implements NotificationUserRepository
         ->where("status", 1)
         ->get();
     }
+
+    public function getEmailsByGroupId(string $groupId)
+    {
+        return DB::table("usraes.padm_notification_user")
+        ->select("email")
+        ->where("group_id", $groupId)
+        ->where("status", 1)
+        ->get()
+        ->map(function($row){
+            return $row->email;
+        })
+        ->toArray();
+    }
 }

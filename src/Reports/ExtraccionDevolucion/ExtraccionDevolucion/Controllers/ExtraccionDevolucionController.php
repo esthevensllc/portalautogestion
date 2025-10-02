@@ -157,7 +157,8 @@ class ExtraccionDevolucionController
             ProcessExtraccion::MESES_INTERES, // $request->input("fecha_interes"),
             $request->input('corte_fecha1_date')." ".$request->input('corte_fecha1_time'),
             $request->input('corte_fecha2_date')." ".$request->input('corte_fecha2_time'),
-            ProcessExtraccion::MINUTOS_USUARIOS // $request->input("minutos_usuarios")
+            ProcessExtraccion::MINUTOS_USUARIOS, // $request->input("minutos_usuarios")
+            $request->ip()
         )->data();
 
         return response()->json(["result" => $resp]);
@@ -249,7 +250,8 @@ class ExtraccionDevolucionController
             $request->input("ticket"),
             $request->file("excel"),
             $request->input('corte_fecha1_date'), $request->input('corte_fecha1_time'),
-            $request->input('corte_fecha2_date'), $request->input('corte_fecha2_time')
+            $request->input('corte_fecha2_date'), $request->input('corte_fecha2_time'),
+            $request->ip()
         );
         if ($response->fails()) {
             return response()->json($response->errors(), 400);

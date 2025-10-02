@@ -36,9 +36,11 @@ class ProcessExtraccionMsisdn
         $this->saveReportLog = $saveReportLog;
     }
 
-    public function __invoke($num_reporte, $ticket, $excel, $corteFechaIni, $corteHoraIni, $corteFechaFin, $corteHoraFin)
+    public function __invoke($num_reporte, $ticket, $excel, $corteFechaIni, $corteHoraIni, $corteFechaFin, $corteHoraFin, $userIpAddress)
     {
-        $ticket = $ticket !== null ? $ticket : (new DateTime())->getTimestamp();
+        if ($ticket === null) {
+            return new Response(["message" => "El ticket ingresado no es válido"]);
+        }
         if (count($this->informeFallasrepo->findInputFor($num_reporte)) > 0) {
             return new Response(["message" => "El numero de reporte ya existe"]);
         }
@@ -53,7 +55,7 @@ class ProcessExtraccionMsisdn
                 "corteFechaFin" => $corteFechaFin." ".$corteHoraFin,
             ]
         ];
-        $this->cargaInformeFallas->__invoke($num_reporte, InformeTipoReporte::BY_MSISDN2, $excel, $detalleExtraccion);
+        $this->cargaInformeFallas->__invoke($num_reporte, InformeTipoReporte::BY_MSISDN2, $excel, $detalleExtraccion, $userIpAddress);
 
         $this->informeFallasrepo->revisado($num_reporte);
         $this->informeFallasrepo->aprobar($num_reporte, $ticket);
@@ -77,7 +79,8 @@ class ProcessExtraccionMsisdn
             ProcessExtraccion::MESES_INTERES,
             $input->corte_fecha_ini,
             $input->corte_fecha_fin,
-            $minutos_usuarios
+            $minutos_usuarios,
+            $userIpAddress
         );
         $response = $this->processExtraccion->__invoke(
             2,
@@ -91,7 +94,8 @@ class ProcessExtraccionMsisdn
             ProcessExtraccion::MESES_INTERES,
             $input->corte_fecha_ini,
             $input->corte_fecha_fin,
-            $minutos_usuarios
+            $minutos_usuarios,
+            $userIpAddress
         )->toArray();
         return Response::respData(["ticket" => $ticket]);
     }

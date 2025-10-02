@@ -1473,6 +1473,19 @@ class EloquentExtraccionRepository implements ExtraccionRepository
         ->delete();
     }
 
+    public function registerStatusChanges(string $numReporte, ?string $departamento, string $username, string $ipAddress, string $status, DateTime $fecha)
+    {
+        DB::table("usraes.noc_informe_de_fallas_status_log")
+        ->insert([
+            "numero_reporte" => $numReporte,
+            "departamento" => $departamento,
+            "username" => $username,
+            "ip_address" => $ipAddress,
+            "status" => $status,
+            "fecha" => $fecha,
+        ]);
+    }
+
     public function aprobar($id,$ticket)
     {
         $exists = DB::table("usraes.noc_informe_de_fallas")->where('ticket', $ticket)->exists();

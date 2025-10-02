@@ -2,14 +2,19 @@
 
 namespace AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services;
 
+use AMovil\Auth\AccessControl\Domain\AuthService;
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Domain\ExtraccionRepository as ExtraccionRepository1;
 use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Domain\ExtraccionRepository as ExtraccionRepository2;
+use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Domain\InformeStatus;
 use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Domain\InformeTipoReporte;
 use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Services\GetDepartamentosByNumReporte;
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Domain\TipoInput;
 use AMovil\Reports\ExtraccionDevolucion\TablaInteres\Domain\TablaInteresRepository;
 use AMovil\Reports\ReportLog\Services\SaveReportLog;
 use AMovil\Shared\Application\Response;
+use AMovil\Shared\EmailNotification\Domain\EmailNotification;
+use AMovil\Shared\EmailNotification\Domain\EmailNotificationService;
+use AMovil\Shared\NotificationUser\Domain\NotificationUserRepository;
 use DateTime;
 use Exception;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -24,6 +29,10 @@ class ProcessExtraccion
     private $tablaInteresRepo;
     private $sendFilePrepago;
     private $departamentosPendientesGetter;
+    private $notificationUserRepo;
+    private $emailNotification;
+    private $authService;
+    private $groupId;
 
     const MESES_INTERES = 24;
     const MINUTOS_USUARIOS = 3;
@@ -34,7 +43,10 @@ class ProcessExtraccion
         SaveReportLog $saveReportLog,
         TablaInteresRepository $tablaInteresRepo,
         SendFilePrepagoProcesadoEvent $sendFilePrepago,
-        GetDepartamentosByNumReporte $departamentosPendientesGetter
+        GetDepartamentosByNumReporte $departamentosPendientesGetter,
+        NotificationUserRepository $notificationUserRepo,
+        EmailNotificationService $emailNotification,
+        AuthService $authService
     ) {
         $this->repo = $repo;
         $this->repo2 = $repo2;
@@ -42,9 +54,13 @@ class ProcessExtraccion
         $this->tablaInteresRepo = $tablaInteresRepo;
         $this->sendFilePrepago = $sendFilePrepago;
         $this->departamentosPendientesGetter = $departamentosPendientesGetter;
+        $this->notificationUserRepo = $notificationUserRepo;
+        $this->emailNotification = $emailNotification;
+        $this->authService = $authService;
+        $this->groupId = config("app.env")."/ext_procesado";
     }
 
-    public function __invoke(?int $step, $tipoInput, $celdas, $provincias, $excel, $fechaIni, $fechaFin, $ticketOsiptel, $fechaInteres, $corteFechaIni, $corteFechaFin, $minutos_usuarios)
+    public function __invoke(?int $step, $tipoInput, $celdas, $provincias, $excel, $fechaIni, $fechaFin, $ticketOsiptel, $fechaInteres, $corteFechaIni, $corteFechaFin, $minutos_usuarios, $userIpAddress)
     {
         $dtStart = new DateTime();
         $inforFalla = $this->repo2->findInformeByTicket($ticketOsiptel);
@@ -139,46 +155,20 @@ class ProcessExtraccion
             $departamentosPendientes = $this->departamentosPendientesGetter->__invoke($inforFalla->numero_de_reporte)->data();
             if(count($departamentosPendientes) === 0){
                 $this->repo2->procesado($inforFalla->numero_de_reporte);
+                $this->repo2->registerStatusChanges($inforFalla->numero_de_reporte, null, $this->authService->getUserIdentifier(), $userIpAddress, InformeStatus::PROCESADO, new DateTime());
             }
 
             // $reportes = $this->repo2->getReportesProcesados();
-            $correo = new NotificacionProcesado($ticketOsiptel, $depatamento);
-            $correo->setSubject("PROCESADO - TK {$ticketOsiptel} - {$inforFalla->name_file}");
-            // Envío del correo
-            Mail::to([
-                'C19884@claro.com.pe',
-                'jose.ramosm@claro.com.pe',
-                'soporteprepagofactory@claro.com.pe',
-                'edward.granados@claro.com.pe',
-                'ayskel.guevara@claro.com.pe',
-                'elver.ramirez@claro.com.pe',
-                'alex.leguia@claro.com.pe',
-                'michael.lazaro@claro.com.pe',
-                'factsopfacturacion@claro.com.pe',
-                'C25976@claro.com.pe',
-                'josias.luna@claro.com.pe',
-                'omori@claro.com.pe',
-                'cpalacios@claro.com.pe',
-                'luyciana.rodriguez@claro.com.pe',
-                'C26311@claro.com.pe',
-                'marali.huaranca@claro.com.pe',
-                'pleon@claro.com.pe',
-                'C26559@claro.com.pe',
-                'carlos.malpartida@claro.com.pe',
-                'lizeth.moya@claro.com.pe',
-                'bryan.robles@claro.com.pe',
-                'cdiazb@claro.com.pe',
-                'C26670@claro.com.pe',
-                'rhurtado@claro.com.pe',
-                'angela.felix@claro.com.pe',
-                'luis.huatuco@claro.com.pe',
-                'david.granados@claro.com.pe',
-                'c26977@claro.com.pe',
-                'C26131@claro.com.pe',
-                'C27727@claro.com.pe',
-                'C27689@claro.com.pe',
-                'fabiola.sanchez@claro.com.pe',
-            ])->send($correo);
+            $emails = $this->notificationUserRepo->getEmailsByGroupId($this->groupId);
+            $email = new EmailNotification();
+            $email->to($emails)
+            ->subject("PROCESADO - TK {$ticketOsiptel} - {$inforFalla->name_file}")
+            ->view("notificacionProcesado")
+            ->with([
+                'ticket' => $ticketOsiptel,
+                'departamento' => $depatamento,
+            ]);
+            $this->emailNotification->send($email);
 
             $this->sendFilePrepago->__invoke($ticketOsiptel, $depatamento);
 

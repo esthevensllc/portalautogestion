@@ -2,58 +2,50 @@
 
 namespace AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Services;
 
+use AMovil\Auth\AccessControl\Domain\AuthService;
 use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Domain\ExtraccionRepository;
+use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Domain\InformeStatus;
+use AMovil\Shared\EmailNotification\Domain\EmailNotification;
+use AMovil\Shared\EmailNotification\Domain\EmailNotificationService;
+use AMovil\Shared\NotificationUser\Domain\NotificationUserRepository;
 use App\Mail\NotificacionAprobado;
+use DateTime;
 use Illuminate\Support\Facades\Mail;
 
 class AprobarReport
 {
     private $repo;
+    private $authService;
+    private $notificationUserRepo;
+    private $emailNotification;
+    private $groupId;
     
-    public function __construct(ExtraccionRepository $repo)
+    public function __construct(ExtraccionRepository $repo, AuthService $authService, NotificationUserRepository $notificationUserRepo, EmailNotificationService $emailNotification)
     {
         $this->repo = $repo;
+        $this->authService = $authService;
+        $this->notificationUserRepo = $notificationUserRepo;
+        $this->emailNotification = $emailNotification;
+        $this->groupId = config("app.env")."/ext_aprobado";
     }
 
-    public function __invoke($id,$ticket)
+    public function __invoke($id,$ticket,$userIpAddress)
     {
         $data = $this->repo->aprobar($id,$ticket);
+        $this->repo->registerStatusChanges($id, null, $this->authService->getUserIdentifier(), $userIpAddress, InformeStatus::APROBADO, new DateTime());
 
         // $reportes = $this->repo->getReportesAprobados();
         $reportes = $this->repo->findInputFor($id);
         if($data){
             $reporteFinded = $reportes[0];
-            $correo = new NotificacionAprobado($reportes);
-            $correo->setSubject("CONTROL REGULATORIO - APROBRADO - TK {$ticket} - {$reporteFinded->name_file}");
             
-            try {
-                // Envío del correo
-                Mail::to([
-                    'C19884@claro.com.pe',
-                    'jose.ramosm@claro.com.pe',
-                    'C25976@claro.com.pe',
-                    'josias.luna@claro.com.pe',
-                    'omori@claro.com.pe',
-                    'cpalacios@claro.com.pe',
-                    'luyciana.rodriguez@claro.com.pe',
-                    'C26311@claro.com.pe',
-                    'marali.huaranca@claro.com.pe',
-                    'pleon@claro.com.pe',
-                    'C26559@claro.com.pe',
-                    'carlos.malpartida@claro.com.pe',
-                    'lizeth.moya@claro.com.pe',
-                    'bryan.robles@claro.com.pe',
-                    'cdiazb@claro.com.pe',
-                    'C26670@claro.com.pe',
-                    'C26131@claro.com.pe',
-                    'C27727@claro.com.pe',
-                    'C27689@claro.com.pe',
-                ])->send($correo);
-                //Mail::to(['ellanos@indracompany.com'])->send($correo);
-            } catch (\Exception $e) {
-                // Captura cualquier excepción generada durante el envío del correo
-                return response()->json(['message' => 'Error al enviar el correo: '.$e->getMessage(), "reportes" => $reportes], 500);
-            }
+            $emails = $this->notificationUserRepo->getEmailsByGroupId($this->groupId);
+            $email = new EmailNotification();
+            $email->to($emails)
+            ->subject("CONTROL REGULATORIO - APROBRADO - TK {$ticket} - {$reporteFinded->name_file}")
+            ->view("notificacionAprobado")
+            ->with(["reportes" => $reportes]);
+            $this->emailNotification->send($email);
         }
 
         return response()->json(["reportes" => $reportes], 500);

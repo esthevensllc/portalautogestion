@@ -5,6 +5,9 @@ namespace AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services;
 use AMovil\Shared\Remedy\Domain\RemedyService;
 use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Domain\ExtraccionRepository as InformeFallaRepository;
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Infrastructure\NotificacionPrepagoProcesado;
+use AMovil\Shared\EmailNotification\Domain\EmailNotification;
+use AMovil\Shared\EmailNotification\Domain\EmailNotificationService;
+use AMovil\Shared\NotificationUser\Domain\NotificationUserRepository;
 use Illuminate\Support\Facades\Mail;
 use Ramsey\Uuid\Uuid;
 
@@ -13,12 +16,18 @@ class NotifyProcessExtraccionPrepago
     private $remedy;
     private $informeFallaRepo;
     private $exportPrepago;
+    private $notificationUserRepo;
+    private $emailNotification;
+    private $groupId;
 
-    public function __construct(RemedyService $remedy, InformeFallaRepository $informeFallaRepo, ExportRepPrepago $exportPrepago)
+    public function __construct(RemedyService $remedy, InformeFallaRepository $informeFallaRepo, ExportRepPrepago $exportPrepago, NotificationUserRepository $notificationUserRepo, EmailNotificationService $emailNotification)
     {
         $this->remedy = $remedy;
         $this->informeFallaRepo = $informeFallaRepo;
         $this->exportPrepago = $exportPrepago;
+        $this->notificationUserRepo = $notificationUserRepo;
+        $this->emailNotification = $emailNotification;
+        $this->groupId = config("app.env")."/ext_procesado_prepago";
     }
 
     public function __invoke($ticket, $departamento)
@@ -30,36 +39,18 @@ class NotifyProcessExtraccionPrepago
         $response = $this->exportPrepago->__invoke($ticket, $departamento)->data();
         $tempfile = $this->saveToTempfile($response);
 
-        $mail = new NotificacionPrepagoProcesado($ticket, $departamento, $incidenciaNumber, [
-            "path" => $tempfile,
-            "filename" => $response["filename"]
-        ]);
-        $mail->setSubject("PROCESADO - TK {$ticket} - {$informeFalla->name_file} - {$incidenciaNumber}");
-
-        Mail::to([
-            'C19884@claro.com.pe',
-            'jose.ramosm@claro.com.pe',
-            'soporteprepagofactory@claro.com.pe',
-            'edward.granados@claro.com.pe',
-            'ayskel.guevara@claro.com.pe',
-            'elver.ramirez@claro.com.pe',
-            'michael.lazaro@claro.com.pe',
-            'C25976@claro.com.pe',
-            'josias.luna@claro.com.pe',
-            'omori@claro.com.pe',
-            'cpalacios@claro.com.pe',
-            'luyciana.rodriguez@claro.com.pe',
-            'C26311@claro.com.pe',
-            'marali.huaranca@claro.com.pe',
-            'pleon@claro.com.pe',
-            'C26559@claro.com.pe',
-            'carlos.malpartida@claro.com.pe',
-            'lizeth.moya@claro.com.pe',
-            'bryan.robles@claro.com.pe',
-            'cdiazb@claro.com.pe',
-            'C26670@claro.com.pe',
-            // 'cclinarez@indracompany.com',
-        ])->send($mail);
+        $emails = $this->notificationUserRepo->getEmailsByGroupId($this->groupId);
+        $email = new EmailNotification();
+        $email->to($emails)
+        ->subject("PROCESADO - TK {$ticket} - {$informeFalla->name_file} - {$incidenciaNumber}")
+        ->view("mails.extraccionProcesadoPrepago")
+        ->with([
+            'ticket' => $ticket,
+            'departamento' => $departamento,
+            'incidencia' => $incidenciaNumber
+        ])
+        ->attach($tempfile, ["as" => $response["filename"]]);
+        $this->emailNotification->send($email);
 
         unlink($tempfile);
     }

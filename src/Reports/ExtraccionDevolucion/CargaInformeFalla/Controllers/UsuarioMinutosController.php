@@ -97,7 +97,8 @@ class UsuarioMinutosController
             ProcessExtraccion::MESES_INTERES, //$input->fecha_interes,
             $input->corte_fecha_ini,
             $input->corte_fecha_fin,
-            $minutos_usuarios
+            $minutos_usuarios,
+            $request->ip()
         );
         $response = $this->processExtraccion->__invoke(
             2,
@@ -111,7 +112,8 @@ class UsuarioMinutosController
             ProcessExtraccion::MESES_INTERES, //$input->fecha_interes,
             $input->corte_fecha_ini,
             $input->corte_fecha_fin,
-            $minutos_usuarios
+            $minutos_usuarios,
+            $request->ip()
         )->toArray();
         return response()->json($response);
     }

@@ -24,6 +24,7 @@ interface ExtraccionRepository
     public function findInputFor($numero);
     public function findInformeByTicket($ticket);
     public function deleteRecord($numero);
+    public function registerStatusChanges(string $numReporte, ?string $departamento, string $username, string $ipAddress, string $status, DateTime $fecha);
     public function aprobar($id,$ticket);
     public function desaprobar($id);
     public function enEspera($id);

@@ -162,7 +162,8 @@ class CargaInformeFallaController
             $request->input('numero_reporte'),
             InformeTipoReporte::DEFAULT,
             $request->file('excel'),
-            $detalleExtraccion
+            $detalleExtraccion,
+            $request->ip()
             /*implode(",", $strCeldas),
             $request->input("provincias"),
             $request->input('corte_fecha1_date')." ".$request->input('corte_fecha1_time'),
@@ -209,31 +210,31 @@ class CargaInformeFallaController
 
     public function aprobar(Request $request)
     {
-        $response = $this->aprobarReport->__invoke($request->input('id'),$request->input('ticket'));
+        $response = $this->aprobarReport->__invoke($request->input('id'),$request->input('ticket'), $request->ip());
         return response()->json(["result" => $response]);
     }
 
     public function desaprobar(Request $request)
     {
-        $response = $this->desaprobarReport->__invoke($request->input('id'));
+        $response = $this->desaprobarReport->__invoke($request->input('id'), $request->ip());
         return response()->json(["result" => $response]);
     }
 
     public function enEspera(Request $request)
     {
-        $response = $this->enEsperaReport->__invoke($request->input('id'));
+        $response = $this->enEsperaReport->__invoke($request->input('id'), $request->ip());
         return response()->json(["result" => $response]);
     }
 
     public function revisado(Request $request)
     {
-        $response = $this->revisadoReport->__invoke($request->input('id'));
+        $response = $this->revisadoReport->__invoke($request->input('id'), $request->ip());
         return response()->json(["result" => $response]);
     }
 
     public function updateReportStatus(Request $request)
     {
-        $this->updateReportStatus->__invoke($request->input('status'), $request->input('id'));
+        $this->updateReportStatus->__invoke($request->input('status'), $request->input('id'), $request->ip());
         return response()->json(["passes" => true]);
     }
 
@@ -296,7 +297,8 @@ class CargaInformeFallaController
             $request->input("fecha_interes"),
             $request->input('corte_fecha1_date')." ".$request->input('corte_fecha1_time'),
             $request->input('corte_fecha2_date')." ".$request->input('corte_fecha2_time'),
-            $request->input("minutos_usuarios")
+            $request->input("minutos_usuarios"),
+            $request->ip()
         )->data();
 
         return response()->json(["result" => $resp]);

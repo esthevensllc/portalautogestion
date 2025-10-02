@@ -95,7 +95,8 @@ class CargaInformeFallaMsisdnController
             $request->input('numero_reporte'),
             InformeTipoReporte::BY_MSISDN,
             $request->file('excel'),
-            $detalleExtraccion
+            $detalleExtraccion,
+            $request->ip()
             /*implode(",", $strCeldas),
             $request->input("provincias"),
             $request->input('corte_fecha1_date')." ".$request->input('corte_fecha1_time'),

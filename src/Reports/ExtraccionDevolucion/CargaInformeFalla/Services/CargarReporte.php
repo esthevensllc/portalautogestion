@@ -2,10 +2,15 @@
 
 namespace AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Services;
 
+use AMovil\Auth\AccessControl\Domain\AuthService;
 use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Domain\ExtraccionRepository;
+use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Domain\InformeStatus;
 use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Domain\InformeTipoReporte;
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services\ProcessExtraccion;
 use AMovil\Reports\ExtraccionDevolucion\TablaInteres\Domain\TablaInteresRepository;
+use AMovil\Shared\EmailNotification\Domain\EmailNotification;
+use AMovil\Shared\EmailNotification\Domain\EmailNotificationService;
+use AMovil\Shared\NotificationUser\Domain\NotificationUserRepository;
 use DateTime;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use App\Mail\NotificacionCarga;
@@ -15,15 +20,23 @@ use Illuminate\Support\Facades\Mail;
 class CargarReporte
 {
     private $repo;
+    private $notificationUserRepo;
+    private $emailNotification;
+    private $authService;
+    private $groupId;
     private $fechaInteresNumber = ProcessExtraccion::MESES_INTERES;
     private $minutosUsuarios = ProcessExtraccion::MINUTOS_USUARIOS;
     
-    public function __construct(ExtraccionRepository $repo)
+    public function __construct(ExtraccionRepository $repo, NotificationUserRepository $notificationUserRepo, EmailNotificationService $emailNotification, AuthService $authService)
     {
         $this->repo = $repo;
+        $this->notificationUserRepo = $notificationUserRepo;
+        $this->emailNotification = $emailNotification;
+        $this->authService = $authService;
+        $this->groupId = config("app.env")."/ext_cargado";
     }
 
-    public function __invoke($numero, $tipoReporte, $excel, $detalleExtraccion)
+    public function __invoke($numero, $tipoReporte, $excel, $detalleExtraccion, $userIpAddress)
     {
         $this->validate($detalleExtraccion);
         $filename = $excel->getClientOriginalName();
@@ -49,29 +62,15 @@ class CargarReporte
             if((int) $tipoReporte === InformeTipoReporte::BY_MSISDN2){
                 $this->repo->saveInputMsisdn($numero, $this->getMsisdn2DataFromCsv($detalleExtraccion[0]["corteFechaFin"], $excel));
             } else {
-                $correo = new NotificacionCarga($reportes);
-                $correo->setSubject("CARGA DE INFORMES DE FALLAS - {$filename}");
-                
-                try {
-                    // Envío del correo
-                    Mail::to([
-                        'C19884@claro.com.pe',
-                        'jose.ramosm@claro.com.pe',
-                        'lizeth.moya@claro.com.pe',
-                        'carlos.malpartida@claro.com.pe',
-                        'bryan.robles@claro.com.pe',
-                        'Noc-claro@claro.com.pe',
-                        'cpalacios@claro.com.pe',
-                        'cdiazb@claro.com.pe',
-                        'C26131@claro.com.pe',
-                        'C27727@claro.com.pe',
-                        'C27689@claro.com.pe',
-                    ])->send($correo);
-                } catch (\Exception $e) {
-                    // Captura cualquier excepción generada durante el envío del correo
-                    return response()->json(['message' => 'Error al enviar el correo: '.$e->getMessage()], 500);
-                }
+                $emails = $this->notificationUserRepo->getEmailsByGroupId($this->groupId);
+                $email = new EmailNotification();
+                $email->to($emails)
+                ->subject("CARGA DE INFORMES DE FALLAS - {$filename}")
+                ->view("notificacionCarga")
+                ->with(["reportes" => $reportes]);
+                $this->emailNotification->send($email);
             }
+            $this->repo->registerStatusChanges($numero, null, $this->authService->getUserIdentifier(), $userIpAddress, InformeStatus::CARGADO, new DateTime());
         }
         return $reporte;
     }
