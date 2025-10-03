@@ -195,6 +195,11 @@ Route::group([
         Route::get('/json', [\AMovil\Reports\DAPU\VentasLinea\Controllers\VentasLineaController::class, 'getData']);
         Route::post('/export', [\AMovil\Reports\DAPU\VentasLinea\Controllers\VentasLineaController::class, 'export']);
     });
+    Route::group(['prefix' => 'dapu/ventas-linea-prepago', 'trac_name' => 'dapu.ventas-linea-prepago'], function(){
+        Route::get('/', [\AMovil\Reports\DAPU\VentasLinea\Controllers\VentasLineaPrepagoController::class, 'view']);
+        Route::get('/json', [\AMovil\Reports\DAPU\VentasLinea\Controllers\VentasLineaPrepagoController::class, 'getData']);
+        Route::post('/export', [\AMovil\Reports\DAPU\VentasLinea\Controllers\VentasLineaPrepagoController::class, 'export']);
+    });
     Route::group(['prefix' => 'dapu/log-biometria', 'trac_name' => 'dapu.log-biometria'], function(){
         Route::get('/', [\AMovil\Reports\DAPU\LogBiometria\Controllers\LogBiometriaController::class, 'view']);
         Route::get('/json', [\AMovil\Reports\DAPU\LogBiometria\Controllers\LogBiometriaController::class, 'getData']);
