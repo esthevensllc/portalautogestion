@@ -9,11 +9,8 @@
 </div>
 <div class="col-lg-3 col-md-4">
     <div class="form-group">
-        <label for="">MSISDN</label>
-        <input type="text" name="periodo" class="form-control form-control-sm">
-        <div class="invalid-feedback d-block text-dark">
-           <br>Anteponer el codigo 51
-            Ej. 51947158416
-        </div>
+        <label for="">Periodo</label>
+        <input type="date" name="periodo_date" class="form-control form-control-sm">
+        <input type="number" name="periodo_hour" class="form-control form-control-sm" min="0" max="24">
     </div>
 </div>

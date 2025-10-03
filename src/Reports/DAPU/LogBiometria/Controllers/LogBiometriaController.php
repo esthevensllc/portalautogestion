@@ -24,19 +24,15 @@ class LogBiometriaController
             "url" => asset("dapu/log-biometria/json"),
             "url_export" => asset("dapu/log-biometria/export"),
             "fields" => [
-                "fecha_registro_transaccion" => ["label" => "FECHA_REGISTRO_TRANSACCION"],
-                "num_doc" => ["label" => "NUM_DOC"],
-                "numero_transaccion" => ["label" => "NUMERO_TRANSACCION"],
-                "codigo_respuesta" => ["label" => "CODIGO_RESPUESTA"],
-                "mensaje_respuesta" => ["label" => "MENSAJE_RESPUESTA"],
-                "marca_dispositivo" => ["label" => "MARCA_DISPOSITIVO"],
-                "modelo_dispositivo" => ["label" => "MODELO_DISPOSITIVO"],
-                "version_aplicativo" => ["label" => "VERSION_APLICATIVO"],
-                "codigo_aplicativo" => ["label" => "CODIGO_APLICATIVO"],
-                "modelo_estacion" => ["label" => "MODELO_ESTACION"],
-                "codigo_identi_estacion" => ["label" => "CODIGO_IDENTI_ESTACION"],
-                "subscription_access_number" => ["label" => "SUBSCRIPTION_ACCESS_NUMBER"],
-                "agreement_status_date" => ["label" => "AGREEMENT_STATUS_DATE"],
+                "biom_tipovalidacion" => ["label" => "BIOM_TIPOVALIDACION"],
+                "biom_idpadre" => ["label" => "BIOM_IDPADRE"],
+                "biom_codbio" => ["label" => "BIOM_CODBIO"],
+                "biom_mensaje" => ["label" => "BIOM_MENSAJE"],
+                "biom_aplicacion" => ["label" => "BIOM_APLICACION"],
+                "biom_nrodocumento" => ["label" => "BIOM_NRODOCUMENTO"],
+                "biom_nrotransac" => ["label" => "BIOM_NROTRANSAC"],
+                "biom_fecha_crea" => ["label" => "BIOM_FECHA_CREA"],
+                "biom_codigo" => ["label" => "BIOM_CODIGO"],
             ],
             "form_view" => "dapu.log_biometria_form",
         ];
@@ -47,7 +43,7 @@ class LogBiometriaController
     {
         $response = $this->get->__invoke(
             $request->input('dni'),
-            $request->input('periodo')
+            $request->input('periodo_date').' '.$request->input('periodo_hour')
         )->data();
         return response()->json($response);
     }
@@ -57,7 +53,7 @@ class LogBiometriaController
         $response = $this->export->__invoke(
             $request->input('type'),
             $request->input('dni'),
-            $request->input('periodo'),
+            $request->input('periodo_date').' '.$request->input('periodo_hour'),
         )->data();
 
         $headers_type = [

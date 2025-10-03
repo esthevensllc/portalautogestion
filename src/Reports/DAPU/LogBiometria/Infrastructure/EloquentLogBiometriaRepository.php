@@ -3,55 +3,33 @@
 namespace AMovil\Reports\DAPU\LogBiometria\Infrastructure;
 
 use AMovil\Reports\DAPU\LogBiometria\Domain\LogBiometriaRepository;
+use DateTime;
 use Illuminate\Support\Facades\DB;
 
 class EloquentLogBiometriaRepository implements LogBiometriaRepository
 {
-    public function getByDniAndMsisdn($dni, $msisdn)
+    public function getByDniAndPeriodo($dni, DateTime $periodo)
     {
-        $query = "SELECT
-            FECHA_REGISTRO_TRANSACCION,
-            NUM_DOC,
-            NUMERO_TRANSACCION,
-            CODIGO_RESPUESTA,
-            MENSAJE_RESPUESTA,
-            MARCA_DISPOSITIVO,
-            MODELO_DISPOSITIVO,
-            VERSION_APLICATIVO,
-            CODIGO_APLICATIVO,
-            MODELO_ESTACION,
-            CODIGO_IDENTI_ESTACION,
-            SUBSCRIPTION_ACCESS_NUMBER,
-            AGREEMENT_STATUS_DATE
-        FROM (
-            SELECT
-            A.FECHA_REGISTRO_TRANSACCION,
-            A.NUMERO_DOCUMENTO_PERSONA AS NUM_DOC,
-            A.NUMERO_TRANSACCION,
-            A.CODIGO_RESPUESTA,
-            A.MENSAJE_RESPUESTA,
-            A.MARCA_DISPOSITIVO,
-            A.MODELO_DISPOSITIVO,
-            A.VERSION_APLICATIVO,
-            A.CODIGO_APLICATIVO,
-            A.MODELO_ESTACION,
-            A.CODIGO_IDENTI_ESTACION,
-            S.SUBSCRIPTION_ACCESS_NUMBER,
-            S.AGREEMENT_STATUS_DATE,
-            ROW_NUMBER() OVER (PARTITION BY A.NUMERO_DOCUMENTO_PERSONA ORDER BY A.FECHA_REGISTRO_TRANSACCION DESC) AS rn
-            FROM DWS.SA_TP_TRANSACCION_LOG A
-            LEFT JOIN DWA.DW_M_SUBSCRIPTION S
-                ON A.NUMERO_DOCUMENTO_PERSONA = S.ID_CARD_VALUE
-            WHERE A.NUMERO_DOCUMENTO_PERSONA = ? --INPUT
-                AND A.CODIGO_RESPUESTA = '70006'
-                AND A.CODIGO_RESPUESTA NOT IN ('00000')
-                AND S.SUBSCRIPTION_ACCESS_NUMBER = ? --INPUT CON 51
-                AND A.FECHA_REGISTRO_TRANSACCION < S.AGREEMENT_STATUS_DATE
-        ) sub
-        WHERE rn = 1
-        ORDER BY FECHA_REGISTRO_TRANSACCION ASC";
+        $strPeriodo = $periodo->format("d/m/Y H");
+        $query = "SELECT /*+ PARALLEL(8) */ 
+        A.BIOM_TIPOVALIDACION,
+        A.BIOM_IDPADRE,
+        A.BIOM_CODBIO,
+        A.BIOM_MENSAJE,
+        A.BIOM_APLICACION,
+        A.BIOM_NRODOCUMENTO,
+        A.BIOM_NROTRANSAC,
+        A.BIOM_FECHA_CREA,
+        A.BIOM_CODIGO
+        FROM DWS.SA_BIOMT_BIOMETRIA A
+        WHERE A.BIOM_TIPOVALIDACION = 'BIOMETRIA'
+        AND A.BIOM_CODBIO IN ('70006', '00000')
+        AND A.BIOM_NRODOCUMENTO = ?
+        AND TO_CHAR(BIOM_FECHA_CREA, 'DD/MM/YYYY HH24') = ?
+        ORDER BY A.BIOM_FECHA_CREA
+        ";
 
-        $values = [$dni, $msisdn];
+        $values = [$dni, $strPeriodo];
         return DB::select(DB::raw($query), $values);
     }
 }

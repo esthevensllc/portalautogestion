@@ -2,7 +2,9 @@
 
 namespace AMovil\Reports\DAPU\LogBiometria\Domain;
 
+use DateTime;
+
 interface LogBiometriaRepository
 {
-    public function getByDniAndMsisdn($dni, $msisdn);
+    public function getByDniAndPeriodo($dni, DateTime $periodo);
 }

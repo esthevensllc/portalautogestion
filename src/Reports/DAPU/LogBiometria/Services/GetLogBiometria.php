@@ -4,6 +4,7 @@ namespace AMovil\Reports\DAPU\LogBiometria\Services;
 
 use AMovil\Reports\DAPU\LogBiometria\Domain\LogBiometriaRepository;
 use AMovil\Shared\Application\Response;
+use DateTime;
 
 class GetLogBiometria
 {
@@ -14,9 +15,10 @@ class GetLogBiometria
         $this->repo = $repo;
     }
 
-    public function __invoke($dni, $msisdn)
+    public function __invoke($dni, $periodo)
     {    
-        $data = $this->repo->getByDniAndMsisdn($dni, $msisdn);
+        $dtPeriodo = DateTime::createFromFormat("Y-m-d H", $periodo);
+        $data = $this->repo->getByDniAndPeriodo($dni, $dtPeriodo);
         return new Response([], $data);
     }
 }
