@@ -14,12 +14,14 @@ class MotivosBloqueoDesbloqueoFinder
         $this->repo = $repo;
     }
 
-    public function __invoke($imei)
+    public function __invoke(int $tipoInput, $value)
     {
-        if(strlen($imei) < 14){
-            return new Response([], []);
+        $data = [];
+        if ($tipoInput === 1) {
+            $data = $this->repo->getByLinea($value);
+        } else if ($tipoInput === 2) {
+            $data = $this->repo->getByImei($value);
         }
-        $data = $this->repo->getByImei($imei);
         return new Response([], $data);
     }
 }

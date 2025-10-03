@@ -18,19 +18,23 @@ class ExportMotivosBloqueoDesbloqueo
         $this->exportService = $exportService;
     }
 
-    public function __invoke($type, $imei)
+    public function __invoke(int $tipoInput, $type, $value)
     {
-        $data = $this->repo->getByImei($imei);
+        $data = [];
+        if ($tipoInput === 1) {
+            $data = $this->repo->getByLinea($value);
+        } else if ($tipoInput === 2) {
+            $data = $this->repo->getByImei($value);
+        }
         $headers = [
             "id_termovimiento" => ["label" => "ID_TERMOVIMIENTO"],
-            "numero_imei" => ["label" => "IMEI"],
-            "ter_numerolinea" => ["label" => "TER_NUMEROLINEA"],
-            "ter_reportante" => ["label" => "TER_REPORTANTE"],
-            "ter_asesor_servicio" => ["label" => "TER_ASESOR_SERVICIO"],
-            "ter_fecregistro" => ["label" => "TER_FECREGISTRO"],
-            "ter_estado" => ["label" => "TER_ESTADO"],
-            "ter_des_motivo" => ["label" => "TER_DES_MOTIVO"],
-            "ter_marca_modelo" => ["label" => "TER_MARCA_MODELO"],
+            "imei" => ["label" => "IMEI"],
+            "linea" => ["label" => "LINEA"],
+            "cod_asesor" => ["label" => "COD_ASESOR"],
+            "fecha_transaccion" => ["label" => "FECHA_TRANSACCION"],
+            "estado_transaccion" => ["label" => "ESTADO_TRANSACCION"],
+            "motivo_transaccion" => ["label" => "MOTIVO_TRANSACCION"],
+            "detalle_equipo" => ["label" => "DETALLE_EQUIPO"],
         ];
 
         $options = [

@@ -25,14 +25,13 @@ class MotivosBloqueoDesbloqueoController
             "url_export" => asset("dapu/motivos-bloqueo-desbloqueo/export"),
             "fields" => [
                 "id_termovimiento" => ["label" => "ID_TERMOVIMIENTO"],
-                "numero_imei" => ["label" => "IMEI"],
-                "ter_numerolinea" => ["label" => "TER_NUMEROLINEA"],
-                "ter_reportante" => ["label" => "TER_REPORTANTE"],
-                "ter_asesor_servicio" => ["label" => "TER_ASESOR_SERVICIO"],
-                "ter_fecregistro" => ["label" => "TER_FECREGISTRO"],
-                "ter_estado" => ["label" => "TER_ESTADO"],
-                "ter_des_motivo" => ["label" => "TER_DES_MOTIVO"],
-                "ter_marca_modelo" => ["label" => "TER_MARCA_MODELO"],
+                "imei" => ["label" => "IMEI"],
+                "linea" => ["label" => "LINEA"],
+                "cod_asesor" => ["label" => "COD_ASESOR"],
+                "fecha_transaccion" => ["label" => "FECHA_TRANSACCION"],
+                "estado_transaccion" => ["label" => "ESTADO_TRANSACCION"],
+                "motivo_transaccion" => ["label" => "MOTIVO_TRANSACCION"],
+                "detalle_equipo" => ["label" => "DETALLE_EQUIPO"],
             ],
             "form_view" => "dapu.motivos_bloqueo_desb_form",
         ];
@@ -41,15 +40,16 @@ class MotivosBloqueoDesbloqueoController
 
     public function getData(Request $request)
     {
-        $response = $this->get->__invoke($request->input('imei'))->data();
+        $response = $this->get->__invoke($request->input("tipo_input"), $this->getInputValue($request))->data();
         return response()->json($response);
     }
 
     public function export(Request $request)
     {
         $response = $this->export->__invoke(
+            $request->input("tipo_input"),
             $request->input('type'),
-            $request->input('imei'),
+            $this->getInputValue($request),
         )->data();
 
         $headers_type = [
@@ -66,5 +66,14 @@ class MotivosBloqueoDesbloqueoController
         $headers = $headers_type[$response['type']];
         
         return response($response['content'], 200, $headers);
+    }
+
+    private function getInputValue(Request $request){
+        $inputType = (int) $request->input("tipo_input");
+        if ($inputType === 1) {
+            return $request->input("linea");
+        } else if ($inputType === 2) {
+            return $request->input("imei");
+        }
     }
 }
