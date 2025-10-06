@@ -296,5 +296,9 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\DAPU\ReposicionesChip\Domain\ReposicionChipRepository::class,
             \AMovil\Reports\DAPU\ReposicionesChip\Infrastructure\EloquentReposicionChipRepository::class
         );
+        $this->app->bind(
+            \AMovil\Reports\DAPU\CambioTitularidad\Domain\CambioTitularidadRepository::class,
+            \AMovil\Reports\DAPU\CambioTitularidad\Infrastructure\EloquentCambioTitularidadRepository::class
+        );
     }
 }

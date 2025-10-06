@@ -1,0 +1,54 @@
+<?php
+
+namespace AMovil\Reports\DAPU\CambioTitularidad\Infrastructure;
+
+use AMovil\Reports\DAPU\CambioTitularidad\Domain\CambioTitularidadRepository;
+use Illuminate\Support\Facades\DB;
+
+class EloquentCambioTitularidadRepository implements CambioTitularidadRepository
+{
+    public function getByLinea(string $linea){
+        $query = "SELECT /*+ PARALLEL(8) */
+        TI.X_CLASE_CODE AS CODIGO_SUBCLASE,
+            'POSTPAGO' AS TIPO_LINEA,
+            TI.REASON_3 AS DESC_TIPIFICACION,
+            TI.CREATE_DATE AS FECHA_TRANSACCION,
+            TI.PHONE AS NUMERO_TELEFONO,
+            TP.X_INTER_3 AS NOMBRE_CLIENTE_CEDENTE,
+            TC.X_DOC_NUM AS NUMERO_DOC_CEDENTE,
+            TC.X_DOC_TYPE AS TIPO_DOC_CEDENTE,
+            TP.X_INTER_4 AS NOMBRE_CLIENTE_RECEPTOR,
+            TP.X_CLAROLOCAL4 AS TIPO_DOC_RECEPTOR,
+            TP.X_CLAROLOCAL5 AS NUMERO_DOC_RECEPTOR,
+            TI.INTERACT_ID AS CODIGO_TIPIFICACION,
+            TI.S_AGENT AS USUARIO_REG,
+            TP.X_INTER_1 PUNTO_ATENCION
+        FROM DMRED.TABLE_INTERACT TI
+        INNER JOIN DMRED.TABLE_X_PLUS_INTER TP ON TI.OBJID=TP.X_PLUS_INTER2INTERACT
+        INNER JOIN DMRED.TABLE_CONTACT TC ON TC.OBJID=TI.INTERACT2CONTACT 
+        WHERE TI.X_SUBCLASE_CODE = '123471'
+        AND TI.PHONE = :linea --Linea sin 51
+        UNION
+        SELECT /*+ PARALLEL(8) */ TI.X_CLASE_CODE AS CODIGO_SUBCLASE,
+            'PREPAGO' AS TIPO_LINEA,
+            TI.REASON_3 AS DESC_TIPIFICACION,
+            TI.CREATE_DATE AS FECHA_TRANSACCION,
+            TI.PHONE AS NUMERO_TELEFONO,
+            (TP.X_OLD_FIRST_NAME||' '||TP.X_OLD_LAST_NAME) AS NOMBRE_CLIENTE_CEDENTE,
+            TC.X_DOC_NUM AS NUMERO_DOC_CEDENTE,
+            TC.X_DOC_TYPE AS TIPO_DOC_CEDENTE,
+            (TP.X_FIRST_NAME||' '||TP.X_LAST_NAME) AS NOMBRE_CLIENTE_RECEPTOR,
+            TP.X_TYPE_DOCUMENT AS TIPO_DOC_RECEPTOR,
+            TP.X_DOCUMENT_NUMBER AS NUMERO_DOC_RECEPTOR,
+            TI.INTERACT_ID AS CODIGO_TIPIFICACION,
+            TI.S_AGENT AS USUARIO_REG,
+            ' ' PUNTO_ATENCION
+        FROM DMRED.TABLE_INTERACT TI
+        INNER JOIN DMRED.TABLE_X_PLUS_INTER TP ON TI.OBJID=TP.X_PLUS_INTER2INTERACT
+        INNER JOIN DMRED.TABLE_CONTACT TC ON TC.OBJID=TI.INTERACT2CONTACT 
+        WHERE TI.X_SUBCLASE_CODE = '109502'
+        AND TI.PHONE = :linea
+        ";
+        return DB::select($query, ["linea" => $linea]);
+    }
+}
