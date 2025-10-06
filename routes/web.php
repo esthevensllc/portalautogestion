@@ -205,6 +205,11 @@ Route::group([
         Route::get('/json', [\AMovil\Reports\DAPU\LogBiometria\Controllers\LogBiometriaController::class, 'getData']);
         Route::post('/export', [\AMovil\Reports\DAPU\LogBiometria\Controllers\LogBiometriaController::class, 'export']);
     });
+    Route::group(['prefix' => 'dapu/log-no-biometria', 'trac_name' => 'dapu.log-no-biometria'], function(){
+        Route::get('/', [\AMovil\Reports\DAPU\LogNoBiometria\Controllers\LogNoBiometriaController::class, 'view']);
+        Route::get('/json', [\AMovil\Reports\DAPU\LogNoBiometria\Controllers\LogNoBiometriaController::class, 'getData']);
+        Route::post('/export', [\AMovil\Reports\DAPU\LogNoBiometria\Controllers\LogNoBiometriaController::class, 'export']);
+    });
     Route::group(['prefix' => 'dapu/equipo-biometria', 'trac_name' => 'dapu.equipo-biometria'], function(){
         Route::get('/', [\AMovil\Reports\DAPU\EquipoBiometria\Controllers\EquipoBiometriaController::class, 'view']);
         Route::get('/json', [\AMovil\Reports\DAPU\EquipoBiometria\Controllers\EquipoBiometriaController::class, 'getData']);
@@ -259,6 +264,11 @@ Route::group([
         Route::get('/', [\AMovil\Reports\DAPU\VentasFija\Controllers\VentasFijaController::class, 'view']);
         Route::post('/json', [\AMovil\Reports\DAPU\VentasFija\Controllers\VentasFijaController::class, 'getData']);
         Route::post('/export', [\AMovil\Reports\DAPU\VentasFija\Controllers\VentasFijaController::class, 'export']);
+    });
+    Route::group(['prefix' => 'dapu/reposiciones-chip', 'trac_name' => 'dapu.reposiciones-chip'], function(){
+        Route::get('/', [\AMovil\Reports\DAPU\ReposicionesChip\Controllers\ReposicionChipController::class, 'view']);
+        Route::get('/json', [\AMovil\Reports\DAPU\ReposicionesChip\Controllers\ReposicionChipController::class, 'getData']);
+        Route::post('/export', [\AMovil\Reports\DAPU\ReposicionesChip\Controllers\ReposicionChipController::class, 'export']);
     });
 
     Route::group(['prefix' => 'rep-recargas/detalle', 'trac_name' => 'rep-recargas.detalle'], function(){

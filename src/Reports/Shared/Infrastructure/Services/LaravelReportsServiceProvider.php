@@ -77,6 +77,10 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\DAPU\LogBiometria\Infrastructure\EloquentLogBiometriaRepository::class
         );
         $this->app->bind(
+            \AMovil\Reports\DAPU\LogNoBiometria\Domain\LogNoBiometriaRepository::class,
+            \AMovil\Reports\DAPU\LogNoBiometria\Infrastructure\EloquentLogNoBiometriaRepository::class
+        );
+        $this->app->bind(
             \AMovil\Reports\DAPU\EquipoBiometria\Domain\EquipoBiometriaRepository::class,
             \AMovil\Reports\DAPU\EquipoBiometria\Infrastructure\EloquentEquipoBiometriaRepository::class
         );
@@ -287,6 +291,10 @@ class LaravelReportsServiceProvider extends ServiceProvider
         $this->app->bind(
             \AMovil\Reports\DetalleLineas\Domain\DetalleLineasRepository::class,
             \AMovil\Reports\DetalleLineas\Infrastructure\ScriptDetalleLineasRepository::class
+        );
+        $this->app->bind(
+            \AMovil\Reports\DAPU\ReposicionesChip\Domain\ReposicionChipRepository::class,
+            \AMovil\Reports\DAPU\ReposicionesChip\Infrastructure\EloquentReposicionChipRepository::class
         );
     }
 }
