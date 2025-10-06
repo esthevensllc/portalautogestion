@@ -275,6 +275,11 @@ Route::group([
         Route::get('/json', [\AMovil\Reports\DAPU\CambioTitularidad\Controllers\CambioTitularidadController::class, 'getData']);
         Route::post('/export', [\AMovil\Reports\DAPU\CambioTitularidad\Controllers\CambioTitularidadController::class, 'export']);
     });
+    Route::group(['prefix' => 'dapu/busqueda-sim-card', 'trac_name' => 'dapu.busqueda-sim-card'], function(){
+        Route::get('/', [\AMovil\Reports\DAPU\BusquedaSimCard\Controllers\BusquedaSimCardController::class, 'view']);
+        Route::get('/json', [\AMovil\Reports\DAPU\BusquedaSimCard\Controllers\BusquedaSimCardController::class, 'getData']);
+        Route::post('/export', [\AMovil\Reports\DAPU\BusquedaSimCard\Controllers\BusquedaSimCardController::class, 'export']);
+    });
 
     Route::group(['prefix' => 'rep-recargas/detalle', 'trac_name' => 'rep-recargas.detalle'], function(){
         Route::get('/', [\AMovil\Reports\RepRecargas\Controllers\ReporteRecargasController::class, 'detalle']);

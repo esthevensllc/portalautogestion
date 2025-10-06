@@ -300,5 +300,9 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\DAPU\CambioTitularidad\Domain\CambioTitularidadRepository::class,
             \AMovil\Reports\DAPU\CambioTitularidad\Infrastructure\EloquentCambioTitularidadRepository::class
         );
+        $this->app->bind(
+            \AMovil\Reports\DAPU\BusquedaSimCard\Domain\BusquedaSimCardRepository::class,
+            \AMovil\Reports\DAPU\BusquedaSimCard\Infrastructure\EloquentBusquedaSimCardRepository::class
+        );
     }
 }
