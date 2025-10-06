@@ -270,6 +270,11 @@ Route::group([
         Route::get('/json', [\AMovil\Reports\DAPU\ReposicionesChip\Controllers\ReposicionChipController::class, 'getData']);
         Route::post('/export', [\AMovil\Reports\DAPU\ReposicionesChip\Controllers\ReposicionChipController::class, 'export']);
     });
+    Route::group(['prefix' => 'dapu/cambio-titularidad', 'trac_name' => 'dapu.cambio-titularidad'], function(){
+        Route::get('/', [\AMovil\Reports\DAPU\CambioTitularidad\Controllers\CambioTitularidadController::class, 'view']);
+        Route::get('/json', [\AMovil\Reports\DAPU\CambioTitularidad\Controllers\CambioTitularidadController::class, 'getData']);
+        Route::post('/export', [\AMovil\Reports\DAPU\CambioTitularidad\Controllers\CambioTitularidadController::class, 'export']);
+    });
 
     Route::group(['prefix' => 'rep-recargas/detalle', 'trac_name' => 'rep-recargas.detalle'], function(){
         Route::get('/', [\AMovil\Reports\RepRecargas\Controllers\ReporteRecargasController::class, 'detalle']);
