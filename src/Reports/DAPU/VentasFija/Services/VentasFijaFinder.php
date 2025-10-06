@@ -16,13 +16,18 @@ class VentasFijaFinder
         $this->repo = $repo;
     }
 
-    public function __invoke(array $values)
+    public function __invoke(int $tipoInput, array $values)
     {
-        $data = $this->repo->getByNumDocumento($values);
+        $data = [];
+        if(in_array($tipoInput, [1,2])){
+            $data = $this->repo->getByNumDocumento($values);
+        } else if (in_array($tipoInput, [3,4])){
+            $data = $this->repo->getBySOT($values);
+        }
         return new Response([], $data);
     }
 
-    public function fromFile(FileInput $file){
+    public function fromFile(int $tipoInput, FileInput $file){
         if(!in_array($file->getExtension(), ["csv"])){
             return new Response(["message" => "La extension {$file->getExtension()} no es valida"]);
         }
@@ -37,6 +42,6 @@ class VentasFijaFinder
             $data[] = trim($sheet->getCellByColumnAndRow(1, $i)->getValue());
         }
         
-        return $this->__invoke($data);
+        return $this->__invoke($tipoInput, $data);
     }
 }

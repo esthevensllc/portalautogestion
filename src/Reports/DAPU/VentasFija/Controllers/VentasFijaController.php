@@ -40,8 +40,7 @@ class VentasFijaController
                 "contv_codigo_vendedor" => ["label" => "CONTV_CODIGO_VENDEDOR"],
                 "contv_vendedor" => ["label" => "CONTV_VENDEDOR"],
                 "nro_sot" => ["label" => "NRO_SOT"],
-                "fecultest" => ["label" => "FECULTEST"],
-                "fecha_activacion" => ["label" => "FECHA_ACTIVACION"],
+                "contrata" => ["label" => "CONTRATA"],
                 "direccion" => ["label" => "DIRECCION"],
             ],
             "form_method" => "POST",
@@ -55,9 +54,9 @@ class VentasFijaController
         $input = $this->getInputFromRequest($request);
         $response = null;
         if($input["array"] !== null){
-            $response = $this->finder->__invoke($input["array"])->data();
+            $response = $this->finder->__invoke($request->input('tipo_input'), $input["array"])->data();
         } else {
-            $response = $this->finder->fromFile($input["file"])->data();
+            $response = $this->finder->fromFile($request->input('tipo_input'), $input["file"])->data();
         }
         return response()->json($response);
     }
@@ -68,11 +67,13 @@ class VentasFijaController
         $response = null;
         if($input["array"] !== null){
             $response = $this->export->__invoke(
+                $request->input('tipo_input'),
                 $input["array"],
                 $request->input('type'),
             )->data();
         } else {
             $response = $this->export->fromFile(
+                $request->input('tipo_input'),
                 $input["file"],
                 $request->input('type'),
             )->data();
@@ -104,6 +105,13 @@ class VentasFijaController
             $file = new FileInput(
                 $request->file("file_num_documento")->getPathname(),
                 $request->file("file_num_documento")->getClientOriginalName()
+            );
+        } else if($tipoInput === 3){
+            $values = explode(",", str_replace(" ", "", $request->input('sot')));
+        } else if ($tipoInput === 4){
+            $file = new FileInput(
+                $request->file("file_sot")->getPathname(),
+                $request->file("file_sot")->getClientOriginalName()
             );
         }
         return ["array" => $values, "file" => $file];

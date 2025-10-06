@@ -18,14 +18,14 @@ class VentasFijaExporter
         $this->exportService = $exportService;
     }
 
-    public function __invoke(array $values, $exportType): Response
+    public function __invoke(int $tipoInput, array $values, $exportType): Response
     {
-        $data = $this->finderService->__invoke($values)->data();
+        $data = $this->finderService->__invoke($tipoInput, $values)->data();
         return $this->export($data, $exportType);
     }
 
-    public function fromFile(FileInput $file, $exportType){
-        $data = $this->finderService->fromFile($file)->data();
+    public function fromFile(int $tipoInput, FileInput $file, $exportType){
+        $data = $this->finderService->fromFile($tipoInput, $file)->data();
         return $this->export($data, $exportType);
     }
 
@@ -46,8 +46,7 @@ class VentasFijaExporter
             "contv_codigo_vendedor" => ["label" => "CONTV_CODIGO_VENDEDOR"],
             "contv_vendedor" => ["label" => "CONTV_VENDEDOR"],
             "nro_sot" => ["label" => "NRO_SOT"],
-            "fecultest" => ["label" => "FECULTEST"],
-            "fecha_activacion" => ["label" => "FECHA_ACTIVACION"],
+            "contrata" => ["label" => "CONTRATA"],
             "direccion" => ["label" => "DIRECCION"],
         ];
 
