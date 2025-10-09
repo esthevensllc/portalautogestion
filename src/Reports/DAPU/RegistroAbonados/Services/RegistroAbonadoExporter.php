@@ -35,11 +35,13 @@ class RegistroAbonadoExporter
             "nombres" => ["label" => "NOMBRES"],
             "ape_paterno" => ["label" => "APE_PATERNO"],
             "ape_materno" => ["label" => "APE_MATERNO"],
-            "razon_social" => ["label" => "RAZON_SOCIAL"],
-            "tipo_documento" => ["label" => "TIPO_DOCUMENTO"],
+            // "tipo_documento" => ["label" => "TIPO_DOCUMENTO"],
             "nro_documento" => ["label" => "NRO_DOCUMENTO"],
+            "razon_social" => ["label" => "RAZON_SOCIAL"],
             "imsi" => ["label" => "IMSI"],
-            "fch_activacion" => ["label" => "FCH_ACTIVACION"],
+            "imei" => ["label" => "IMEI"],
+            "fecha_actualizacion" => ["label" => "FECHA_ACTUALIZACION"],
+            /*"fch_activacion" => ["label" => "FCH_ACTIVACION"],
             "estado_servicio" => ["label" => "ESTADO_SERVICIO"],
             "motivo_suspension" => ["label" => "MOTIVO_SUSPENSION"],
             "motivo_baja" => ["label" => "MOTIVO_BAJA"],
@@ -48,7 +50,7 @@ class RegistroAbonadoExporter
             "origen_equipo" => ["label" => "ORIGEN_EQUIPO"],
             "fecha_actualizacion" => ["label" => "FECHA_ACTUALIZACION"],
             "fecha_reporte" => ["label" => "FECHA_REPORTE"],
-            "msisdn_anterior" => ["label" => "MSISDN_ANTERIOR"],
+            "msisdn_anterior" => ["label" => "MSISDN_ANTERIOR"],*/
         ];
 
         $options = [

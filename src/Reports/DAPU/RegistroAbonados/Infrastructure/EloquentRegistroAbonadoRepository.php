@@ -49,27 +49,21 @@ class EloquentRegistroAbonadoRepository implements RegistroAbonadoRepository
             throw new Exception("El campo a filtrar no es valido");
         }
 
-        $query = "SELECT 
-        MSISDN
-        ,NOMBRES
-        ,APE_PATERNO
-        ,APE_MATERNO
-        ,RAZON_SOCIAL
-        ,TIPO_DOCUMENTO
-        ,NRO_DOCUMENTO
-        ,IMSI
-        ,FCH_ACTIVACION
-        ,ESTADO_SERVICIO
-        ,MOTIVO_SUSPENSION
-        ,MOTIVO_BAJA
-        ,VINCULACION_SERVICIO
-        ,IMEI
-        ,ORIGEN_EQUIPO
-        ,FECHA_ACTUALIZACION
-        ,FECHA_REPORTE
-        ,MSISDN_ANTERIOR
+        $query = "SELECT /*+ PARALLEL(8) */
+        MSISDN,
+        NOMBRES,
+        APE_PATERNO,
+        APE_MATERNO,
+        NRO_DOCUMENTO,
+        RAZON_SOCIAL,
+        IMSI,
+        IMEI,
+        FECHA_ACTUALIZACION
         FROM DWA.F_D_BASE_RA_HIST R
-        WHERE {$queryFilter}";
+        WHERE {$queryFilter}
+        AND ROWNUM <= 10
+        ORDER BY FECHA_ACTUALIZACION
+        ";
 
         $data = DB::select(DB::raw($query));
 
