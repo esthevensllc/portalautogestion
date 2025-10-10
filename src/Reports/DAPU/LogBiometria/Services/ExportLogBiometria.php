@@ -19,7 +19,10 @@ class ExportLogBiometria
 
     public function __invoke($type, $dni, $periodo): Response
     {
-        $dtPeriodo = DateTime::createFromFormat("Y-m-d H", $periodo);
+
+        // 1️⃣ Limpiar espacios
+        $dtPeriodo = trim($periodo);
+
         $data = $this->repo->getByDniAndPeriodo($dni, $dtPeriodo);
         $headers = [
             "biom_tipovalidacion" => ["label" => "BIOM_TIPOVALIDACION"],

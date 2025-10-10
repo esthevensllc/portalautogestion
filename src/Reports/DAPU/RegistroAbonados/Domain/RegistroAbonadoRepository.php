@@ -6,4 +6,5 @@ interface RegistroAbonadoRepository
 {
     public function getByMsisdn(array $values);
     public function getByNumDocumento(array $values);
+    public function getByImei(array $values);
 }

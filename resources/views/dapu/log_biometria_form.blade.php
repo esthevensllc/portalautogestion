@@ -11,6 +11,12 @@
     <div class="form-group">
         <label for="">Periodo</label>
         <input type="date" name="periodo_date" class="form-control form-control-sm">
-        <input type="number" name="periodo_hour" class="form-control form-control-sm" min="0" max="24">
+    </div>
+</div>
+<div class="col-lg-3 col-md-4">
+    <div class="form-group">
+        <label for="hora">Hora (Entre 00 y 23) <span style="color: red;">*</span></label>      
+        <input type="number" class="form-control form-control-sm" name="periodo_hour" min="0" max="23" placeholder="Entre 00 - 23">        
+        <small style="color: gray;">* Campo opcional</small> 
     </div>
 </div>

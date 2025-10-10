@@ -22,6 +22,8 @@ class RegistroAbonadoFinder
             $data = $this->repo->getByMsisdn($values);
         } else if (in_array($tipoInput, [2,4])){
             $data = $this->repo->getByNumDocumento($values);
+        } else if (in_array($tipoInput, [5,6])){
+            $data = $this->repo->getByImei($values);
         }
         return new Response([], $data);
     }

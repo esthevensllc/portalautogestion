@@ -41,7 +41,7 @@ class EloquentUltimoTraficoRepository implements UltimoTraficoRepository
 
         // $queryFilter = null;
         if($field === "msisdn"){
-            $query = "SELECT MSISDN, IMSI, null IMEI, FEC_ULTIMO_TRAFICO FROM (
+            $query = "SELECT MSISDN, IMSI, null IMEI, FEC_ULTIMO_TRAFICO, FUENTE, RN FROM (
                 SELECT  /*+ PARALLEL(8) */ 
                     T.MSISDN,
                     T.IMSI,
@@ -73,7 +73,7 @@ class EloquentUltimoTraficoRepository implements UltimoTraficoRepository
             )
             WHERE RN = 1";
         } else {
-            $query = "SELECT null MSISDN, IMSI, IMEI, FEC_ULTIMO_TRAFICO FROM (
+            $query = "SELECT null MSISDN, IMSI, IMEI, FEC_ULTIMO_TRAFICO, FUENTE, RN FROM (
                 SELECT /*+ PARALLEL(8) */  
                     T.IMEI,
                     T.IMSI,

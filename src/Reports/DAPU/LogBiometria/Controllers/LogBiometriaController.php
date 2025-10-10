@@ -41,19 +41,35 @@ class LogBiometriaController
 
     public function getData(Request $request)
     {
+        // 1️⃣ Combinar los dos campos (puede que uno esté vacío)
+        $periodo_date = trim($request->input('periodo_date'));
+        $periodo_hour = trim($request->input('periodo_hour'));
+
+        // 2️⃣ Armar el periodo final (sin doble espacio)
+        $periodo = trim($periodo_date . ' ' . $periodo_hour);
+
+        // 3️⃣ Pasar limpio a la invocación
         $response = $this->get->__invoke(
             $request->input('dni'),
-            $request->input('periodo_date').' '.$request->input('periodo_hour')
+            $periodo
         )->data();
+
         return response()->json($response);
     }
 
     public function export(Request $request)
     {
+        // 1️⃣ Combinar los dos campos (puede que uno esté vacío)
+        $periodo_date = trim($request->input('periodo_date'));
+        $periodo_hour = trim($request->input('periodo_hour'));
+
+        // 2️⃣ Armar el periodo final (sin doble espacio)
+        $periodo = trim($periodo_date . ' ' . $periodo_hour);
+
         $response = $this->export->__invoke(
             $request->input('type'),
             $request->input('dni'),
-            $request->input('periodo_date').' '.$request->input('periodo_hour'),
+            $periodo
         )->data();
 
         $headers_type = [

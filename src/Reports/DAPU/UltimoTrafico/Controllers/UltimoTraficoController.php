@@ -29,6 +29,8 @@ class UltimoTraficoController
                 "imsi" => ["label" => "IMSI"],
                 "imei" => ["label" => "IMEI"],
                 "fec_ultimo_trafico" => ["label" => "FEC_ULTIMO_TRAFICO"],
+                "fuente" => ["label" => "FUENTE"],
+                "rn" => ["label" => "RN"]
             ],
             "form_method" => "POST",
             "form_view" => "dapu.ultimo_trafico_form",

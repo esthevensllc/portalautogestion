@@ -106,7 +106,15 @@ class RegistroAbonadoController
                 $request->file("file_num_documento")->getPathname(),
                 $request->file("file_num_documento")->getClientOriginalName()
             );
+        } else if ($tipoInput === 5){
+            $values = explode(",", str_replace(" ", "", $request->input('imei')));
+        } else if ($tipoInput === 6){
+            $file = new FileInput(
+                $request->file("file_imei")->getPathname(),
+                $request->file("file_imei")->getClientOriginalName()
+            );
         }
+
         return ["array" => $values, "file" => $file];
     }
 }

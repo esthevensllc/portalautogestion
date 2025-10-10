@@ -25,6 +25,10 @@ class EloquentRegistroAbonadoRepository implements RegistroAbonadoRepository
         return $this->getBy("num_documento", $values);
     }
 
+    public function getByImei(array $values) {
+        return $this->getBy("imei", $values);
+    }
+
     public function getBy(string $field, array $values)
     {
         $this->userIdentifier = $this->authService->getUserIdentifier();
@@ -45,7 +49,9 @@ class EloquentRegistroAbonadoRepository implements RegistroAbonadoRepository
             $queryFilter = "MSISDN IN (SELECT value FROM USRAES.DAPU_LINEA_DNI_INPUT_{$this->userIdentifier})";
         } else if($field === "num_documento") {
             $queryFilter = "NRO_DOCUMENTO IN (SELECT value FROM USRAES.DAPU_LINEA_DNI_INPUT_{$this->userIdentifier})";
-        } else {
+        } else if($field === "imei") {
+            $queryFilter = "IMEI IN (SELECT value FROM USRAES.DAPU_LINEA_DNI_INPUT_{$this->userIdentifier})";
+        } else{
             throw new Exception("El campo a filtrar no es valido");
         }
 

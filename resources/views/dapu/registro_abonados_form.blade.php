@@ -4,8 +4,10 @@
         <select class="form-control form-control-sm" name="tipo_input" id="tabs_select">
             <option value="1">MSISDN</option>
             <option value="2">NUMERO DE DOCUMENTO</option>
+            <option value="5">IMEI</option>
             <option value="3">CSV MSISDN</option>
             <option value="4">CSV NUMERO DE DOCUMENTO</option>
+            <option value="6">CSV IMEI</option>
         </select>
     </div>
 </div>
@@ -31,6 +33,16 @@
                 </div>
             </div>
         </div>
+        <div class="col-lg-3 col-md-4 tab-item" data-tab-target="5">
+            <div class="form-group">
+                <label for="">IMEI</label>
+                <input type="text" name="imei" class="form-control form-control-sm">
+                <div class="invalid-feedback d-block text-dark">
+                    Puede ingresar más de un imei separado por comas ,los imeis deberán estar completos.
+                    <br>Ej. 8689640600906884
+                </div>
+            </div>
+        </div>
         <div class="col-lg-3 col-md-4 tab-item" data-tab-target="3">
             <div class="form-group">
                 <label for="">CSV MSISDN</label>
@@ -48,6 +60,16 @@
                 <div class="invalid-feedback d-block text-dark">
                     Subir el archivo en formato csv sin cabeceras y con los valores en la primera columna
                     <br>Ej. 20538595188
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-4 tab-item" data-tab-target="6">
+            <div class="form-group">
+                <label for="">CSV IMEI</label>
+                <input type="file" name="file_imei" class="d-block" accept=".csv">
+                <div class="invalid-feedback d-block text-dark">
+                    Subir el archivo en formato csv sin cabeceras y con los imeis en la primera columna, los imeis deberán estar completos.
+                    <br>Ej. 8689640600906884
                 </div>
             </div>
         </div>

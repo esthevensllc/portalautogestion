@@ -35,6 +35,7 @@ class VentasFijaExporter
             "dn_num" => ["label" => "DN_NUM"],
             "contn_numero_contrato" => ["label" => "CONTN_NUMERO_CONTRATO"],
             "contn_numero_sec" => ["label" => "CONTN_NUMERO_SEC"],
+            "estado_desc" => ["label" => "ESTADO_DESC"],
             "paquete" => ["label" => "PAQUETE"],
             "contc_oficina_venta" => ["label" => "CONTC_OFICINA_VENTA"],
             "pdv_canal" => ["label" => "PDV_CANAL"],
