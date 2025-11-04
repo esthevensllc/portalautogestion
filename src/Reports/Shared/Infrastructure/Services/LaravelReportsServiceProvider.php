@@ -304,5 +304,9 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\DAPU\BusquedaSimCard\Domain\BusquedaSimCardRepository::class,
             \AMovil\Reports\DAPU\BusquedaSimCard\Infrastructure\EloquentBusquedaSimCardRepository::class
         );
+        $this->app->bind(
+            \AMovil\Reports\AlertaMml\Domain\AlertaMmlRepository::class,
+            \AMovil\Reports\AlertaMml\Infrastructure\EloquentAlertaMmlRepository::class
+        );
     }
 }

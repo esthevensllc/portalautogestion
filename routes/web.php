@@ -706,4 +706,14 @@ Route::group([
         Route::get('/', [\AMovil\Reports\DetalleLineas\Controllers\DetalleLineasController::class, 'view']);
         Route::post('export', [\AMovil\Reports\DetalleLineas\Controllers\DetalleLineasController::class, 'export']);
     });
+    
+    //ALERTAMML
+    Route::group(['prefix' => 'alerta-mml', 'trac_name' => 'alerta-mml'], function(){
+        Route::get('/', [\AMovil\Reports\AlertaMml\Controllers\AlertaMmlController::class, 'view']);
+        Route::post('/export', [\AMovil\Reports\AlertaMml\Controllers\AlertaMmlController::class, 'export']);
+    });
+    Route::group(['prefix' => 'alerta-mml/logs', 'trac_name' => 'alerta-mml.logs'], function(){
+        Route::get('/', [\AMovil\Reports\AlertaMml\Controllers\AlertaMmlController::class, 'logView']);
+        Route::get('search', [\AMovil\Reports\AlertaMml\Controllers\AlertaMmlController::class, 'logSearch']);
+    });
 });
