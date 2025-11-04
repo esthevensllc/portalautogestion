@@ -38,7 +38,7 @@
                 </div>
             </div>
             <div class="mb-3 row form-section-2" style="display: none;">
-                <div class="col-12">
+                <div class="col-lg-3 col-md-4">
                     <div class="form-group">
                         <label for="mensaje">Mensaje</label>
                         <textarea id="mensaje" class="form-control" rows="4" placeholder="Escribe aquí..."></textarea>
