@@ -40,9 +40,9 @@
             <div class="mb-3 row form-section-2" style="display: none;">
                 <div class="col-12">
                     <div class="form-group">
-                        <label for="msg">Mensaje</label>
-                        <textarea id="msg" name="msg" rows="4" placeholder="Escribe aquí..." required></textarea>                        
-                    </div>
+                        <label for="mensaje">Mensaje</label>
+                        <textarea id="mensaje" class="form-control" rows="4" placeholder="Escribe aquí..."></textarea>
+                    </div>                      
                 </div>
                 <div class="col-12" style="display: flex; align-items: end;">
                     <div class="form-group">
