@@ -139,7 +139,7 @@ class ProcessExtraccion
             if($step === 1){
                 $informe = $this->repo2->getInputByTicket($ticketOsiptel);
                 $usuariosAfectados = null;
-                if($informe !== null && (int) $informe->tipo_reporte === InformeTipoReporte::BY_MSISDN){
+                if($informe !== null && ((int) $informe->tipo_reporte === InformeTipoReporte::BY_MSISDN || (int) $informe->tipo_reporte === InformeTipoReporte::BY_MSISDN2)){
                     $usuariosAfectados = $this->repo->getReporteWithoutValidation($arrayCeldas, $arrayProvincias, $dtFechaIni, $dtFechaFin, $ticketOsiptel, $dtFechaInteres, $dtCorteFechaIni, $dtCorteFechaFin);
                 } else {
                     $usuariosAfectados = $this->repo->getReporte($arrayCeldas, $arrayProvincias, $dtFechaIni, $dtFechaFin, $ticketOsiptel, $dtFechaInteres, $dtCorteFechaIni, $dtCorteFechaFin);
