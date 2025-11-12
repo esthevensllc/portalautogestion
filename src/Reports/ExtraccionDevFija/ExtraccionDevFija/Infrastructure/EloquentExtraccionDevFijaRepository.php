@@ -26,6 +26,7 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
     public function processAndGetGruposUsuario($distritos, $ticket, $servicioAfectado, DateTime $fechaIni, DateTime $fechaFin, $mesesInteres)
     {
         $this->userIdentifier = $this->authService->getUserIdentifier();
+        $partitionActual = (new DateTime())->format('Ym');
         $strFechaIniF1 = $fechaIni->format("Y-m-d H:i:s");
         $strFechaFinF1 = $fechaFin->format("Y-m-d H:i:s");
         $strFechaIniF2 = $fechaIni->format("d/m/Y H:i:s");
@@ -200,9 +201,11 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
                     I.DIRECCION,I.DESCRIPCION SEDE,I.CODUBI,
                     J.CODSUC,J.IDPLANO,I.CO_ID,
                         I.NUMSEC,I.CUSTOMER_ID
-                    FROM dws.sa_inssrv I
-                    JOIN USRAES.TMP_ABONADOS_NODOS_{$this->userIdentifier} J
-                    ON J.CODCLI = I.CODCLI
+                    FROM USRAES.TMP_ABONADOS_NODOS_{$this->userIdentifier} J
+                    JOIN DWS.SA_SOLOT ST
+                    ON J.CODCLI=ST.CUSTOMER_ID
+                    JOIN dws.sa_inssrv I
+                    ON ST.CODCLI = I.CODCLI
                     WHERE I.TIPSRV IN (
                         SELECT DISTINCT E.TIPSRV
                         FROM USRAES.SA_DEVOLUCION_EQUIVALENCIAS E
@@ -1228,6 +1231,224 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
             COMMIT;
         END;");
 
+        $queries = [];
+        $queries[] = ["sql" => "ALTER TABLE USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier} ADD MODO_CONTRATACION VARCHAR2(100)"];
+        $queries[] = ["sql" => "ALTER TABLE USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier} ADD TIPO_CLIENTE VARCHAR2(100)"];
+        $queries[] = ["sql" => "ALTER TABLE USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier} ADD MSISDN_DEVOLVER VARCHAR2(100)"];
+        $queries[] = ["sql" => "ALTER TABLE USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier} ADD COMENTARIOS VARCHAR2(100)"];
+        $queries[] = ["sql" => "ALTER TABLE USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier} ADD FECHA_BAJA DATE"];
+
+        $queries[] = ["sql" => "BEGIN
+            EXECUTE IMMEDIATE 'DROP TABLE USRAES.TMP_BASE_FIJA_DESACTIVOS_{$this->userIdentifier}';
+        EXCEPTION
+        WHEN OTHERS THEN
+            IF SQLCODE != -942 THEN RAISE; END IF;
+        END;"];
+        $queries[] = ["sql" => "CREATE TABLE USRAES.TMP_BASE_FIJA_DESACTIVOS_{$this->userIdentifier}(
+            TICKET VARCHAR2(500),
+            CODCLI VARCHAR2(1000),
+            NOMCLI VARCHAR2(1000),
+            NRO_DOC VARCHAR2(1000),
+            TIPDOC VARCHAR2(1000),
+            NUMERO VARCHAR2(500),
+            CID NUMBER,
+            FAMILIA VARCHAR2(500),
+            IDPLANO VARCHAR2(500),
+            FEC_INI_INCIDENCIA DATE,
+            FEC_FIN_INCIDENCIA DATE,
+            MINUTOS_AFECTACION NUMBER,
+            DPTO VARCHAR2(500),
+            PROVINCIA VARCHAR2(500),
+            DISTRITO VARCHAR2(500),
+            MONEDA VARCHAR2(500),
+            CR_NETO NUMBER,
+            FCHINI_INST DATE,
+            FCHFIN_INST DATE,
+            CICFAC_DEVOL VARCHAR2(10 CHAR),
+            CUSTCODE VARCHAR2(255 CHAR),
+            CO_ID VARCHAR2(50),
+            FECHAALTA DATE,
+            ESTADO_CONTRATO VARCHAR2(20),
+            CUSTOMER_ID VARCHAR2(50 CHAR),
+            FUENTE VARCHAR2(50),
+            CODSRV VARCHAR2(250),
+            DSCSRV VARCHAR2(250),
+            OBS VARCHAR2(500),
+            ESTADO_IDINTPROD_DEVOL VARCHAR2(500),
+            SERVICIO_DEVOL VARCHAR2(500),
+            IDINTPROD_DEVOL NUMBER,
+            TASA_AL DATE,
+            FCH_CALC_TASA DATE,
+            TASA NUMBER,
+            MONEDA_DEVOL VARCHAR2(500),
+            MONTO_DEVOL_CIGV NUMBER,
+            INTERES NUMBER,
+            MONTO_PRINC_CIGV NUMBER,
+            ULT_FECHA NUMBER,
+            CR_NETOCIGV NUMBER,
+            MONTO_PRINCIPAL NUMBER,
+            /*MTO_DEV_FACTURACION NUMBER,
+            MTO_DIF_FACTURACION NUMBER,
+            FACTURA_APLICADA VARCHAR2(100),
+            FECHA_DEVOLUCION DATE,
+            FECHA_REGISTRO_DEVOLUCION DATE,
+            OBSERVACION VARCHAR2(250),*/
+            FECHA_BAJA DATE,
+            MODO_CONTRATACION VARCHAR2(20),
+            TIPO_CLIENTE VARCHAR2(500),
+            MSISDN_DEVOLVER VARCHAR2(20),
+            COMENTARIOS VARCHAR2(28)
+        )"];
+        $queries[] = ["sql" => "BEGIN
+            INSERT INTO USRAES.TMP_BASE_FIJA_DESACTIVOS_{$this->userIdentifier}(
+                TICKET, CODCLI, NOMCLI, NRO_DOC, TIPDOC, NUMERO, CID, FAMILIA, IDPLANO, FEC_INI_INCIDENCIA, FEC_FIN_INCIDENCIA, MINUTOS_AFECTACION,
+                DPTO, PROVINCIA, DISTRITO, MONEDA, CR_NETO, FCHINI_INST, FCHFIN_INST, CICFAC_DEVOL, CUSTCODE, CO_ID, FECHAALTA, ESTADO_CONTRATO, CUSTOMER_ID,
+                FUENTE, CODSRV, DSCSRV, OBS, ESTADO_IDINTPROD_DEVOL, SERVICIO_DEVOL, IDINTPROD_DEVOL, TASA_AL, FCH_CALC_TASA, TASA, MONEDA_DEVOL, MONTO_DEVOL_CIGV,
+                INTERES, MONTO_PRINC_CIGV, ULT_FECHA, CR_NETOCIGV, MONTO_PRINCIPAL,
+                -- MTO_DEV_FACTURACION, MTO_DIF_FACTURACION, FACTURA_APLICADA, FECHA_DEVOLUCION, FECHA_REGISTRO_DEVOLUCION, OBSERVACION,
+                FECHA_BAJA, MODO_CONTRATACION, TIPO_CLIENTE, MSISDN_DEVOLVER, COMENTARIOS
+            )
+            SELECT TICKET,
+            CODCLI,
+            NOMCLI,
+            NRO_DOC,
+            TIPDOC,
+            NUMERO,
+            CID,
+            FAMILIA,
+            IDPLANO,
+            FEC_INI_INCIDENCIA,
+            FEC_FIN_INCIDENCIA,
+            MINUTOS_AFECTACION,
+            DPTO,
+            PROVINCIA,
+            DISTRITO,
+            MONEDA,
+            CR_NETO,
+            FCHINI_INST,
+            FCHFIN_INST,
+            CICLO CICFAC_DEVOL,
+            MOVIL_CUSTCODE CUSTCODE,
+            MOVIL_CO_ID CO_ID,
+            FECHAALTA,
+            MOVIL_STATUS ESTADO_CONTRATO,
+            MOVIL_CUSTOMER_ID CUSTOMER_ID,
+            SUBSCRIPTION_SOURCE_SYSTEM_DESC FUENTE,
+            CODSRV,
+            DSCSRV,
+            OBS,
+            ESTADO_IDINTPROD_DEVOL,
+            SERVICIO_DEVOL,
+            IDINTPROD_DEVOL,
+            TASA_AL,
+            FCH_CALC_TASA,
+            TASA,
+            MONEDA_DEVOL,
+            MONTO_DEVOL_CIGV,
+            INTERES,
+            MONTO_PRINC_CIGV,
+            ULT_FECHA,
+            CR_NETOCIGV,
+            MONTO_PRINCIPAL,
+            CASE WHEN MOVIL_STATUS IN ('A','G') THEN NULL WHEN (MOVIL_STATUS NOT IN ('A','G') AND AGREEMENT_END_DATE<FCHFIN_INST) OR TRUNC(AGREEMENT_END_DATE)=TO_DATE('31/12/9999','DD/MM/YYYY') OR AGREEMENT_END_DATE IS NULL THEN FCHFIN_INST ELSE AGREEMENT_END_DATE END FECHA_BAJA,
+            AGREEMENT_MODE MODO_CONTRATACION,
+            TIPO_CLIENTE TIPO_CLIENTE,
+            LINEA_ACTUAL MSISDN_DEVOLVER,
+            CASE WHEN MOVIL_STATUS NOT IN ('A','G') OR AGREEMENT_END_DATE IS NULL THEN 'DEVOLUCION WEB' 
+            WHEN AGREEMENT_MODE='POSTPAGO' THEN 'DEVOLUCION APLICADA-POSTPAGO' 
+            WHEN AGREEMENT_MODE='PREPAGO' THEN 'DEVOLUCION APLICADA-PREPAGO' 
+            END COMENTARIOS
+            FROM (
+            SELECT /*+ PARALLEL(20)*/
+                TK.TICKET,TK.CODCLI,TK.NOMCLI,TK.NRO_DOC,TK.TIPDOC,TK.NUMERO,TK.CID,TK.FAMILIA,TK.IDPLANO,TK.FEC_INI_INCIDENCIA,TK.FEC_FIN_INCIDENCIA,
+                TK.MINUTOS_AFECTACION,TK.DPTO,TK.PROVINCIA,TK.DISTRITO,TK.MONEDA,TK.CR_NETO,TK.FCHINI_INST,TK.FCHFIN_INST,TK.CICFAC_DEVOL,TK.CUSTCODE,
+                TK.CO_ID,TK.FECHAALTA,TK.ESTADO_CONTRATO,TK.CUSTOMER_ID,TK.FUENTE,TK.CODSRV,TK.DSCSRV,TK.OBS,TK.ESTADO_IDINTPROD_DEVOL,TK.SERVICIO_DEVOL,
+                TK.IDINTPROD_DEVOL,TK.TASA_AL,TK.FCH_CALC_TASA,TK.TASA,TK.MONEDA_DEVOL,TK.MONTO_DEVOL_CIGV,TK.INTERES,TK.MONTO_PRINC_CIGV,TK.ULT_FECHA,
+                TK.CR_NETOCIGV,TK.MONTO_PRINCIPAL,TK.FECHA_BAJA,TK.MODO_CONTRATACION,/*TK.TIPO_CLIENTE,*/TK.MSISDN_DEVOLVER,TK.COMENTARIOS,
+                SBS.CUSTOMER_ACCOUNT_SC CLIENTE_ID,
+                CASE WHEN ID_CARD_TYPE_VALUE='RUC' THEN SBS.CUSTOMER_FULL_NAME ELSE SBS.CUSTOMER_FIRST_NAME END NOMBRES,
+                CASE WHEN ID_CARD_TYPE_VALUE='RUC' THEN SBS.CUSTOMER_FULL_NAME ELSE SBS.CUSTOMER_LAST_NAME END APELLIDOS,
+                SBS.CUSTOMER_FULL_NAME,
+                SBS.ID_CARD_VALUE,
+                SBS.ID_CARD_TYPE_VALUE,
+                UPPER(DECODE(SBS.AGREEMENT_MODE,'PREPAGO','CONSUMER',SBS.CUSTOMER_ACCOUNT_CATEGORY_DESC)) TIPO_CLIENTE,  
+                SBS.SUBSCRIPTION_SOURCE_SYSTEM_DESC,
+                SBS.AGREEMENT_PRODUCT_OFFERING_SC,
+                SBS.AGREEMENT_PRODUCT_OFFERING_DESC,
+                CASE WHEN SBS.AGREEMENT_STATUS IS NULL THEN 'D' ELSE SBS.AGREEMENT_STATUS END MOVIL_STATUS,
+                DECODE(AGREEMENT_MODE,'POSTPAGO',SBS.CUSTOMER_ACCOUNT_SC)   MOVIL_CUSTOMER_ID,
+                DECODE(AGREEMENT_MODE,'POSTPAGO',SBS.CUSTOMER_ACCOUNT_DESC) MOVIL_CUSTCODE,
+                DECODE(AGREEMENT_MODE,'POSTPAGO',SBS.AGREEMENT_SOURCE_CODE) MOVIL_CO_ID,
+                CASE WHEN SBS.AGREEMENT_MODE IS NULL THEN 'POSTPAGO' ELSE SBS.AGREEMENT_MODE END AGREEMENT_MODE,
+                SBS.AGREEMENT_START_DATE,
+                SBS.AGREEMENT_END_DATE,
+                SBS.CUSTOMER_ACCOUNT_BILLING_CYCLE_SC CICLO,
+                SBS.SUBSCRIPTION_ACCESS_NUMBER LINEA_ACTUAL,
+                ROW_NUMBER() OVER(PARTITION BY TK.NRO_DOC ORDER BY CASE WHEN SBS.AGREEMENT_STATUS='A' THEN 1 ELSE 0 END DESC, SBS.CUSTOMER_ACCOUNT_ID DESC) R
+            FROM 
+            (
+                SELECT * FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier}
+                WHERE TICKET = :ticket
+                AND ((CASE FUENTE
+                    WHEN 'BSCS' THEN (CASE WHEN ESTADO_CONTRATO != 'D' THEN 1 ELSE 0 END)
+                    WHEN 'SGA' THEN (CASE WHEN CICFAC_DEVOL IS NOT NULL AND FCHFIN_INST IS NULL THEN 1 ELSE 0 END)
+                    ELSE 0 END
+                ) = 0
+                OR to_number(CICFAC_DEVOL) in (29, 3, 6, 11, 21, 37, 114, 39, 26, 36, 12, 20) OR ESTADO_CONTRATO NOT IN ('A','G'))
+            ) TK
+            LEFT JOIN DWA.DW_M_SUBSCRIPTION_HIST PARTITION(P_{$partitionActual}) SBS -- INGRESAR EL AÑO Y MES ACTUAL
+            ON SBS.ID_CARD_VALUE=TK.NRO_DOC AND SBS.AGREEMENT_SERVICE_GROUP='MOVIL'
+            LEFT JOIN DWA.DW_T_SUBSCRIPTION_NUMBER SN ON TK.FEC_INI_INCIDENCIA BETWEEN SN.START_DATE AND SN.END_DATE 
+            AND SN.AGREEMENT_ID=SBS.AGREEMENT_ID
+            -- WHERE SBS.ID_CARD_VALUE IS NOT NULL
+            -- WHERE NRO_DOC='03615309'
+            )
+            WHERE R=1;
+            COMMIT;
+        END;", "params" => ["ticket" => $ticket]];
+
+        $queries[] = ["sql" => "BEGIN
+            UPDATE USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier}
+            SET COMENTARIOS='DEVOLUCION APLICADA-POSTPAGO', MODO_CONTRATACION='POSTPAGO'
+            WHERE TICKET=:ticket;
+            COMMIT;
+
+            UPDATE USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier}
+            SET COMENTARIOS='DEVOLUCION WEB'
+            WHERE ((CASE FUENTE
+            WHEN 'BSCS' THEN (CASE WHEN ESTADO_CONTRATO != 'D' THEN 1 ELSE 0 END)
+            WHEN 'SGA' THEN (CASE WHEN CICFAC_DEVOL IS NOT NULL AND FCHFIN_INST IS NULL THEN 1 ELSE 0 END)
+            ELSE 0 END
+            ) = 0
+            OR to_number(CICFAC_DEVOL) in (29, 3, 6, 11, 21, 37, 114, 39, 26, 36, 12, 20) OR ESTADO_CONTRATO NOT IN ('A','G')) AND TICKET=:ticket;
+            COMMIT;
+
+            MERGE INTO USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier} DMD
+            USING USRAES.TMP_BASE_FIJA_DESACTIVOS_{$this->userIdentifier} TMP
+            ON(DMD.TICKET=TMP.TICKET AND DMD.NRO_DOC=TMP.NRO_DOC)
+            WHEN MATCHED THEN
+            UPDATE SET DMD.CICFAC_DEVOL=TMP.CICFAC_DEVOL,
+                DMD.CUSTCODE=TMP.CUSTCODE,
+                DMD.CO_ID=TMP.CO_ID,
+                DMD.ESTADO_CONTRATO=TMP.ESTADO_CONTRATO,
+                DMD.CUSTOMER_ID=TMP.CUSTOMER_ID,
+                DMD.FUENTE=TMP.FUENTE,
+                DMD.MODO_CONTRATACION=TMP.MODO_CONTRATACION,
+                DMD.TIPO_CLIENTE=TMP.TIPO_CLIENTE,
+                DMD.MSISDN_DEVOLVER=TMP.MSISDN_DEVOLVER,
+                DMD.COMENTARIOS=TMP.COMENTARIOS,
+                DMD.FECHA_BAJA=TMP.FECHA_BAJA
+            WHERE DMD.TICKET in (:ticket) AND ((CASE DMD.FUENTE
+            WHEN 'BSCS' THEN (CASE WHEN DMD.ESTADO_CONTRATO != 'D' THEN 1 ELSE 0 END)
+            WHEN 'SGA' THEN (CASE WHEN DMD.CICFAC_DEVOL IS NOT NULL AND DMD.FCHFIN_INST IS NULL THEN 1 ELSE 0 END)
+            ELSE 0 END
+            ) = 0
+            OR to_number(DMD.CICFAC_DEVOL) in (29, 3, 6, 11, 21, 37, 114, 39, 26, 36, 12, 20));
+            COMMIT;
+        END;", "params" => ["ticket" => $ticket]];
+
+        $this->exec_sql($queries);
+
         $cantidadUsuarios = DB::connection($this->connection)
         ->select("SELECT
         count(distinct a.codcli) usuarios_activos,
@@ -1277,7 +1498,8 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
                 CICFAC_DEVOL, CUSTCODE, CO_ID, FECHAALTA, ESTADO_CONTRATO, CUSTOMER_ID,
                 FUENTE, CODSRV, DSCSRV, OBS, ESTADO_IDINTPROD_DEVOL, SERVICIO_DEVOL,
                 IDINTPROD_DEVOL, TASA_AL, FCH_CALC_TASA, TASA, MONEDA_DEVOL, MONTO_DEVOL_CIGV,
-                INTERES, MONTO_PRINC_CIGV, ULT_FECHA, CR_NETOCIGV, MONTO_PRINCIPAL
+                INTERES, MONTO_PRINC_CIGV, ULT_FECHA, CR_NETOCIGV, MONTO_PRINCIPAL,
+                MODO_CONTRATACION, TIPO_CLIENTE, MSISDN_DEVOLVER, COMENTARIOS, FECHA_BAJA
             )
             SELECT
             TICKET, CODCLI, NOMCLI, NRO_DOC, TIPDOC, NUMERO, CID, FAMILIA, IDPLANO,
@@ -1286,7 +1508,8 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
             CICFAC_DEVOL, CUSTCODE, CO_ID, FECHAALTA, ESTADO_CONTRATO, CUSTOMER_ID,
             FUENTE, CODSRV, DSCSRV, OBS, ESTADO_IDINTPROD_DEVOL, SERVICIO_DEVOL,
             IDINTPROD_DEVOL, TASA_AL, FCH_CALC_TASA, TASA, MONEDA_DEVOL, MONTO_DEVOL_CIGV,
-            INTERES, MONTO_PRINC_CIGV, ULT_FECHA, CR_NETOCIGV, MONTO_PRINCIPAL
+            INTERES, MONTO_PRINC_CIGV, ULT_FECHA, CR_NETOCIGV, MONTO_PRINCIPAL,
+            MODO_CONTRATACION, TIPO_CLIENTE, MSISDN_DEVOLVER, COMENTARIOS, FECHA_BAJA
             FROM (
                 SELECT
                 a.*,
@@ -1489,16 +1712,16 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
         NOMCLI NOMBRES_APELLIDOS,FAMILIA SERVICIO_ANALIZADO,NUMERO SERVICIO,DPTO,MONTO_PRINCIPAL")
         ->where("ticket", $ticket)
         ->whereNotNull("MONTO_PRINCIPAL")
-        ->where("ESTADO_CONTRATO", "=", "A")
+        ->whereIn("ESTADO_CONTRATO", ["A", "G"])
         //->whereRaw("TRIM(MONTO_PRINCIPAL) != ''")
-        ->where(function($query) {
+        /*->where(function($query) {
             $query->whereRaw("(CASE FUENTE
             WHEN 'BSCS' THEN (CASE WHEN ESTADO_CONTRATO != 'D' THEN 1 ELSE 0 END)
             WHEN 'SGA' THEN (CASE WHEN CICFAC_DEVOL IS NOT NULL AND FCHFIN_INST IS NULL THEN 1 ELSE 0 END)
             ELSE 0 END
             ) = 1
             AND to_number(a.CICFAC_DEVOL) not in (29, 3, 6, 11, 21, 37, 114, 39, 26, 36, 12, 20)");
-        })
+        })*/
         ->get();
     }
 
@@ -1546,16 +1769,17 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
         ->where("ticket", $ticket)
         ->where("fuente", $fuente)
         ->whereNotNull("MONTO_PRINCIPAL")
-        ->where("ESTADO_CONTRATO", "=", "A")
+        ->whereIn("ESTADO_CONTRATO", ["A", "G"])
+        ->where("COMENTARIOS", 'like', '%POSTPAGO%')
         //->where("MONTO_PRINCIPAL", '!=', '')
-        ->where(function($query) {
+        /*->where(function($query) {
             $query->whereRaw("(CASE FUENTE
             WHEN 'BSCS' THEN (CASE WHEN ESTADO_CONTRATO != 'D' THEN 1 ELSE 0 END)
             WHEN 'SGA' THEN (CASE WHEN CICFAC_DEVOL IS NOT NULL AND FCHFIN_INST IS NULL THEN 1 ELSE 0 END)
             ELSE 0 END
             ) = 1
             AND to_number(a.CICFAC_DEVOL) not in (29, 3, 6, 11, 21, 37, 114, 39, 26, 36, 12, 20)");
-        })
+        })*/
         ->get();
     }
 
@@ -1565,16 +1789,30 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
         ->select("fuente")
         ->where("ticket", $ticket)
         ->whereNotNull("MONTO_PRINCIPAL")
-        ->where("ESTADO_CONTRATO", "=", "A")
-        ->where(function($query) {
+        ->where("ESTADO_CONTRATO", ["A", "G"])
+        ->where("COMENTARIOS", 'like', '%POSTPAGO%')
+        /*->where(function($query) {
             $query->whereRaw("(CASE FUENTE
             WHEN 'BSCS' THEN (CASE WHEN ESTADO_CONTRATO != 'D' THEN 1 ELSE 0 END)
             WHEN 'SGA' THEN (CASE WHEN CICFAC_DEVOL IS NOT NULL AND FCHFIN_INST IS NULL THEN 1 ELSE 0 END)
             ELSE 0 END
             ) = 1
             AND to_number(CICFAC_DEVOL) not in (29, 3, 6, 11, 21, 37, 114, 39, 26, 36, 12, 20)");
-        })
+        })*/
         ->groupBy("fuente")
+        ->get();
+    }
+
+    public function getReportePrepago($ticket)
+    {
+        return DB::connection($this->connection)->table("USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST a")
+        ->selectRaw("NUMERO,
+        MSISDN_DEVOLVER MSISDN_DEVOL,
+        ROUND(ROUND(MONTO_PRINCIPAL * 1.18, 2) + INTERES, 2)*100 CENTIMOS,
+        'Dev. por interrupcion del '||to_char(fec_ini_incidencia, 'dd/mm/yyyy')||'. Tasa aplicada  0.01%' GLOSA")
+        ->where("ticket", $ticket)
+        ->whereIn("ESTADO_CONTRATO", ["A", "G"])
+        ->where("COMENTARIOS", 'like', '%PREPAGO%')
         ->get();
     }
 

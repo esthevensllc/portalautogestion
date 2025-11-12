@@ -42,7 +42,7 @@
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-4 form-group">
-                    <label for="">Subir Excel <a href="{{ asset('resources/plantilla_ext_fija_codcli.xlsx') }}" class="btn btn-secondary btn-sm ml-2">Plantilla</a></label>
+                    <label for="">Subir Excel <a href="{{ asset('resources/plantilla_ext_fija_codigocliente.xlsx') }}" class="btn btn-secondary btn-sm ml-2">Plantilla</a></label>
                     <input type="file" class="form-control-file" name="excel" accept=".xlsx" required>
                 </div>
                 <div class="col-12"></div>

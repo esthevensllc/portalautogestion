@@ -24,7 +24,7 @@ class EloquentModevFijaRepository implements ModevFijaRepository
         a.MONEDA_DEVOL,
         a.FECHA_DEVOLUCION,
         CASE WHEN a.FACTURA_APLICADA LIKE '=%' THEN NULL ELSE a.FACTURA_APLICADA END FACTURA_APLICADA,
-        'ACTIVO' AS ESTADO,
+        CASE WHEN a.ESTADO_CONTRATO IN ('A','G') THEN 'ACTIVO' ELSE 'INACTIVO' END AS ESTADO,
         a.FECHA_BAJA,
         a.NOMCLI,
         '' LUGAR_DONDE_COBRAR,
@@ -32,7 +32,7 @@ class EloquentModevFijaRepository implements ModevFijaRepository
         '' COMUNICACION,
         '' MEDIO_DE_COMUNICACION,
         'NO_APLICA' MOTIVO_SOLO_CUANDO_NO_CORRESPONDE,
-        'DEVOLUCION APLICADA-POSTPAGO' COMENTARIOS,
+        a.COMENTARIOS,
         '' LIBERADO
         from
         USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST a

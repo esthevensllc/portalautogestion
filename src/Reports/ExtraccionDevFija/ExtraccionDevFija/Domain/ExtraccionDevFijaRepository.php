@@ -14,6 +14,7 @@ interface ExtraccionDevFijaRepository
     public function getReporteUsuariosAfectados($ticket);
     public function getReportePostpago($ticket, $fuente, int $compensacionId);
     public function getFuentesReportePostpago($ticket);
+    public function getReportePrepago($ticket);
     public function createInput(
         string $numReporte,
         string $username,

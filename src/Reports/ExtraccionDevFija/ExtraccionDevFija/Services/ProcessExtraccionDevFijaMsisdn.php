@@ -35,7 +35,8 @@ class ProcessExtraccionDevFijaMsisdn
         ProcessExtraccionDevFija $extraccion,
         InformeFallasUpdater $updater,
         TablaInteresRepository $tablaInteresRepo,
-        NotifyUsersOnInformeFallasProcessed $notifyOnProcessed
+        NotifyUsersOnInformeFallasProcessed $notifyOnProcessed,
+        SendFilePrepagoProcesadoEvent $sendFilePrepagoEvent
     ){
         $this->informeFallasrepo = $informeFallasrepo;
         $this->extraccionFijaRepo = $extraccionFijaRepo;
@@ -46,6 +47,7 @@ class ProcessExtraccionDevFijaMsisdn
         $this->updater = $updater;
         $this->tablaInteresRepo = $tablaInteresRepo;
         $this->notifyOnProcessed = $notifyOnProcessed;
+        $this->sendFilePrepagoEvent = $sendFilePrepagoEvent;
     }
 
     // public function __invoke($numReporte, $excel, $ticket, $servicioAfectadoId, $fechasIni, $horasIni, $fechasFin, $horasFin, $compensacionId)
@@ -189,5 +191,6 @@ class ProcessExtraccionDevFijaMsisdn
         $this->updater->updateStatusToProcesado($input->numero_reporte, $input->servicio_afectado_id, $userIpAddress);
 
         $this->notifyOnProcessed->__invoke($input->numero_reporte, $input->servicio_afectado_id);
+        $this->sendFilePrepagoEvent->__invoke($input->ticket);
     }
 }
