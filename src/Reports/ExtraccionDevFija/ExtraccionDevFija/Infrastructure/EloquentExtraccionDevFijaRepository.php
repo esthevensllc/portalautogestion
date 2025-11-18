@@ -1712,6 +1712,33 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
         NOMCLI NOMBRES_APELLIDOS,FAMILIA SERVICIO_ANALIZADO,NUMERO SERVICIO,DPTO,MONTO_PRINCIPAL")
         ->where("ticket", $ticket)
         ->whereNotNull("MONTO_PRINCIPAL")
+        //->whereIn("ESTADO_CONTRATO", ["A", "G"])
+	    ->where("ESTADO_CONTRATO", "=", "A")
+        //->whereRaw("TRIM(MONTO_PRINCIPAL) != ''")
+        ->where(function($query) {
+            $query->whereRaw("(CASE FUENTE
+            WHEN 'BSCS' THEN (CASE WHEN ESTADO_CONTRATO != 'D' THEN 1 ELSE 0 END)
+            WHEN 'SGA' THEN (CASE WHEN CICFAC_DEVOL IS NOT NULL AND FCHFIN_INST IS NULL THEN 1 ELSE 0 END)
+            ELSE 0 END
+            ) = 1
+            AND to_number(a.CICFAC_DEVOL) not in (29, 3, 6, 11, 21, 37, 114, 39, 26, 36, 12, 20)");
+        })
+        ->get();
+    }
+
+    public function getReporteUsuariosAfectadosMantenimiento($ticket)
+    {
+        return DB::connection($this->connection)->table("USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST a")
+        ->selectRaw("rownum item,ticket,CODCLI CODIGO_CLIENTE,
+        CASE
+            WHEN LENGTH(NRO_DOC) <= 8 AND regexp_replace(NRO_DOC, '[0-9]*') IS NOT NULL THEN LPAD(NRO_DOC, 12, '0')
+            WHEN LENGTH(NRO_DOC) < 8 THEN LPAD(NRO_DOC, 8, '0')
+            WHEN 8 < LENGTH(NRO_DOC) AND LENGTH(NRO_DOC) < 11 THEN LPAD(NRO_DOC, 12, '0')
+            ELSE NRO_DOC
+            END AS NUMERO_DE_DOCUMENTO,
+        NOMCLI NOMBRES_APELLIDOS,FAMILIA SERVICIO_ANALIZADO,NUMERO SERVICIO,DPTO,MONTO_PRINCIPAL")
+        ->where("ticket", $ticket)
+        ->whereNotNull("MONTO_PRINCIPAL")
         ->whereIn("ESTADO_CONTRATO", ["A", "G"])
         //->whereRaw("TRIM(MONTO_PRINCIPAL) != ''")
         /*->where(function($query) {
@@ -1769,6 +1796,86 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
         ->where("ticket", $ticket)
         ->where("fuente", $fuente)
         ->whereNotNull("MONTO_PRINCIPAL")
+        //->whereIn("ESTADO_CONTRATO", ["A", "G"])
+        ->where("ESTADO_CONTRATO", "=", "A")
+	    //->where("COMENTARIOS", 'like', '%POSTPAGO%')
+        //->where("MONTO_PRINCIPAL", '!=', '')
+        ->where(function($query) {
+            $query->whereRaw("(CASE FUENTE
+            WHEN 'BSCS' THEN (CASE WHEN ESTADO_CONTRATO != 'D' THEN 1 ELSE 0 END)
+            WHEN 'SGA' THEN (CASE WHEN CICFAC_DEVOL IS NOT NULL AND FCHFIN_INST IS NULL THEN 1 ELSE 0 END)
+            ELSE 0 END
+            ) = 1
+            AND to_number(a.CICFAC_DEVOL) not in (29, 3, 6, 11, 21, 37, 114, 39, 26, 36, 12, 20)");
+        })
+        ->get();
+    }
+
+    public function getFuentesReportePostpago($ticket)
+    {
+        return DB::connection($this->connection)->table("USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST")
+        ->select("fuente")
+        ->where("ticket", $ticket)
+        ->whereNotNull("MONTO_PRINCIPAL")
+        ->where("ESTADO_CONTRATO", "=", "A")
+	    //->where("ESTADO_CONTRATO", ["A", "G"])
+        //->where("COMENTARIOS", 'like', '%POSTPAGO%')
+        ->where(function($query) {
+            $query->whereRaw("(CASE FUENTE
+            WHEN 'BSCS' THEN (CASE WHEN ESTADO_CONTRATO != 'D' THEN 1 ELSE 0 END)
+            WHEN 'SGA' THEN (CASE WHEN CICFAC_DEVOL IS NOT NULL AND FCHFIN_INST IS NULL THEN 1 ELSE 0 END)
+            ELSE 0 END
+            ) = 1
+            AND to_number(CICFAC_DEVOL) not in (29, 3, 6, 11, 21, 37, 114, 39, 26, 36, 12, 20)");
+        })
+        ->groupBy("fuente")
+        ->get();
+    }
+
+    public function getReportePostpagoMantenimiento($ticket, $fuente, int $compensacionId)
+    {
+        return DB::connection($this->connection)->table("USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST a")
+        ->selectRaw("TICKET,
+        NUMERO MSISDN,
+        NUMERO MSISDN_DEVOLVER,
+        CR_NETO CARGO_LINEA,
+        round(CR_NETO * 1.18, 2) CARGO_LINEA_IGV,
+        MONTO_PRINCIPAL MTO_DEV,
+        ROUND(MONTO_PRINCIPAL * 1.18, 2) MTO_DEV_IGV,
+        CASE {$compensacionId}
+        WHEN 1 THEN
+        ROUND(CASE
+            WHEN MINUTOS_AFECTACION >= 1440 THEN (ROUND(MONTO_PRINCIPAL * 1.18, 2) + INTERES) * 4
+            WHEN MINUTOS_AFECTACION >= 700 AND MINUTOS_AFECTACION < 1440 THEN (ROUND(MONTO_PRINCIPAL * 1.18, 2) + INTERES) * 3.5
+            WHEN MINUTOS_AFECTACION >= 300 AND MINUTOS_AFECTACION < 700 THEN (ROUND(MONTO_PRINCIPAL * 1.18, 2) + INTERES) * 3
+            WHEN MINUTOS_AFECTACION >= 60 AND MINUTOS_AFECTACION < 300 THEN (ROUND(MONTO_PRINCIPAL * 1.18, 2) + INTERES) * 2.5
+            ELSE 0
+        END, 2) ELSE NULL END AS COMPENSACION,
+        CASE {$compensacionId}
+        WHEN 1 THEN
+        ROUND((CASE
+            WHEN MINUTOS_AFECTACION >= 1440 THEN (ROUND(MONTO_PRINCIPAL * 1.18, 2) + INTERES) * 4
+            WHEN MINUTOS_AFECTACION >= 700 AND MINUTOS_AFECTACION < 1440 THEN (ROUND(MONTO_PRINCIPAL * 1.18, 2) + INTERES) * 3.5
+            WHEN MINUTOS_AFECTACION >= 300 AND MINUTOS_AFECTACION < 700 THEN (ROUND(MONTO_PRINCIPAL * 1.18, 2) + INTERES) * 3
+            WHEN MINUTOS_AFECTACION >= 60 AND MINUTOS_AFECTACION < 300 THEN (ROUND(MONTO_PRINCIPAL * 1.18, 2) + INTERES) * 2.5
+            ELSE 0
+        END) / (ROUND(MONTO_PRINCIPAL * 1.18, 2) + INTERES), 1)
+        ELSE NULL END AS FACTOR_MULTIPLICATIVO,
+        INTERES,
+        TASA,
+        ROUND(ROUND(MONTO_PRINCIPAL * 1.18, 2) + INTERES, 2) MTO_TOTAL_DEV_IGV,
+        CUSTCODE,
+        CASE FUENTE WHEN 'SGA' THEN CODCLI ELSE CUSTOMER_ID END CUSTOMER_ID,
+        IDINTPROD_DEVOL IDINSTPROD,
+        CO_ID CO_ID_DEVOLVER,
+        CICFAC_DEVOL CICLOFACTURACION,
+        FUENTE,
+        to_char(CASE FUENTE WHEN 'SGA' THEN FCHINI_INST ELSE FECHAALTA END, 'YYYY-MM-DD') FECHA_ALTA,
+        to_char(CASE FUENTE WHEN 'SGA' THEN FCHINI_INST ELSE FECHAALTA END, 'YYYY-MM-DD') FECHA_ACTIVACION,
+        'Dev. por interrupcion del ' || to_char(FEC_INI_INCIDENCIA, 'DD/MM/YYYY') || '. Tasa aplicada  0.01%' GLOSARIO")
+        ->where("ticket", $ticket)
+        ->where("fuente", $fuente)
+        ->whereNotNull("MONTO_PRINCIPAL")
         ->whereIn("ESTADO_CONTRATO", ["A", "G"])
         ->where("COMENTARIOS", 'like', '%POSTPAGO%')
         //->where("MONTO_PRINCIPAL", '!=', '')
@@ -1783,13 +1890,13 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
         ->get();
     }
 
-    public function getFuentesReportePostpago($ticket)
+    public function getFuentesReportePostpagoMantenimiento($ticket)
     {
         return DB::connection($this->connection)->table("USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST")
         ->select("fuente")
         ->where("ticket", $ticket)
         ->whereNotNull("MONTO_PRINCIPAL")
-        ->where("ESTADO_CONTRATO", ["A", "G"])
+        ->whereIn("ESTADO_CONTRATO", ["A", "G"])
         ->where("COMENTARIOS", 'like', '%POSTPAGO%')
         /*->where(function($query) {
             $query->whereRaw("(CASE FUENTE

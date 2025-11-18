@@ -4,6 +4,7 @@ namespace AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Services;
 
 use AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Domain\ExtraccionDevFijaRepository;
 use AMovil\Reports\ExtraccionDevFija\InformesFalla\Domain\InformeFallasRepository;
+use AMovil\Reports\ExtraccionDevFija\InformesFalla\Domain\InformeFijaTipoReporte;
 use AMovil\Shared\Application\Response;
 use AMovil\Shared\Exports\Domain\ExportService;
 use AMovil\Shared\Exports\Domain\WriterType;
@@ -29,10 +30,16 @@ class ExportExtraccionFijaPostpago
     {
         $informeFalla = $this->informeRepo->getByCriteria(["ticket.eq.{$ticket}"]);
         if (count($informeFalla['data']) === 0) {
-            throw new Exception("No se encontro el informe de fallas para el ticket");
+            throw new \Exception("No se encontro el informe de fallas para el ticket");
         }
         $informeFalla = $informeFalla['data'][0];
-        $fuentes = $this->repo->getFuentesReportePostpago($ticket);
+        $tipo_reporte = (int) $informeFalla->tipo_reporte;
+        $fuentes = [];
+        if ($tipo_reporte === InformeFijaTipoReporte::BY_CODCLI) {
+            $fuentes = $this->repo->getFuentesReportePostpagoMantenimiento($ticket);
+        } else {
+            $fuentes = $this->repo->getFuentesReportePostpago($ticket);
+        }
         $response = null;
         if(count($fuentes) > 1){
             $zip = new ZipArchive();
@@ -40,7 +47,12 @@ class ExportExtraccionFijaPostpago
             $tempfiles = [$zipTempfilename];
             $zip->open($zipTempfilename, ZipArchive::CREATE);
             foreach($fuentes as $row){
-                $data = $this->repo->getReportePostpago($ticket, $row->fuente, $informeFalla->compensacion_id);
+                $data = [];
+                if ($tipo_reporte === InformeFijaTipoReporte::BY_CODCLI) {
+                    $data = $this->repo->getReportePostpagoMantenimiento($ticket, $row->fuente, $informeFalla->compensacion_id);
+                } else {
+                    $data = $this->repo->getReportePostpago($ticket, $row->fuente, $informeFalla->compensacion_id);
+                }
                 $tempfile = $this->getExportTempfile($data);
                 $zip->addFile($tempfile, "FIJA_POSTPAGO_{$row->fuente}.xlsx");
                 $tempfiles[] = $tempfile;
@@ -60,7 +72,12 @@ class ExportExtraccionFijaPostpago
             $data = [];
             if(count($fuentes) === 1) {
                 $fuente = $fuentes[0]->fuente;
-                $data = $this->repo->getReportePostpago($ticket, $fuente, $informeFalla->compensacion_id);
+                $data = [];
+                if ($tipo_reporte === InformeFijaTipoReporte::BY_CODCLI) {
+                    $data = $this->repo->getReportePostpagoMantenimiento($ticket, $fuente, $informeFalla->compensacion_id);
+                } else {
+                    $data = $this->repo->getReportePostpago($ticket, $fuente, $informeFalla->compensacion_id);
+                }
             }
             $tempfile = $this->getExportTempfile($data);
             $content = file_get_contents($tempfile);

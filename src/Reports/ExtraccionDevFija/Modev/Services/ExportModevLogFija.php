@@ -3,6 +3,8 @@
 namespace AMovil\Reports\ExtraccionDevFija\Modev\Services;
 
 use AMovil\Reports\ExtraccionDevFija\Modev\Domain\ModevFijaRepository;
+use AMovil\Reports\ExtraccionDevFija\InformesFalla\Domain\InformeFallasRepository;
+use AMovil\Reports\ExtraccionDevFija\InformesFalla\Domain\InformeFijaTipoReporte;
 use AMovil\Shared\Application\Response;
 use AMovil\Shared\Exports\Domain\ExportService;
 use AMovil\Shared\Exports\Domain\WriterType;
@@ -11,18 +13,32 @@ use PhpOffice\PhpSpreadsheet\Style as SpreadsheetStyle;
 class ExportModevLogFija
 {
     private $repo;
+    private $informeFallarepo;
     private $exportService;
 
-    public function __construct(ModevFijaRepository $repo, ExportService $exportService)
+    public function __construct(ModevFijaRepository $repo, InformeFallasRepository $informeFallarepo, ExportService $exportService)
     {
         $this->repo = $repo;
+        $this->informeFallarepo = $informeFallarepo;
         $this->exportService = $exportService;
     }
 
     public function __invoke($ticket)
     {
-        $tickets = explode(",", str_replace(" ", "", $ticket));
-        $data = $this->repo->getReporteModev($tickets);
+        $result = $this->informeFallarepo->getByCriteria(["ticket.eq.{$ticket}"]);
+        if(count($result["data"]) === 0){
+            throw new \Exception("No se encontro el informe de fallas para el ticket");
+        }
+        $tipo_reporte = (int) $result["data"][0]->tipo_reporte;
+        $data = [];
+        if ($tipo_reporte === InformeFijaTipoReporte::BY_CODCLI) {
+            $data = $this->repo->getReporteModevMantenimiento([$ticket]);
+        } else {
+            $data = $this->repo->getReporteModev([$ticket]);
+        }
+
+        // $tickets = explode(",", str_replace(" ", "", $ticket));
+        // $data = $this->repo->getReporteModev($tickets);
 
         $headers = [
             "ticket" => ["label" => "TICKET"],
