@@ -5,6 +5,7 @@ namespace AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Infrastructur
 use AMovil\Auth\AccessControl\Domain\AuthService;
 use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Domain\InformeTipoReporte;
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Domain\ExtraccionRepository;
+use AMovil\Shared\Infrastructure\Repository\ClickhouseDB;
 use DateTime;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -14,10 +15,12 @@ class EloquentExtraccionRepository implements ExtraccionRepository
     private $connection = "oracle_reptdm";
     private $userIdentifier;
     private $authService;
+    private $chDb;
 
-    public function __construct(AuthService $authService)
+    public function __construct(AuthService $authService, ClickhouseDB $chDb)
     {
         $this->authService = $authService;
+        $this->chDb = $chDb->connection("ch-dn04");
     }
 
     public function getReporte(array $celdas, array $provincias, DateTime $fechaIni, DateTime $fechaFin, $ticketOsiptel, DateTime $fechaInteres, DateTime $corteFechaIni, Datetime $corteFechaFin)
@@ -1805,6 +1808,147 @@ class EloquentExtraccionRepository implements ExtraccionRepository
     public function getReporteMsisdn($ticket){
         $this->userIdentifier = $this->authService->getUserIdentifier();
         return DB::connection("oracle_reptdm")->table("USRAES.BASE_USUARIOS_VALIDACION_DOC_{$this->userIdentifier}")->get();
+    }
+
+    public function getReporteDiligenciasWebCorreo($ticket) {
+        return DB::select(DB::raw("SELECT
+        /*+PARALLEL(16)*/ Y.CUSTOMER_FULL_NAME, Y.NRO_DOCUMENTO,
+        CASE WHEN X.CUSTOMER_ACCOUNT_BILLING_EMAIL IS NULL THEN X.CUSTOMER_EMAIL ELSE X.CUSTOMER_ACCOUNT_BILLING_EMAIL END AS CORREO
+        FROM 
+        (
+            SELECT ID_CARD_VALUE,CUSTOMER_ACCOUNT_BILLING_EMAIL, CUSTOMER_EMAIL
+            ,ROW_NUMBER() OVER (PARTITION BY ID_CARD_VALUE ORDER BY CASE WHEN AGREEMENT_STATUS='A' THEN 1 ELSE 0 END DESC, CUSTOMER_ACCOUNT_ID DESC) ORDEN
+            FROM 
+            (
+                SELECT ID_CARD_VALUE,CUSTOMER_ACCOUNT_BILLING_EMAIL, CASE WHEN CUSTOMER_EMAIL='@iclaro.com.pe' THEN NULL ELSE CUSTOMER_EMAIL end CUSTOMER_EMAIL
+                ,AGREEMENT_STATUS,CUSTOMER_ACCOUNT_ID
+                FROM DWA.DW_M_SUBSCRIPTION WHERE ID_CARD_VALUE IN (
+                    SELECT NRO_DOCUMENTO FROM USRAES.BASE_PREV_BASEDEV@DBL_REPTDM
+                    where ticket = :p_ticket
+                ) 
+                AND (CUSTOMER_ACCOUNT_BILLING_EMAIL IS NOT NULL OR CASE WHEN CUSTOMER_EMAIL='@iclaro.com.pe' THEN NULL ELSE CUSTOMER_EMAIL end IS NOT NULL)
+            ) X
+        ) X
+        RIGHT JOIN USRAES.BASE_PREV_BASEDEV@DBL_REPTDM Y
+        ON X.ID_CARD_VALUE=Y.NRO_DOCUMENTO AND X.ORDEN=1
+        WHERE MODALIDAD_DEV like '%WEB%'
+        and y.ticket = :p_ticket"), ["p_ticket" => $ticket]);
+    }
+
+    public function getReporteDiligenciasWebDocumento($ticket) {
+        return DB::select(DB::raw("SELECT
+        CUSTOMER_FULL_NAME, TIPO_DOCUMENTO, NRO_DOCUMENTO, MTO_TOTAL_DEV_IGV
+        FROM USRAES.BASE_PREV_BASEDEV@DBL_REPTDM
+        WHERE MODALIDAD_DEV like '%WEB%' and ticket = :p_ticket"), ["p_ticket" => $ticket]);
+    }
+
+    public function saveReporteValidacionRecarga($ticket){
+        $this->userIdentifier = $this->authService->getUserIdentifier();
+
+        $queryClickHouse = "SELECT
+        xx.ticket TICKET
+        ,xx.msisdn MSISDN
+        ,xx.msisdn_devolver MSISDN_DEVOLVER
+        ,xx.nro_documento NRO_DOCUMENTO
+        ,xx.modalidad_dev MODALIDAD_DEV
+        ,xx.mto_total_dev_igv MTO_TOTAL_DEV_IGV
+        ,xx.fecha_carga FECHA_CARGA
+        ,yy.recharge_date FECHA_RECARGA
+        ,yy.served_number LINEA_RECARGA
+        ,round(yy.recharge_qty/100,2) MONTO_RECARGA
+        ,yy.usage_str3 TIPI_RECARGA
+        from
+        (
+            select ticket,msisdn,nro_documento,msisdn_devolver,modalidad_dev,mto_total_dev_igv,toDate(substring(fecha_carga,1,10)) fecha_carga
+            from  reptdm.base_prev_basedev
+            where modalidad_dev like '%PREPAGO%' and length(ticket)=9
+            and load_date=(select toString(max(parseDateTimeBestEffort(load_date))) from reptdm.base_prev_basedev)
+            and ticket= {ticket:String}
+        ) xx
+        left join (
+        select aa.*,bb.*,round(toFloat64(aa.mto_total_dev_igv)*100,2),date_diff('days',aa.fecha_carga,bb.recharge_date)
+        ,row_number() over(partition by aa.ticket,aa.msisdn,aa.msisdn_devolver,aa.mto_total_dev_igv
+        order by bb.recharge_date asc) flag
+        from
+        (
+            select ticket,msisdn,msisdn_devolver,modalidad_dev,mto_total_dev_igv,toDate(substring(fecha_carga,1,10)) fecha_carga
+            from  reptdm.base_prev_basedev
+            where modalidad_dev like '%PREPAGO%' and length(ticket)=9
+            and load_date=(select toString(max(parseDateTimeBestEffort(load_date))) from reptdm.base_prev_basedev)
+            and ticket= {ticket:String}
+        ) as aa
+        left join recargas.recargas_dwo_osip as bb
+        on aa.msisdn_devolver=bb.served_number and bb.recharge_qty>0 and round(toFloat64(aa.mto_total_dev_igv)*100,2)=round(bb.recharge_qty,2)
+        where date_diff('days',aa.fecha_carga,bb.recharge_date)<90 and date_diff('days',aa.fecha_carga,bb.recharge_date)>=-90
+        group by aa.*,bb.*
+        ) yy
+        on xx.ticket=yy.ticket and xx.msisdn=yy.msisdn and xx.msisdn_devolver=yy.msisdn_devolver and xx.mto_total_dev_igv=yy.mto_total_dev_igv
+        and yy.flag=1";
+
+        $data = $this->chDb->select($queryClickHouse, ["ticket" => $ticket])->rows();
+
+        $queries = [];
+        $queries[] = ["sql" => "BEGIN
+            EXECUTE IMMEDIATE 'DROP TABLE USRAES.VALIDACION_PREPAGO_{$this->userIdentifier}';
+        EXCEPTION
+        WHEN OTHERS THEN
+            IF SQLCODE != -942 THEN RAISE; END IF;
+        END;"];
+        $queries[] = ["sql" => "CREATE TABLE USRAES.VALIDACION_PREPAGO_{$this->userIdentifier}(
+            TICKET VARCHAR2(20),
+            MSISDN VARCHAR2(20),
+            MSISDN_DEVOLVER VARCHAR2(20),
+            NRO_DOCUMENTO VARCHAR2(30),
+            MODALIDAD_DEV VARCHAR2(30),
+            MTO_TOTAL_DEV_IGV NUMBER,
+            FECHA_CARGA VARCHAR2(20),
+            FECHA_RECARGA VARCHAR2(20),
+            LINEA_RECARGA VARCHAR2(20),
+            MONTO_RECARGA NUMBER,
+            TIPI_RECARGA VARCHAR2(100)
+        )"];
+        $this->exec_sql($queries);
+
+        $chunk = [];
+        $lastIndex = count($data)-1;
+        foreach($data as $index => $row){
+            $chunk[] = $row;
+            if(count($chunk) === 20 || $index === $lastIndex){
+                DB::connection($this->connection)->table("USRAES.VALIDACION_PREPAGO_{$this->userIdentifier}")->insert($chunk);
+                $chunk = [];
+            }
+        }
+
+        $queries = [];
+        $queries[] = ["sql" => "BEGIN
+            MERGE INTO USRAES.BASE_PREV_BASEDEV BPB
+            USING USRAES.VALIDACION_PREPAGO_{$this->userIdentifier} VP
+            ON(BPB.TICKET = VP.TICKET AND BPB.MSISDN=VP.MSISDN)
+            WHEN MATCHED THEN
+            UPDATE SET
+            BPB.FECHA_DEVOLUCION=TO_DATE(VP.FECHA_RECARGA,'YYYY-MM-DD'),
+            BPB.MTO_DEV=VP.MONTO_RECARGA
+            WHERE MODALIDAD_DEV like '%PREPAGO%'
+            AND TICKET = :ticket;
+            COMMIT;
+        END;", "params" => ["ticket" => $ticket]];
+        $this->exec_sql($queries);
+    }
+
+    public function getPrepagoLog($ticket)
+    {
+        return DB::connection("oracle_reptdm")
+        ->select(DB::raw("SELECT
+        TICKET,
+        MSISDN,
+        ROUND(MTO_TOTAL_DEV_IGV*100,2) CANTIDAD,
+        FECHA_DEVOLUCION RECHARGE_DATE,
+        ROUND(MTO_DEV*100,2) RECARGA,
+        MSISDN_DEVOLVER,
+        '92000559;Prepago_Devolucion_Interrupciones_Osiptel' USAGE_STR3
+        from USRAES.BASE_PREV_BASEDEV
+        WHERE MODALIDAD_DEV like '%PREPAGO%'
+        AND TICKET= ?"), [$ticket]);
     }
 
     public function updateReporte($ticket, $departamento, $data)

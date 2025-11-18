@@ -26,10 +26,10 @@ class ExportModevLog
     {
         $tickets = explode(",", str_replace(" ", "", $ticket));
         // $informeInput = $this->informeRepo->getInputByTicket($ticket);
-        $validation = $this->repo->validateRecargas($tickets);
+        /*$validation = $this->repo->validateRecargas($tickets);
         foreach($validation as $row){
             $this->repo->saveRecargasNoCorrectas($row['ticket']);
-        }
+        }*/
         $tipoReporte = null;
         if (count($tickets) > 0) {
             $informe = $this->informeRepo->getInputByTicket($tickets[0]);

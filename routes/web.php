@@ -405,6 +405,15 @@ Route::group([
         Route::get('/', [\AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Controllers\ExtraccionDevolucionController::class, 'processByMsisdnView']);
         Route::post('process', [\AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Controllers\ExtraccionDevolucionController::class, 'processByMsisdn']);
     });
+    Route::group(['prefix' => 'extraccion-devolucion/validacion-recargas-pre', 'trac_name' => 'extraccion-devolucion.recarga_pre'], function(){
+        Route::get('/', [\AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Controllers\ValidacionRecargaController::class, 'view']);
+        Route::post('update', [\AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Controllers\ValidacionRecargaController::class, 'update']);
+        Route::post('export', [\AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Controllers\ValidacionRecargaController::class, 'export']);
+    });
+    Route::group(['prefix' => 'extraccion-devolucion/diligencias-web', 'trac_name' => 'extraccion-devolucion.diligencias_web'], function(){
+        Route::get('/', [\AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Controllers\DiligenciasWebController::class, 'view']);
+        Route::post('export', [\AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Controllers\DiligenciasWebController::class, 'export']);
+    });
 
     Route::group(['prefix' => 'michaell-cia-nn', 'trac_name' => 'michaell-cia-nn'], function(){
         Route::get('/', [\AMovil\Reports\General\RepMichaellCIANN\Controllers\RepMichaellCIANNController::class, 'view']);
