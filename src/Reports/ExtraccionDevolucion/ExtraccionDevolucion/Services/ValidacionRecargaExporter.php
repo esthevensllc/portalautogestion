@@ -59,7 +59,7 @@ class ValidacionRecargaExporter
         $strNow = (new DateTime())->format("YmdHis");
     
         return Response::respData([
-            "filename" => "REPORTE_PREPAGO_LOG_{$strNow}.xlsx",
+            "filename" => "REPORTE_PREPAGO_LOG_TK{$ticket}.xlsx",
             "type" => "xlsx",
             "content" => $content,
         ]);
