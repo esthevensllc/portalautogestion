@@ -110,7 +110,7 @@ class ExtraccionDevolucionController
             "api" => asset("extraccion-devolucion/carga-reportes/import"),
             "tipo_input" => [
                 ["id" => 1, "label" => "Postpago"],
-                ["id" => 2, "label" => "Prepago"],
+                // ["id" => 2, "label" => "Prepago"],
             ],
             "tickets" => $tickets,
             "departamentos" => $departamentos,

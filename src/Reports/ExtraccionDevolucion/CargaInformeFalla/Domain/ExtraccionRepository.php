@@ -34,6 +34,9 @@ interface ExtraccionRepository
     public function enEsperaPre($id);
     public function enEjecucionPost($id);
     public function enEsperaPost($id);
+    public function acreditadoPost($id, bool $acreditado);
+    public function acreditadoPre($id, bool $acreditado);
+
     public function getReportesSnRevisado();
     public function getReportesAprobados();
     public function getReportesProcesados();

@@ -3,6 +3,11 @@
 namespace AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services;
 
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Domain\ExtraccionRepository;
+use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Domain\ExtraccionRepository as InformeFallasRepository;
+use AMovil\Reports\ExtraccionDevolucion\TicketReports\Domain\TicketReportRepository;
+use AMovil\Shared\EmailNotification\Domain\EmailNotification;
+use AMovil\Shared\EmailNotification\Domain\EmailNotificationService;
+use AMovil\Shared\NotificationUser\Domain\NotificationUserRepository;
 use DateTime;
 use Exception;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -11,20 +16,54 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 class CargarReporte
 {
     private $repo;
+    private $informeRepo;
+    private $ticketRepo;
+    private $notificationUserRepo;
+    private $emailNotification;
+    private $groupId;
     
-    public function __construct(ExtraccionRepository $repo)
-    {
+    public function __construct(
+        ExtraccionRepository $repo,
+        InformeFallasRepository $informeRepo,
+        TicketReportRepository $ticketRepo,
+        NotificationUserRepository $notificationUserRepo,
+        EmailNotificationService $emailNotification,
+    ){
         $this->repo = $repo;
+        $this->informeRepo = $informeRepo;
+        $this->ticketRepo = $ticketRepo;
+        $this->notificationUserRepo = $notificationUserRepo;
+        $this->emailNotification = $emailNotification;
+        $this->groupId = config("app.env")."/ext_acreditado";
     }
 
     public function __invoke($ticket, $departamento, $excel, $tipo)
     {
-        if($tipo === "1"){
-            $data = $this->getDataFromExcel($excel);
-            $this->repo->updateReporte($ticket, $departamento, $data);
-        }else{
-            $data = $this->getDataFromLog($excel);
-            $this->repo->saveAcreditacionPrepago($ticket, $departamento, $data);
+        $data = $this->getDataFromExcel($excel);
+        $this->repo->updateReporte($ticket, $departamento, $data);
+        // $data = $this->getDataFromLog($excel);
+        // $this->repo->saveAcreditacionPrepago($ticket, $departamento, $data);
+
+        $informes = $this->informeRepo->getReportesByCriteria([["ticket", $ticket]]);
+        if (count($informes)>0) {
+            $informe = $informes[0];
+            $registroTicket = $this->ticketRepo->findByTicket($ticket);
+            $porcentaje = round($registroTicket->acreditados_post / $registroTicket->numero_afectados_post, 2);
+            if ($porcentaje > 0.5) {
+                $this->informeRepo->acreditadoPost($informe->numero_de_reporte, true);
+
+                $emails = $this->notificationUserRepo->getEmailsByGroupId($this->groupId);
+                $email = new EmailNotification();
+                $email->to($emails)
+                ->subject("Extracción y Devolución / Notificación de ticket acreditado Postpago")
+                ->view("mails.extraccionAcreditado")
+                ->with(["informeFallas" => $registroTicket, "modalidad" => "Postpago"]);
+                $this->emailNotification->send($email);
+            } else {
+                $this->informeRepo->acreditadoPost($ticket, false);
+            }
+        } else {
+            throw new Exception("No existe un informe de fallas con el ticket ingresado");
         }
     }
 

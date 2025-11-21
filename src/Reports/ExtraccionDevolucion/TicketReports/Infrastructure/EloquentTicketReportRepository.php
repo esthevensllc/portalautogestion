@@ -127,4 +127,12 @@ class EloquentTicketReportRepository implements TicketReportRepository
         ->where("departamento", $departamento)
         ->first();
     }
+
+    public function findByTicket($ticket)
+    {
+        return DB::connection($this->connection)
+        ->table("USRAES.BASE_PREV_BASEDEV_HIST")
+        ->where("ticket", $ticket)
+        ->first();
+    }
 }

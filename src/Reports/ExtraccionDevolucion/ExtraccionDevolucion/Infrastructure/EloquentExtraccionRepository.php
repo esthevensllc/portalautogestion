@@ -1971,9 +1971,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
 
             UPDATE USRAES.BASE_PREV_BASEDEV_HIST SET
             ACREDITADOS_POST = 0,
-            ACREDITADOS_PRE = 0,
-            NO_ACREDITADOS_POST = 0,
-            NO_ACREDITADOS_PRE = 0
+            NO_ACREDITADOS_POST = 0
             WHERE TICKET= V_TICKET and DEPARTAMENTO = V_DEPARTAMENTO;
             COMMIT;
         END;", ["p_ticket" => $ticket, "p_departamento" => $departamento]);
@@ -2012,8 +2010,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
             ) B
             ON (A.TICKET = B.TICKET AND A.DEPARTAMENTO = B.DEPARTAMENTO)
             WHEN MATCHED THEN UPDATE SET
-            A.ACREDITADOS_POST = B.ACREDITADOS_POST,
-            A.ACREDITADOS_PRE = B.ACREDITADOS_PRE
+            A.ACREDITADOS_POST = B.ACREDITADOS_POST
             WHERE TICKET= V_TICKET and DEPARTAMENTO = V_DEPARTAMENTO;
             COMMIT;
 
@@ -2023,6 +2020,42 @@ class EloquentExtraccionRepository implements ExtraccionRepository
             WHERE TICKET= V_TICKET and DEPARTAMENTO = V_DEPARTAMENTO;
             COMMIT;
         END;", ["p_ticket" => $ticket, "p_departamento" => $departamento]);
+    }
+
+    public function updateNumAcreditadosPrepagoByTicket($ticket){
+        DB::connection("oracle_reptdm")
+        ->statement("DECLARE
+        BEGIN
+            UPDATE USRAES.BASE_PREV_BASEDEV_HIST SET
+            ACREDITADOS_PRE = 0,
+            NO_ACREDITADOS_PRE = 0
+            WHERE TICKET= :p_ticket;
+            COMMIT;
+        END;", ["p_ticket" => $ticket]);
+
+        DB::connection("oracle_reptdm")
+        ->statement("DECLARE
+            V_TICKET VARCHAR2(100) := :p_ticket;
+        BEGIN
+            MERGE INTO USRAES.BASE_PREV_BASEDEV_HIST BPH
+            USING
+            (
+                SELECT TICKET,DEPARTAMENTO,COUNT(DISTINCT CASE WHEN MTO_DEV IS NOT NULL THEN MSISDN ELSE NULL END) ACREDITADOS_PREPAGO,COUNT(DISTINCT MSISDN) CC_LINEAS 
+                FROM USRAES.BASE_PREV_BASEDEV
+                WHERE MODALIDAD_DEV LIKE '%PREPAGO%' AND TICKET = V_TICKET
+                GROUP BY TICKET,DEPARTAMENTO
+            ) BVP
+            ON (BPH.TICKET=BVP.TICKET and BPH.DEPARTAMENTO=BVP.DEPARTAMENTO)
+            WHEN MATCHED THEN
+            UPDATE SET BPH.ACREDITADOS_PRE=BVP.ACREDITADOS_PREPAGO
+            WHERE BPH.TICKET = V_TICKET;
+
+            UPDATE USRAES.BASE_PREV_BASEDEV_HIST SET
+            NO_ACREDITADOS_POST = NUMERO_AFECTADOS_POST - ACREDITADOS_POST,
+            NO_ACREDITADOS_PRE = NUMERO_AFECTADOS_PRE - ACREDITADOS_PRE
+            WHERE TICKET= V_TICKET;
+            COMMIT;
+        END;", ["p_ticket" => $ticket]);
     }
 
     public function saveAcreditacionPrepago($ticket, $departamento, $data)

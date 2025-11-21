@@ -1551,6 +1551,18 @@ class EloquentExtraccionRepository implements ExtraccionRepository
         ->update(['en_ejecucion_post' => '0']);
     }
 
+    public function acreditadoPost($id, bool $acreditado){
+        DB::table("usraes.noc_informe_de_fallas")
+        ->where('numero_de_reporte', $id)
+        ->update(['acreditado_post' => $acreditado ? '1' : '0']);
+    }
+
+    public function acreditadoPre($id, bool $acreditado){
+        DB::table("usraes.noc_informe_de_fallas")
+        ->where('numero_de_reporte', $id)
+        ->update(['acreditado_pre' => $acreditado ? '1' : '0']);
+    }
+
     public function getReportesSnRevisado()
     {
         return DB::table("usraes.noc_informe_de_fallas")

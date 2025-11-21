@@ -25,5 +25,6 @@ interface ExtraccionRepository
     public function saveReporteValidacionRecarga($ticket);
 
     public function updateReporte($ticket, $departamento, $data);
+    public function updateNumAcreditadosPrepagoByTicket($ticket);
     public function saveAcreditacionPrepago($ticket, $departamento, $data);
 }
