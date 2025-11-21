@@ -104,12 +104,12 @@ class CargarReporte
     {
         $sheetCount = $spreedsheet->getSheetCount();
         if($sheetCount !== 2){
-            throw new Exception("El número de hojas deven ser dos");
+            throw new Exception("El número de hojas deben ser dos");
         }
         $sheet = $spreedsheet->getSheet(1);
         $firstRowCount = $sheet->getHighestColumn(1);
         if($firstRowCount !== "Y"){
-            throw new Exception("El número de columnas deven ser 25(columna 'Y' como máximo)");
+            throw new Exception("El número de columnas deben ser 25(columna 'Y' como máximo)");
         }
     }
 

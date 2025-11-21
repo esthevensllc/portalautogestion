@@ -25,7 +25,7 @@ class TripletaFinder
     {
         $errors = [];
         if(!in_array($value->getExtension(), ["xlsx", "csv", "xls", "txt"])){
-            $errors["message"] = "El formato del archivo deve ser un xlsx,xls,txt o csv";
+            $errors["message"] = "El formato del archivo debe ser un xlsx,xls,txt o csv";
         }
         if(count($errors) === 0){
             $values = $this->getDataFromFile($value);
