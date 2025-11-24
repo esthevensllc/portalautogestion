@@ -41,7 +41,7 @@
                 <div class="col-lg-3 col-md-4">
                     <div class="form-group">
                         <label for="mensaje">Mensaje</label>
-                        <textarea id="mensaje" class="form-control" rows="4" placeholder="Escribe aquí..."></textarea>
+                        <textarea name="mensaje" class="form-control" rows="4" placeholder="Escribe aquí..."></textarea>
                     </div>                      
                 </div>
                 <div class="col-12" style="display: flex; align-items: end;">

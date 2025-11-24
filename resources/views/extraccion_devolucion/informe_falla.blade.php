@@ -5,6 +5,7 @@
   <link rel="stylesheet" type="text/css" href="{{ asset('packages/datatables.net-bs4/css/dataTables.bootstrap4.min.css') }}">
   <link rel="stylesheet" type="text/css" href="{{ asset('packages/datatables.net-fixedheader-bs4/css/fixedHeader.bootstrap4.min.css') }}">
   <link rel="stylesheet" type="text/css" href="{{ asset('packages/datatables.net-responsive-bs4/css/responsive.bootstrap4.min.css') }}">
+  <link href="https://cdn.datatables.net/buttons/3.2.5/css/buttons.bootstrap4.min.css" rel="stylesheet" integrity="sha384-YHUnVhPYErA/IH3gGmVQyB2twaYx/xm4Nw+wQE2xZoB+VBmRPPt9Paqc4/eShUAF" crossorigin="anonymous">
 <style>
     table.dataTable td, table.dataTable th{
         padding: 0.4rem;
@@ -222,6 +223,10 @@
 <script type="text/javascript" src="{{ asset('packages/datatables.net-responsive-bs4/js/responsive.bootstrap4.min.js') }}"></script>
 <script type="text/javascript" src="{{ asset('packages/datatables.net-fixedheader/js/dataTables.fixedHeader.min.js') }}"></script>
 <script type="text/javascript" src="{{ asset('packages/datatables.net-fixedheader-bs4/js/fixedHeader.bootstrap4.min.js') }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" integrity="sha384-+mbV2IY1Zk/X1p/nWllGySJSUN8uMs+gUAN10Or95UBH0fpj6GfKgPmgC5EXieXG" crossorigin="anonymous"></script>
+<script src="https://cdn.datatables.net/buttons/3.2.5/js/dataTables.buttons.min.js" integrity="sha384-nShWTydNlLNjbeTudrIIbT/2GtisYB0Hdmc1BMuBNdWRkXb5+pqyKRuZzrwmmDpa" crossorigin="anonymous"></script>
+<script src="https://cdn.datatables.net/buttons/3.2.5/js/buttons.bootstrap4.min.js" integrity="sha384-1oeq8jb8l26AfnhvoQ1kcuVi2ty/y+QuzyJCi5E+GC31PymbE9QEla3XuYTwZHBC" crossorigin="anonymous"></script>
+<script src="https://cdn.datatables.net/buttons/3.2.5/js/buttons.html5.min.js" integrity="sha384-XT65ZByvRGLJG18n96xtO3veM0VfqLVC8Meh+QKwvKGlX483Ei/l2ocUgQYvPR/0" crossorigin="anonymous"></script>
 <script>
 let store = {};
 var id,name,_datatable;
@@ -229,6 +234,19 @@ var id,name,_datatable;
 $(function() {
 
     _datatable = $(".tbl-informefallas").DataTable({
+        dom: 'Bfrtip',
+        buttons: [
+            {
+                extend: 'excelHtml5',
+                text: '<i class="la la-download"></i> Descargar tabla',
+                className: 'btn btn-danger btn-sm',
+                filename: 'informe_fallas',
+                exportOptions: {
+                    modifier: { page: 'all' },
+                    columns: ':not(:last-child)'
+                }
+            }
+        ],
         language: {url: "{{ asset('packages/datatables-language/spanish.json') }}"},
         ajax: {
             url: "{{ asset('extraccion-devolucion/informe-fallas/search') }}",

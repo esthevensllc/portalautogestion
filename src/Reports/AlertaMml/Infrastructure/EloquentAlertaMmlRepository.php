@@ -30,7 +30,7 @@ class EloquentAlertaMmlRepository implements AlertaMmlRepository
         $this->db->ping(true);*/
     }
 
-    public function getReport($baseFlag, DateTime $fechaIni, DateTime $fechaFin, int $whiteList)
+    public function getReport($baseFlag, $mensaje)
     {
         $arrayBaseFlag = explode(",", $baseFlag);
         $strBaseFlag = "'".implode("','", $arrayBaseFlag)."'";
@@ -54,12 +54,6 @@ class EloquentAlertaMmlRepository implements AlertaMmlRepository
         // dd($dateRange);
 
         $queries = [];
-        $queries[] = [
-            "sql" => "DROP TABLE IF EXISTS cdrdatos.usuarios_estadio_{$this->userIdentifier}"
-        ];
-        $queries[] = [
-            "sql" => "DROP TABLE IF EXISTS cdrdatos.lineas_5g_{$this->userIdentifier}"
-        ];
         $queries[] = [
             "sql" => "CREATE TABLE cdrdatos.usuarios_estadio_{$this->userIdentifier}(
                 `msisdn` Nullable(UInt64) DEFAULT NULL CODEC(T64, LZ4),
@@ -142,26 +136,7 @@ class EloquentAlertaMmlRepository implements AlertaMmlRepository
         }
         $this->exec_sql($queries);
 
-
-        $sql = null;
-        if($whiteList === 1){
-            $sql = "SELECT msisdn FROM cdrdatos.usuarios_estadio_{$this->userIdentifier} a
-            inner join remote('172.19.242.57',dwa.f_d_base_wl_bl,'nifi','nifi') b on toString(a.msisdn)=toString(b.msisdn)
-            where toString(msisdn) like '519%' and b.wl='X' group by 1";
-        }else{
-            $sql = "SELECT msisdn FROM cdrdatos.usuarios_estadio_{$this->userIdentifier}
-            where toString(msisdn) like '519%' group by 1";
-        }
-        $data = DB::connection("ch-dn01")->select($sql);
-
-        $queries = [];
-        $queries[] = [
-            "sql" => "DROP TABLE cdrdatos.usuarios_estadio_{$this->userIdentifier}"
-        ];
-        $queries[] = [
-            "sql" => "DROP TABLE cdrdatos.lineas_5g_{$this->userIdentifier}"
-        ];
-        // $this->exec_sql($queries);
+        $data = null;
         return $data;
     }
 

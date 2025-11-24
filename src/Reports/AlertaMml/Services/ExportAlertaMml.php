@@ -41,10 +41,10 @@ class ExportAlertaMml
         $this->storage = $storage->getStorageSystemByName(StorageSystemName::LOCAL2);
     }
 
-    public function __invoke($nintex, $base, $fechaIni, $fechaFin, $whiteList)
+    public function __invoke($base, $mensaje)
     {
         $fechaIniExec = new DateTime();
-        $reporteInput = ["nintex" => $nintex, 'base' => $base, 'fechaInicio' => $fechaIni, 'fechaFin' => $fechaFin, 'whiteList' => $whiteList];
+        $reporteInput = ['base' => $base, 'mensaje' => $mensaje];
 
         try {
             $dtFechaIni = DateTime::createFromFormat("Y-m-d H:i", $fechaIni);
