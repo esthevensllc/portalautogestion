@@ -2,10 +2,12 @@
 
 @section('after_styles')
 {{-- DATA TABLES --}}
-  <link rel="stylesheet" type="text/css" href="{{ asset('packages/datatables.net-bs4/css/dataTables.bootstrap4.min.css') }}">
+  <!--<link rel="stylesheet" type="text/css" href="{{ asset('packages/datatables.net-bs4/css/dataTables.bootstrap4.min.css') }}">-->
+  <link href="https://cdn.datatables.net/2.3.5/css/dataTables.bootstrap4.min.css" rel="stylesheet" integrity="sha384-65Hju/G2i6VeT96zQj/jBYZL9pgiy2OjZ5PAZtLvP5In46zON20PN4TdKAG8Q4VI" crossorigin="anonymous">
   <link rel="stylesheet" type="text/css" href="{{ asset('packages/datatables.net-fixedheader-bs4/css/fixedHeader.bootstrap4.min.css') }}">
   <link rel="stylesheet" type="text/css" href="{{ asset('packages/datatables.net-responsive-bs4/css/responsive.bootstrap4.min.css') }}">
-  <link href="https://cdn.datatables.net/buttons/3.2.5/css/buttons.bootstrap4.min.css" rel="stylesheet" integrity="sha384-YHUnVhPYErA/IH3gGmVQyB2twaYx/xm4Nw+wQE2xZoB+VBmRPPt9Paqc4/eShUAF" crossorigin="anonymous">
+    
+    <link href="https://cdn.datatables.net/buttons/3.2.5/css/buttons.bootstrap4.min.css" rel="stylesheet" integrity="sha384-YHUnVhPYErA/IH3gGmVQyB2twaYx/xm4Nw+wQE2xZoB+VBmRPPt9Paqc4/eShUAF" crossorigin="anonymous">
 <style>
     table.dataTable td, table.dataTable th{
         padding: 0.4rem;
@@ -217,8 +219,10 @@
 @include('includes.utils_js')
 @include('includes.noty_js')
 @include('includes.select2_js')
-<script type="text/javascript" src="{{ asset('packages/datatables.net/js/jquery.dataTables.min.js') }}"></script>
-<script type="text/javascript" src="{{ asset('packages/datatables.net-bs4/js/dataTables.bootstrap4.min.js') }}"></script>
+<script src="https://cdn.datatables.net/2.3.5/js/dataTables.min.js" integrity="sha384-VQb2IR8f6y3bNbMe6kK6H+edzCXdt7Z/3GtWA7zYzXcvfwYRR5rHGl46q28FbtsY" crossorigin="anonymous"></script>
+<script src="https://cdn.datatables.net/2.3.5/js/dataTables.bootstrap4.min.js" integrity="sha384-mQYCF2gxqKl3YTl+txVPKMyrgj14Qf/YxyCAcI+r+CylaK4hucffh2hza6Dtap6y" crossorigin="anonymous"></script>
+<!--<script type="text/javascript" src="{{ asset('packages/datatables.net/js/jquery.dataTables.min.js') }}"></script>-->
+<!--<script type="text/javascript" src="{{ asset('packages/datatables.net-bs4/js/dataTables.bootstrap4.min.js') }}"></script>-->
 <script type="text/javascript" src="{{ asset('packages/datatables.net-responsive/js/dataTables.responsive.min.js') }}"></script>
 <script type="text/javascript" src="{{ asset('packages/datatables.net-responsive-bs4/js/responsive.bootstrap4.min.js') }}"></script>
 <script type="text/javascript" src="{{ asset('packages/datatables.net-fixedheader/js/dataTables.fixedHeader.min.js') }}"></script>
