@@ -15,6 +15,12 @@
     .dataTables_scrollBody{
         position: unset !important;
     }
+    /* Mostrar los botones de DataTables */
+    div.dt-buttons {
+        display: inline-block !important;
+        margin-bottom: 10px; /* opcional, solo para que se vea bonito */
+    }
+ 
 </style>
 @include('includes.select2_css')
 @endsection
