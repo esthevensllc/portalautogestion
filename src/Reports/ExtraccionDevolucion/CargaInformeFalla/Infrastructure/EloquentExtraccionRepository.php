@@ -1493,6 +1493,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
             DB::table("usraes.noc_informe_de_fallas")
             ->where('numero_de_reporte',$id)
             ->update(['ticket' => $ticket, 'aprobado' => '1']);
+            $this->enEsperaPre($id);
             return 1;
         }else{
             return 0;
