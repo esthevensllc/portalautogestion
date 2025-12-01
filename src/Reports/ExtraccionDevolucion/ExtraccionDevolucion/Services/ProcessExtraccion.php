@@ -156,6 +156,8 @@ class ProcessExtraccion
             if(count($departamentosPendientes) === 0){
                 $this->repo2->procesado($inforFalla->numero_de_reporte);
                 $this->repo2->registerStatusChanges($inforFalla->numero_de_reporte, null, $this->authService->getUserIdentifier(), $userIpAddress, InformeStatus::PROCESADO, new DateTime());
+                $this->repo2->enEjecucionPre($inforFalla->numero_de_reporte);
+                $this->repo2->registerStatusChanges($inforFalla->numero_de_reporte, null, $this->authService->getUserIdentifier(), $userIpAddress, InformeStatus::EN_EJECUCION_PRE, new DateTime());
             }
 
             // $reportes = $this->repo2->getReportesProcesados();
