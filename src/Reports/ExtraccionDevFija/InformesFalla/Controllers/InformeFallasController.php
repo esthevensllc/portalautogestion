@@ -180,7 +180,7 @@ class InformeFallasController
             ];
         }
         
-        $this->creator->__invoke($request->input("num_reporte"), InformeFijaTipoReporte::BY_CODCLI, $request->file("excel"), $detallePlanos, $detalleServicios);
+        $this->creator->__invoke($request->input("num_reporte"), InformeFijaTipoReporte::DEFAULT, $request->file("excel"), $detallePlanos, $detalleServicios);
         // $this->creator->__invoke($request->input("num_reporte"), $request->file("excel"), $detallesExtraccion);
         return response()->json([]);
     }
