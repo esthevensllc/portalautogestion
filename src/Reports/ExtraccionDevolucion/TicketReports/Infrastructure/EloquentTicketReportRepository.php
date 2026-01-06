@@ -135,4 +135,36 @@ class EloquentTicketReportRepository implements TicketReportRepository
         ->where("ticket", $ticket)
         ->first();
     }
+
+    public function findSumAcreditadosByTicket($ticket)
+    {
+        return DB::connection($this->connection)
+        ->table("USRAES.BASE_PREV_BASEDEV_HIST")
+        ->selectRaw("
+        ticket,
+        sum(acreditados_post) acreditados_post,
+        sum(numero_afectados_post) numero_afectados_post,
+        sum(acreditados_pre) acreditados_pre,
+        sum(numero_afectados_pre) numero_afectados_pre
+        ")
+        ->where("ticket", $ticket)
+        ->groupBy('ticket')
+        ->first();
+    }
+
+    public function getByCriteria($filters)
+    {
+        $builder = DB::connection($this->connection)
+        ->table("usraes.BASE_PREV_BASEDEV_HIST");
+
+        foreach($filters as $row){
+            if (is_array($row[1])) {
+                $builder->whereIn($row[0], $row[1]);    
+            } else {
+                $builder->where($row[0], $row[1]);
+            }
+        }
+
+        return $builder->get();
+    }
 }

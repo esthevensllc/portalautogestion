@@ -26,6 +26,10 @@
                             <input type="radio" class="" id="rep_postpago" name="tipo_reporte" value="2" required>
                             Documento
                         </label>
+                        <label for="rep_doc_correo" class="mb-0 btn btn-light btn-sm">
+                            <input type="radio" class="" id="rep_doc_correo" name="tipo_reporte" value="3" required>
+                            Documento y Correo
+                        </label>
                     </div>
                 </div>
                 <div class="col-lg-12 form-group">
@@ -49,7 +53,12 @@ $(function() {
     document.querySelector("#form_export")
     .addEventListener("submit", function(e){
         utils.downloadHandler({
-            url: config.exportApi
+            url: config.exportApi,
+            requestOptions: {
+                headers: {
+                    "Accept": "application/json"
+                }
+            }
         }, e);
     });
 

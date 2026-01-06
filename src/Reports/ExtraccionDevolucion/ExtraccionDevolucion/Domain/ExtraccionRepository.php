@@ -20,11 +20,13 @@ interface ExtraccionRepository
     public function getPostpagoBy($ticket, $departamento);
     public function getPrepagoBy($ticket, $departamento);
     public function getReporteMsisdn($ticket);
-    public function getReporteDiligenciasWebCorreo($ticket);
-    public function getReporteDiligenciasWebDocumento($ticket);
-    public function saveReporteValidacionRecarga($ticket);
+    public function getReporteDiligenciasWebCorreo($tickets);
+    public function getReporteDiligenciasWebDocumento($tickets);
+    public function getTicketsWithDevolucionWeb($tickets);
+    public function saveReporteValidacionRecarga($tickets);
 
     public function updateReporte($ticket, $departamento, $data);
-    public function updateNumAcreditadosPrepagoByTicket($ticket);
+    public function getPrepagoLog($tickets);
+    public function updateNumAcreditadosPrepagoByTicket($tickets);
     public function saveAcreditacionPrepago($ticket, $departamento, $data);
 }

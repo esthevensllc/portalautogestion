@@ -9,6 +9,7 @@ use AMovil\Shared\Exports\Domain\ExportService;
 use AMovil\Shared\Exports\Domain\WriterType;
 use Exception;
 use PhpOffice\PhpSpreadsheet\Style as SpreadsheetStyle;
+use DateTime;
 
 class ExportMODEV
 {
@@ -30,6 +31,35 @@ class ExportMODEV
             throw new Exception("El ticket no existe");
         }
         $data = $this->repository->getReporteByTicketAndDepartamento($informe->tipo_reporte, $ticket, $departamento);
+        
+        $content = $this->getReportWriter($data)->getOutput();
+
+        return new Response([], [
+            "filename" => "FORMATO_MODEV_{$ticket}_{$departamento}.xlsx",
+            "type" => "xlsx",
+            "content" => $content,
+        ]);
+    }
+
+    public function getByTickets($tickets){
+        $data = $this->repository->getReporteByTickets($tickets);
+        $content = $this->getReportWriter($data)->getOutput();
+        $strNow = (new DateTime())->format("Ymd");
+
+        return new Response([], [
+            "filename" => "FORMATO_MODEV_{$strNow}.xlsx",
+            "type" => "xlsx",
+            "content" => $content,
+        ]);
+    }
+
+    private function getReportWriter($data)
+    {
+        // $informe = $this->informeRepository->getInputByTicket($ticket);
+        // if ($informe === null) {
+        //     throw new Exception("El ticket no existe");
+        // }
+        // $data = $this->repository->getReporteByTicketAndDepartamento($informe->tipo_reporte, $ticket, $departamento);
 
         $default_alignment = [
             'horizontal' => SpreadsheetStyle\Alignment::HORIZONTAL_CENTER,
@@ -196,12 +226,12 @@ class ExportMODEV
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
-        $content = $this->exportService->getWriter(WriterType::XLSX)->getOutput();
-
-        return new Response([], [
-            "filename" => "FORMATO_MODEV_{$ticket}_{$departamento}.xlsx",
-            "type" => "xlsx",
-            "content" => $content,
-        ]);
+        return $this->exportService->getWriter(WriterType::XLSX);
+        // $content = $this->exportService->getWriter(WriterType::XLSX)->getOutput();
+        // return new Response([], [
+        //     "filename" => "FORMATO_MODEV_{$ticket}_{$departamento}.xlsx",
+        //     "type" => "xlsx",
+        //     "content" => $content,
+        // ]);
     }
 }

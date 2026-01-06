@@ -12,20 +12,46 @@
         <form id="form_export">
             @csrf
             <div class="row">
-                <div class="col-lg-3 col-md-4 form-group">
-                    <label for="">Ticket_osiptel</label>
-                    <select name="ticket" class="form-control form-control-sm" required>
-                        <option value="">Seleccione</option>
-                        @foreach ($config["tickets"] as $row)
-                            <option>{{ $row->ticket }}</option>
-                        @endforeach
-                    </select>
+                <div class="col-lg-2">
+                    <div class="form-group">
+                        <label for="">Tipo input</label>
+                        <select class="form-control form-control-sm" name="tipo_input" id="tabs_select">
+                            <option value="1">Ticket y Departamento</option>
+                            <option value="2">Tickets</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="col-lg-3 col-md-4 form-group">
-                    <label for="">Departamento</label>
-                    <select name="departamento" class="form-control form-control-sm" required>
-                        <option value="">Seleccione</option>
-                    </select>
+                <div class="col-lg-10 tabs" data-tab-target="tabs_select">
+                    <div class="row">
+                        <!-- <div class="col-lg-3 tab-item" data-tab-target="1"> -->
+                            
+                            <div class="col-lg-3 col-md-4 form-group tab-item" data-tab-target="1">
+                                <label for="">Ticket_osiptel</label>
+                                <select name="ticket" class="form-control form-control-sm" required>
+                                    <option value="">Seleccione</option>
+                                    @foreach ($config["tickets"] as $row)
+                                        <option>{{ $row->ticket }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-lg-3 col-md-4 form-group tab-item" data-tab-target="1">
+                                <label for="">Departamento</label>
+                                <select name="departamento" class="form-control form-control-sm" required>
+                                    <option value="">Seleccione</option>
+                                </select>
+                            </div>
+
+                        <!-- </div> -->
+                        <div class="col-lg-4 form-group tab-item" data-tab-target="2">
+                            <div class="form-group">
+                                <label for="">Tickets</label>
+                                <input type="text" name="tickets" class="form-control form-control-sm" required disabled>
+                                <div class="invalid-feedback d-block text-dark">
+                                    Puede ingresar multiples tickets separado por comas
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="col-lg-12 form-group">
                     <button type="submit" class="btn btn-primary btn-sm btn_export">Descargar</button>
@@ -66,6 +92,21 @@ $(function() {
         document.querySelector("select[name=departamento]").innerHTML = `<option value="">Seleccione</option>` + _html;
         $("select[name=departamento]").select2({width: '100%'});
     });
+
+    let tabSelect = document.querySelector('#tabs_select');
+    if(tabSelect){
+        utils.tabs.createTabSelectController(tabSelect);
+        tabSelect.addEventListener('change', function(e){
+            document.querySelectorAll('.tabs[data-tab-target=tabs_select] .tab-item input')
+            .forEach(panelInput => {
+                panelInput.disabled = true;
+            });
+            let input = document.querySelector('.tabs[data-tab-target=tabs_select] .tab-item-active input');
+            if(input){
+                input.disabled = false;
+            }
+        });
+    }
 });
 </script>
 @endsection

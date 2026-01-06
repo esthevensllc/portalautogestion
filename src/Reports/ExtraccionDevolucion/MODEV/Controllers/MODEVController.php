@@ -35,10 +35,18 @@ class MODEVController
 
     public function export(Request $request)
     {
-        $content = $this->export->__invoke(
-            $request->input("ticket"),
-            $request->input("departamento")
-        )->data();
+        $tipoInput = $request->input("tipo_input");
+        $content = null;
+        if ($tipoInput === '1') {
+            $content = $this->export->__invoke(
+                $request->input("ticket"),
+                $request->input("departamento")
+            )->data();
+        } else {
+            $content = $this->export->getByTickets(
+                explode(',',$request->input("tickets"))
+            )->data();
+        }
 
         return response($content["content"], 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

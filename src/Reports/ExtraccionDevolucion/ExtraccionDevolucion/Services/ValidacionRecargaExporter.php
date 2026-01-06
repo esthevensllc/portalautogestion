@@ -22,11 +22,19 @@ class ValidacionRecargaExporter
         $this->exportService = $exportService;
     }
     
-    public function __invoke($ticket)
+    public function __invoke($tickets)
     {
+        $ticketsArray = explode(",", str_replace(" ", "", $tickets));
+        $strNow = (new DateTime())->format("Ymd");
+        $labelExcel = count($ticketsArray) > 0 ? $strNow : "TK".$tickets;
+
+        if (count($ticketsArray) > 100) {
+            return Response::respError(["message" => "No se puede ingresar mas de 100 tickets"]);
+        }
+
         $options = [
             "sheetIndex" => 0,
-            'title' => $ticket,
+            'title' => $labelExcel,
             'styles' => [
                 'header' => [
                     'font' => ['bold' => true, 'size' => 9],
@@ -52,14 +60,14 @@ class ValidacionRecargaExporter
             "msisdn_devolver" => ["label" => "MSISDN_DEVOLVER"],
             "usage_str3" => ["label" => "USAGE_STR3"],
         ];
-        $data = $this->extraccionRepo->getPrepagoLog($ticket);
+        $data = $this->extraccionRepo->getPrepagoLog($ticketsArray);
         $this->exportService->loadData($headers, $data, $options);
 
         $content = $this->exportService->getWriter(WriterType::XLSX)->stream();
         $strNow = (new DateTime())->format("YmdHis");
     
         return Response::respData([
-            "filename" => "REPORTE_PREPAGO_LOG_TK{$ticket}.xlsx",
+            "filename" => "REPORTE_PREPAGO_LOG_{$labelExcel}.xlsx",
             "type" => "xlsx",
             "content" => $content,
         ]);

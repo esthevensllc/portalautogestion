@@ -47,11 +47,9 @@ class CargarReporte
         $informes = $this->informeRepo->getReportesByCriteria([["ticket", $ticket]]);
         if (count($informes)>0) {
             $informe = $informes[0];
-            $registroTicket = $this->ticketRepo->findByTicket($ticket);
+            $registroTicket = $this->ticketRepo->findByTicketAndDepartamento($ticket, $departamento);
             $porcentaje = round($registroTicket->acreditados_post / $registroTicket->numero_afectados_post, 2);
             if ($porcentaje > 0.5) {
-                $this->informeRepo->acreditadoPost($informe->numero_de_reporte, true);
-
                 $emails = $this->notificationUserRepo->getEmailsByGroupId($this->groupId);
                 $email = new EmailNotification();
                 $email->to($emails)
@@ -59,8 +57,14 @@ class CargarReporte
                 ->view("mails.extraccionAcreditado")
                 ->with(["informeFallas" => $registroTicket, "modalidad" => "Postpago"]);
                 $this->emailNotification->send($email);
+            }
+
+            $registroTicket = $this->ticketRepo->findSumAcreditadosByTicket($ticket);
+            $porcentaje = round($registroTicket->acreditados_post / $registroTicket->numero_afectados_post, 2);
+            if ($porcentaje > 0.5) {
+                $this->informeRepo->acreditadoPost($informe->numero_de_reporte, true);
             } else {
-                $this->informeRepo->acreditadoPost($ticket, false);
+                $this->informeRepo->acreditadoPost($informe->numero_de_reporte, false);
             }
         } else {
             throw new Exception("No existe un informe de fallas con el ticket ingresado");
@@ -82,13 +86,13 @@ class CargarReporte
                 $row["msisdn"] = $sheet->getCellByColumnAndRow(2, $i)->getValue();
                 // $row["mto_dev_facturacion"] = $sheet->getCellByColumnAndRow(19, $i)->getOldCalculatedValue();
                 $row["mto_dev_facturacion"] = $sheet->getCellByColumnAndRow(19, $i)->getValue();
-                //if(str_starts_with($row["mto_dev_facturacion"], "=")){
+                if(str_starts_with($row["mto_dev_facturacion"], "=")){
                     $row["mto_dev_facturacion"] = $sheet->getCellByColumnAndRow(19, $i)->getOldCalculatedValue();
-                //}
+                }
                 $row["mto_dev"] = $sheet->getCellByColumnAndRow(20, $i)->getValue();
-                //if(str_starts_with($row["mto_dev"], "=")){
+                if(str_starts_with($row["mto_dev"], "=")){
                     $row["mto_dev"] = $sheet->getCellByColumnAndRow(20, $i)->getOldCalculatedValue();
-                //}
+                }
                 $row["factura_aplicada"] = $sheet->getCellByColumnAndRow(21, $i)->getValue();
                 $row["fecha_devolucion"] = $this->formatExcelDate($sheet->getCellByColumnAndRow(22, $i)->getValue());
                 $row["fecha_registro_devolucion"] = $this->formatExcelDate($sheet->getCellByColumnAndRow(23, $i)->getValue());

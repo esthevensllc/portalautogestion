@@ -35,7 +35,10 @@ class EloquentMODEVRepository implements MODEVRepository
             aa.MODO_CONTRATACION,
         ROUND(aa.CARGO_LINEA_IGV,2) monto_plan,
             bb.diferencia tiempo_averia,
-            aa.MTO_DEV_FACTURACION MONTO_DEVOLVER_IGV,
+            -- aa.MTO_DEV_FACTURACION MONTO_DEVOLVER_IGV,
+	    CASE WHEN MODO_CONTRATACION_DEV='POSTPAGO' THEN aa.MTO_DEV_FACTURACION
+	    WHEN MODO_CONTRATACION_DEV='PREPAGO' THEN aa.MTO_DEV
+	    WHEN aa.MODALIDAD_DEV like '%WEB%' THEN NULL END MONTO_DEVOLVER_IGV,
             'SOLES' unidad,
             case when aa.MSISDN_DEVOLVER is not null then aa.FECHA_DEVOLUCION 
                 when aa.MSISDN_DEVOLVER is null then NULL END fecha_dev_fecha_comun,
@@ -69,6 +72,79 @@ class EloquentMODEVRepository implements MODEVRepository
             "p1" => $ticket, "p2" => $departamento,
             "p3" => $ticket, "p4" => $departamento
         ]);
+    }
+    
+    public function getReporteByTickets($tickets)
+    {
+        $ticketBinds = $this->getQueryBinds($tickets);
+        return DB::select(DB::raw("
+        with base_portal as (
+            SELECT aa.ticket,
+            aa.NRO_DOCUMENTO,
+            aa.ID_CLIENTE,
+            aa.MSISDN,
+            'Comunicaciones Personales(PCS)' SERVICIO_AFECTADO,
+            aa.MODO_CONTRATACION,
+            ROUND(aa.CARGO_LINEA_IGV,2) monto_plan,
+            bb.diferencia tiempo_averia,
+            -- aa.MTO_DEV_FACTURACION MONTO_DEVOLVER_IGV,
+            CASE WHEN MODO_CONTRATACION_DEV='POSTPAGO' THEN aa.MTO_DEV_FACTURACION
+            WHEN MODO_CONTRATACION_DEV='PREPAGO' THEN aa.MTO_DEV
+            WHEN aa.MODALIDAD_DEV like '%WEB%' THEN NULL END MONTO_DEVOLVER_IGV,
+            'SOLES' unidad,
+            case when aa.MSISDN_DEVOLVER is not null AND MODALIDAD_DEV LIKE '%POSTPAGO%' then aa.FECHA_DEVOLUCION
+                when aa.MSISDN_DEVOLVER is not null AND MODALIDAD_DEV LIKE '%PREPAGO%' then aa.FCH_DEV
+                when aa.MSISDN_DEVOLVER is null then NULL END fecha_dev_fecha_comun,
+            case when aa.MSISDN_DEVOLVER is not null then aa.FACTURA_APLICADA END FACTURA_APLICADA,
+            case when aa.MSISDN_DEVOLVER is not null then 'ACTIVO'
+                WHEN aa.MSISDN_DEVOLVER is null then 'INACTIVO' END ESTADO,
+            case when aa.MSISDN_DEVOLVER is null then aa.FECHA_BAJA
+                when aa.MSISDN_DEVOLVER is not null then NULL END fecha_baja,
+            case when aa.MSISDN_DEVOLVER is null then aa.CUSTOMER_FULL_NAME
+                END NOMBRE_RAZON_SOCIAL,
+            case when aa.MSISDN_DEVOLVER is null AND aa.MODALIDAD_DEV like '%WEB%' THEN 'CAC'
+            WHEN aa.MSISDN_DEVOLVER is null AND aa.MODALIDAD_DEV NOT LIKE '%WEB%' THEN '' END LUGAR_DONDE_COBRAR,
+            case when aa.MSISDN_DEVOLVER is null AND aa.MODALIDAD_DEV like '%WEB%' THEN 'documento'
+            WHEN aa.MSISDN_DEVOLVER is null AND aa.MODALIDAD_DEV NOT LIKE '%WEB%' THEN '' END REQUISITO_COBRO,
+            case when aa.MSISDN_DEVOLVER is null AND aa.MODALIDAD_DEV like '%WEB%' THEN 'SI'
+            WHEN aa.MSISDN_DEVOLVER is null AND aa.MODALIDAD_DEV NOT LIKE '%WEB%' THEN 'NO' END COMUNICACION,
+            case when aa.MSISDN_DEVOLVER is null AND aa.MODALIDAD_DEV like '%WEB%' THEN 'WEB'
+            WHEN aa.MSISDN_DEVOLVER is null AND aa.MODALIDAD_DEV NOT LIKE '%WEB%' then 'NO_APLICA' END MEDIO_COMUNICACION,
+            'NO_APLICA' NO_CORRESPONDE,
+            CASE WHEN MODO_CONTRATACION_DEV='POSTPAGO' THEN 'DEVOLUCION APLICADA-POSTPAGO'
+            WHEN MODO_CONTRATACION_DEV='PREPAGO' THEN 'DEVOLUCION APLICADA-PREPAGO'
+            WHEN aa.MODALIDAD_DEV like '%WEB%' THEN 'DEVOLUCION WEB' END COMENTARIOS,
+            null LIBERADO,
+            cc.TIPO_REPORTE TIPO_REPORTE,
+            MODALIDAD_DEV
+            from USRAES.BASE_PREV_BASEDEV@DBL_REPTDM aa
+            left join 
+            (
+                SELECT ticket,corte_fecha_ini,corte_fecha_fin,(corte_fecha_fin-corte_fecha_ini)*24*60 diferencia
+                FROM usraes.base_prev_basedev_input@DBL_REPTDM
+            ) bb
+            on aa.ticket=bb.ticket and aa.FECHA_CORTE=bb.corte_fecha_ini
+            LEFT JOIN 
+            (
+                SELECT A.TICKET,B.TIPO_REPORTE FROM usraes.noc_informe_de_fallas A
+                JOIN USRAES.BASE_EXT_DEV_INPUT@DBL_REPTDM B
+                ON A.NUMERO_DE_REPORTE=B.NUM_REPORTE
+            ) CC
+            ON AA.TICKET=CC.TICKET
+            
+        )
+        select TICKET,NRO_DOCUMENTO,ID_CLIENTE,MSISDN,SERVICIO_AFECTADO,MODO_CONTRATACION,MONTO_PLAN,TIEMPO_AVERIA
+        ,MONTO_DEVOLVER_IGV,UNIDAD,FECHA_DEV_FECHA_COMUN,FACTURA_APLICADA,ESTADO,FECHA_BAJA,NOMBRE_RAZON_SOCIAL
+        ,LUGAR_DONDE_COBRAR,REQUISITO_COBRO,COMUNICACION,MEDIO_COMUNICACION,NO_CORRESPONDE,COMENTARIOS,LIBERADO 
+        from base_portal
+        where (MODALIDAD_DEV LIKE '%POSTPAGO%' or MODALIDAD_DEV LIKE '%PREPAGO%') and TIPO_REPORTE=1 and ticket in ({$ticketBinds['str_binds']})
+        union all
+        select TICKET,NRO_DOCUMENTO,ID_CLIENTE,MSISDN,SERVICIO_AFECTADO,MODO_CONTRATACION,MONTO_PLAN,TIEMPO_AVERIA
+        ,MONTO_DEVOLVER_IGV,UNIDAD,FECHA_DEV_FECHA_COMUN,FACTURA_APLICADA,ESTADO,FECHA_BAJA,NOMBRE_RAZON_SOCIAL
+        ,LUGAR_DONDE_COBRAR,REQUISITO_COBRO,COMUNICACION,MEDIO_COMUNICACION,NO_CORRESPONDE,COMENTARIOS,LIBERADO
+        from base_portal
+        where (MODALIDAD_DEV LIKE '%POSTPAGO%' or MODALIDAD_DEV LIKE '%PREPAGO%' or MODALIDAD_DEV LIKE '%WEB%')
+        and TIPO_REPORTE=3 and ticket in ({$ticketBinds['str_binds']})"), $ticketBinds["values"]);
     }
 
     public function validateRecargas(array $ticket)

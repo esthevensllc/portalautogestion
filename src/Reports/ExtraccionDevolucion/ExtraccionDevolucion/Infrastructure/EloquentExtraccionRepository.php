@@ -1810,9 +1810,17 @@ class EloquentExtraccionRepository implements ExtraccionRepository
         return DB::connection("oracle_reptdm")->table("USRAES.BASE_USUARIOS_VALIDACION_DOC_{$this->userIdentifier}")->get();
     }
 
-    public function getReporteDiligenciasWebCorreo($ticket) {
+    public function getReporteDiligenciasWebCorreo($tickets) {
+        $strBindsOracle = [];
+        $ticketValues = [];
+        foreach($tickets as $index => $ticket){
+            $strBindsOracle[] = ":ticket_{$index}";
+            $ticketValues["ticket_{$index}"] = $ticket;
+        }
+        $strBindsOracle = implode(",", $strBindsOracle);
+
         return DB::select(DB::raw("SELECT
-        /*+PARALLEL(16)*/ Y.CUSTOMER_FULL_NAME, Y.NRO_DOCUMENTO,
+        /*+PARALLEL(16)*/ Y.TICKET, Y.CUSTOMER_FULL_NAME, Y.NRO_DOCUMENTO,
         CASE WHEN X.CUSTOMER_ACCOUNT_BILLING_EMAIL IS NULL THEN X.CUSTOMER_EMAIL ELSE X.CUSTOMER_ACCOUNT_BILLING_EMAIL END AS CORREO
         FROM 
         (
@@ -1824,7 +1832,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
                 ,AGREEMENT_STATUS,CUSTOMER_ACCOUNT_ID
                 FROM DWA.DW_M_SUBSCRIPTION WHERE ID_CARD_VALUE IN (
                     SELECT NRO_DOCUMENTO FROM USRAES.BASE_PREV_BASEDEV@DBL_REPTDM
-                    where ticket = :p_ticket
+                    where ticket in ({$strBindsOracle})
                 ) 
                 AND (CUSTOMER_ACCOUNT_BILLING_EMAIL IS NOT NULL OR CASE WHEN CUSTOMER_EMAIL='@iclaro.com.pe' THEN NULL ELSE CUSTOMER_EMAIL end IS NOT NULL)
             ) X
@@ -1832,20 +1840,63 @@ class EloquentExtraccionRepository implements ExtraccionRepository
         RIGHT JOIN USRAES.BASE_PREV_BASEDEV@DBL_REPTDM Y
         ON X.ID_CARD_VALUE=Y.NRO_DOCUMENTO AND X.ORDEN=1
         WHERE MODALIDAD_DEV like '%WEB%'
-        and y.ticket = :p_ticket"), ["p_ticket" => $ticket]);
+        and y.ticket in ({$strBindsOracle})
+        ORDER BY y.TICKET"), $ticketValues);
     }
 
-    public function getReporteDiligenciasWebDocumento($ticket) {
+    public function getReporteDiligenciasWebDocumento($tickets) {
+        $strBindsOracle = [];
+        $ticketValues = [];
+        foreach($tickets as $index => $ticket){
+            $strBindsOracle[] = ":ticket_{$index}";
+            $ticketValues["ticket_{$index}"] = $ticket;
+        }
+        $strBindsOracle = implode(",", $strBindsOracle);
+
         return DB::select(DB::raw("SELECT
-        CUSTOMER_FULL_NAME, TIPO_DOCUMENTO, NRO_DOCUMENTO, MTO_TOTAL_DEV_IGV
+        TICKET, CUSTOMER_FULL_NAME, TIPO_DOCUMENTO, NRO_DOCUMENTO, MTO_TOTAL_DEV_IGV
         FROM USRAES.BASE_PREV_BASEDEV@DBL_REPTDM
-        WHERE MODALIDAD_DEV like '%WEB%' and ticket = :p_ticket"), ["p_ticket" => $ticket]);
+        WHERE MODALIDAD_DEV like '%WEB%' and ticket in ({$strBindsOracle})
+        ORDER BY TICKET"), $ticketValues);
     }
 
-    public function saveReporteValidacionRecarga($ticket){
+    public function getTicketsWithDevolucionWeb($tickets) {
+        $strBindsOracle = [];
+        $ticketValues = [];
+        foreach($tickets as $index => $ticket){
+            $strBindsOracle[] = ":ticket_{$index}";
+            $ticketValues["ticket_{$index}"] = $ticket;
+        }
+        $strBindsOracle = implode(",", $strBindsOracle);
+
+        $result = DB::select(DB::raw("SELECT A.TICKET,B.TIPO_REPORTE FROM usraes.noc_informe_de_fallas A
+        JOIN USRAES.BASE_EXT_DEV_INPUT@DBL_REPTDM B
+        ON A.NUMERO_DE_REPORTE=B.NUM_REPORTE
+        WHERE A.TICKET in ({$strBindsOracle}) and B.TIPO_REPORTE = 3"), $ticketValues);
+
+        $resultMapped = [];
+        foreach($result as $row){
+            $resultMapped[] = $row->ticket;
+        }
+        return $resultMapped;
+    }
+
+    public function saveReporteValidacionRecarga($tickets){
         $this->userIdentifier = $this->authService->getUserIdentifier();
 
+        $strBinds = [];
+        $strBindsOracle = [];
+        $ticketValues = [];
+        foreach($tickets as $index => $ticket){
+            $strBinds[] = "{ticket_{$index}:String}";
+            $strBindsOracle[] = ":ticket_{$index}";
+            $ticketValues["ticket_{$index}"] = $ticket;
+        }
+        $strBinds = implode(",", $strBinds);
+        $strBindsOracle = implode(",", $strBindsOracle);
+
         $queryClickHouse = "SELECT
+        distinct
         xx.ticket TICKET
         ,xx.msisdn MSISDN
         ,xx.msisdn_devolver MSISDN_DEVOLVER
@@ -1863,7 +1914,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
             from  reptdm.base_prev_basedev
             where modalidad_dev like '%PREPAGO%' and length(ticket)=9
             and load_date=(select toString(max(parseDateTimeBestEffort(load_date))) from reptdm.base_prev_basedev)
-            and ticket= {ticket:String}
+            and ticket in ({$strBinds})
         ) xx
         left join (
         select aa.*,bb.*,round(toFloat64(aa.mto_total_dev_igv)*100,2),date_diff('days',aa.fecha_carga,bb.recharge_date)
@@ -1875,7 +1926,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
             from  reptdm.base_prev_basedev
             where modalidad_dev like '%PREPAGO%' and length(ticket)=9
             and load_date=(select toString(max(parseDateTimeBestEffort(load_date))) from reptdm.base_prev_basedev)
-            and ticket= {ticket:String}
+            and ticket in ({$strBinds})
         ) as aa
         left join recargas.recargas_dwo_osip as bb
         on aa.msisdn_devolver=bb.served_number and bb.recharge_qty>0 and round(toFloat64(aa.mto_total_dev_igv)*100,2)=round(bb.recharge_qty,2)
@@ -1885,7 +1936,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
         on xx.ticket=yy.ticket and xx.msisdn=yy.msisdn and xx.msisdn_devolver=yy.msisdn_devolver and xx.mto_total_dev_igv=yy.mto_total_dev_igv
         and yy.flag=1";
 
-        $data = $this->chDb->select($queryClickHouse, ["ticket" => $ticket])->rows();
+        $data = $this->chDb->select($queryClickHouse, $ticketValues)->rows();
 
         $queries = [];
         $queries[] = ["sql" => "BEGIN
@@ -1929,14 +1980,22 @@ class EloquentExtraccionRepository implements ExtraccionRepository
             BPB.FECHA_DEVOLUCION=TO_DATE(VP.FECHA_RECARGA,'YYYY-MM-DD'),
             BPB.MTO_DEV=VP.MONTO_RECARGA
             WHERE MODALIDAD_DEV like '%PREPAGO%'
-            AND TICKET = :ticket;
+            AND TICKET in ({$strBindsOracle});
             COMMIT;
-        END;", "params" => ["ticket" => $ticket]];
+        END;", "params" => $ticketValues];
         $this->exec_sql($queries);
     }
 
-    public function getPrepagoLog($ticket)
+    public function getPrepagoLog($tickets)
     {
+        $strBindsOracle = [];
+        $ticketValues = [];
+        foreach($tickets as $index => $ticket){
+            $strBindsOracle[] = ":ticket_{$index}";
+            $ticketValues["ticket_{$index}"] = $ticket;
+        }
+        $strBindsOracle = implode(",", $strBindsOracle);
+
         return DB::connection("oracle_reptdm")
         ->select(DB::raw("SELECT
         TICKET,
@@ -1948,7 +2007,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
         '92000559;Prepago_Devolucion_Interrupciones_Osiptel' USAGE_STR3
         from USRAES.BASE_PREV_BASEDEV
         WHERE MODALIDAD_DEV like '%PREPAGO%'
-        AND TICKET= ?"), [$ticket]);
+        AND TICKET in ({$strBindsOracle})"), $ticketValues);
     }
 
     public function updateReporte($ticket, $departamento, $data)
@@ -1966,7 +2025,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
             fecha_registro_devolucion = NULL,
             observacion = NULL,
             fecha_baja_facturacion = NULL
-            WHERE TICKET= V_TICKET and DEPARTAMENTO = V_DEPARTAMENTO;
+            WHERE TICKET= V_TICKET and DEPARTAMENTO = V_DEPARTAMENTO AND MODALIDAD_DEV like '%POSTPAGO%';
             COMMIT;
 
             UPDATE USRAES.BASE_PREV_BASEDEV_HIST SET
@@ -1997,6 +2056,16 @@ class EloquentExtraccionRepository implements ExtraccionRepository
             V_TICKET VARCHAR2(100) := :p_ticket;
             V_DEPARTAMENTO VARCHAR2(100):= :p_departamento;
         BEGIN
+            UPDATE BASE_PREV_BASEDEV SET
+            MODALIDAD_DEV = CASE
+                WHEN FECHA_BAJA_FACTURACION IS NOT NULL THEN 'WEB'
+                WHEN MODO_CONTRATACION_DEV like '%POSTPAGO%' AND FECHA_BAJA_FACTURACION IS NULL THEN 'POSTPAGO'
+                WHEN MODO_CONTRATACION_DEV like '%PREPAGO%' AND FECHA_BAJA_FACTURACION IS NULL THEN 'PREPAGO'
+                ELSE MODALIDAD_DEV
+                END
+            WHERE TICKET= V_TICKET and DEPARTAMENTO = V_DEPARTAMENTO;
+            COMMIT;
+
             MERGE INTO USRAES.BASE_PREV_BASEDEV_HIST A
             USING (
                 SELECT TICKET,
@@ -2020,9 +2089,36 @@ class EloquentExtraccionRepository implements ExtraccionRepository
             WHERE TICKET= V_TICKET and DEPARTAMENTO = V_DEPARTAMENTO;
             COMMIT;
         END;", ["p_ticket" => $ticket, "p_departamento" => $departamento]);
+
+        $numReporte = DB::select("SELECT A.NUMERO_DE_REPORTE FROM usraes.noc_informe_de_fallas A
+        WHERE A.TICKET in (
+            SELECT TICKET FROM USRAES.BASE_PREV_BASEDEV@DBL_REPTDM
+            WHERE TICKET = :p_ticket AND MODALIDAD_DEV LIKE '%WEB%'
+            AND DEPARTAMENTO = :p_departamento
+        )", ["p_ticket" => $ticket, "p_departamento" => $departamento]);
+
+        $numReporte = count($numReporte) > 0 ? $numReporte[0]->numero_de_reporte : null;
+
+        if ($numReporte !== null) {
+            DB::connection("oracle_reptdm")
+            ->statement("BEGIN
+                UPDATE USRAES.BASE_EXT_DEV_INPUT B SET
+                B.TIPO_REPORTE = 3
+                WHERE B.NUM_REPORTE = :v_numero_de_reporte;
+                COMMIT;
+            END;", ["v_numero_de_reporte" => $numReporte]);
+        }
     }
 
-    public function updateNumAcreditadosPrepagoByTicket($ticket){
+    public function updateNumAcreditadosPrepagoByTicket($tickets){
+        $strBindsOracle = [];
+        $ticketValues = [];
+        foreach($tickets as $index => $ticket){
+            $strBindsOracle[] = ":ticket_{$index}";
+            $ticketValues["ticket_{$index}"] = $ticket;
+        }
+        $strBindsOracle = implode(",", $strBindsOracle);
+
         DB::connection("oracle_reptdm")
         ->statement("DECLARE
         BEGIN
@@ -2035,27 +2131,27 @@ class EloquentExtraccionRepository implements ExtraccionRepository
 
         DB::connection("oracle_reptdm")
         ->statement("DECLARE
-            V_TICKET VARCHAR2(100) := :p_ticket;
+            V_TICKET VARCHAR2(100);
         BEGIN
             MERGE INTO USRAES.BASE_PREV_BASEDEV_HIST BPH
             USING
             (
                 SELECT TICKET,DEPARTAMENTO,COUNT(DISTINCT CASE WHEN MTO_DEV IS NOT NULL THEN MSISDN ELSE NULL END) ACREDITADOS_PREPAGO,COUNT(DISTINCT MSISDN) CC_LINEAS 
                 FROM USRAES.BASE_PREV_BASEDEV
-                WHERE MODALIDAD_DEV LIKE '%PREPAGO%' AND TICKET = V_TICKET
+                WHERE MODALIDAD_DEV LIKE '%PREPAGO%' AND TICKET in ({$strBindsOracle})
                 GROUP BY TICKET,DEPARTAMENTO
             ) BVP
             ON (BPH.TICKET=BVP.TICKET and BPH.DEPARTAMENTO=BVP.DEPARTAMENTO)
             WHEN MATCHED THEN
             UPDATE SET BPH.ACREDITADOS_PRE=BVP.ACREDITADOS_PREPAGO
-            WHERE BPH.TICKET = V_TICKET;
+            WHERE BPH.TICKET in ({$strBindsOracle});
 
             UPDATE USRAES.BASE_PREV_BASEDEV_HIST SET
             NO_ACREDITADOS_POST = NUMERO_AFECTADOS_POST - ACREDITADOS_POST,
             NO_ACREDITADOS_PRE = NUMERO_AFECTADOS_PRE - ACREDITADOS_PRE
-            WHERE TICKET= V_TICKET;
+            WHERE TICKET in ({$strBindsOracle});
             COMMIT;
-        END;", ["p_ticket" => $ticket]);
+        END;", $ticketValues);
     }
 
     public function saveAcreditacionPrepago($ticket, $departamento, $data)

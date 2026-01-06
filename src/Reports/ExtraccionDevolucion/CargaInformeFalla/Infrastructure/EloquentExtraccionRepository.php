@@ -1796,7 +1796,11 @@ class EloquentExtraccionRepository implements ExtraccionRepository
         ->selectRaw("*");
 
         foreach($filters as $row){
-            $builder->where($row[0], $row[1]);
+            if (is_array($row[1])) {
+                $builder->whereIn($row[0], $row[1]);    
+            } else {
+                $builder->where($row[0], $row[1]);
+            }
         }
 
         return $builder->get();

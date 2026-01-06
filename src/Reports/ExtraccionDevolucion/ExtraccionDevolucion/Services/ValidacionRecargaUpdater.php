@@ -33,19 +33,25 @@ class ValidacionRecargaUpdater
         $this->groupId = config("app.env")."/ext_acreditado";
     }
     
-    public function __invoke($ticket)
+    public function __invoke($tickets)
     {
-        $this->extraccionRepo->saveReporteValidacionRecarga($ticket);
-        $this->extraccionRepo->updateNumAcreditadosPrepagoByTicket($ticket);
+        $ticketsArray = explode(",", str_replace(" ", "", $tickets));
 
-        $informes = $this->informeRepo->getReportesByCriteria([["ticket", $ticket]]);
-        if (count($informes)>0) {
-            $informe = $informes[0];
-            $registroTicket = $this->ticketRepo->findByTicket($ticket);
+        if (count($ticketsArray) > 100) {
+            return Response::respError(["message" => "No se puede ingresar mas de 100 tickets"]);
+        }
+
+        $this->extraccionRepo->saveReporteValidacionRecarga($ticketsArray);
+        $this->extraccionRepo->updateNumAcreditadosPrepagoByTicket($ticketsArray);
+
+        $registrosTicket = $this->ticketRepo->getByCriteria([["ticket", $ticketsArray]]);
+        if (count($registrosTicket) === 0) {
+            throw new Exception("No existe ningun registro de los tickets ingresados");
+        }
+        foreach ($registrosTicket as $key => $registroTicket) {
+            // $registroTicket = $this->ticketRepo->findByTicketAndDepartamento($informe->ticket, $informe->departamento);
             $porcentaje = round($registroTicket->acreditados_pre / $registroTicket->numero_afectados_pre, 2);
             if ($porcentaje > 0.5) {
-                $this->informeRepo->acreditadoPre($informe->numero_de_reporte, true);
-
                 $emails = $this->notificationUserRepo->getEmailsByGroupId($this->groupId);
                 $email = new EmailNotification();
                 $email->to($emails)
@@ -53,11 +59,22 @@ class ValidacionRecargaUpdater
                 ->view("mails.extraccionAcreditado")
                 ->with(["informeFallas" => $registroTicket, "modalidad" => "Prepago"]);
                 $this->emailNotification->send($email);
-            } else {
-                $this->informeRepo->acreditadoPre($ticket, false);
             }
-        } else {
-            throw new Exception("No existe un informe de fallas con el ticket ingresado");
+
+            $registroTicket = $this->ticketRepo->findSumAcreditadosByTicket($registroTicket->ticket);
+            $porcentaje = round($registroTicket->acreditados_pre / $registroTicket->numero_afectados_pre, 2);
+
+            $informe = $this->informeRepo->getReportesByCriteria([["ticket", $registroTicket->ticket]]);
+            $informe = count($informe) > 0 ? $informe[0] : null;
+
+            if ($informe !== null) {
+                if ($porcentaje > 0.5) {
+                    $this->informeRepo->acreditadoPre($informe->numero_de_reporte, true);
+                } else {
+                    $this->informeRepo->acreditadoPre($informe->numero_de_reporte, false);
+                }
+            }
+
         }
     }
 }

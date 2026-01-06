@@ -12,4 +12,6 @@ interface TicketReportRepository
     public function getDepartamentos();
     public function findByTicketAndDepartamento($ticket, $departamento);
     public function findByTicket($ticket);
+    public function findSumAcreditadosByTicket($ticket);
+    public function getByCriteria($filters);
 }
