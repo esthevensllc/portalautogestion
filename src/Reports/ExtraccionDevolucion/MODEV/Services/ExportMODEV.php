@@ -175,10 +175,12 @@ class ExportMODEV
                 ]
             ]
         ];
+        $numberFormat = ['numberFormat' => ['formatCode' => SpreadsheetStyle\NumberFormat::FORMAT_TEXT]];
+
         $headers = [
             "ticket" => ["label" => "Nro de Ticket"],
             "nro_documento" => ["label" => "N° del documento (DNI,RUC, CE)"],
-            "id_cliente" => ["label" => "Código del Cliente"],
+            "id_cliente" => ["label" => "Código del Cliente", 'bodyStyles' => $numberFormat],
             "msisdn" => ["label" => "N° Servicio"],
             "servicio_afectado" => ["label" => "Servicio Analizado"],
 

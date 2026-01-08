@@ -97,7 +97,7 @@ $(function() {
     if(tabSelect){
         utils.tabs.createTabSelectController(tabSelect);
         tabSelect.addEventListener('change', function(e){
-            document.querySelectorAll('.tabs[data-tab-target=tabs_select] .tab-item input')
+            document.querySelectorAll('.tabs[data-tab-target=tabs_select] .tab-item .form-control')
             .forEach(panelInput => {
                 panelInput.disabled = true;
             });
