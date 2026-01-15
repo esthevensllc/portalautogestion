@@ -35,6 +35,7 @@ class GeoMarketingController
                 ["id" => "10", "label" => "PARQUE DE LA EXPOSICION - ANFITEATRO"],
                 ["id" => "11", "label" => "GRAN TEATRO NACIONAL"],
                 ["id" => "12,13,14,15", "label" => "MALL PLAZA AREQUIPA"],
+                ["id" => "16", "label" => "PLAZA NORTE"],
                 ["id" => "17", "label" => "PLAYAS SUR"],
                 // ["id" => "13", "label" => "NAT CRISTO REY"],
                 // ["id" => "14", "label" => "HIPODROMO AREQUIPA"],

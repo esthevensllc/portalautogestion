@@ -28,6 +28,7 @@ class ExportGeoMarketing
         "10" => ["name" => "PARQUE_DE_LA_EXPOSICION_ANFITEATRO"],
         "11" => ["name" => "GRAN_TEATRO_NACIONAL"],
         "12,13,14,15" => ["name" => "MALL_PLAZA_AREQUIPA"],
+        "16" => ["name" => "PLAZA NORTE"],
         "17" => ["name" => "PLAYAS_SUR"],
     ];
     private $repository;
