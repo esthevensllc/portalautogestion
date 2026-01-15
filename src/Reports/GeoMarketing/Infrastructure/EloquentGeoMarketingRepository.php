@@ -148,6 +148,19 @@ class EloquentGeoMarketingRepository implements GeoMarketingRepository
             $sql = "SELECT msisdn FROM cdrdatos.usuarios_estadio_{$this->userIdentifier} a
             inner join remote('172.19.242.57',dwa.f_d_base_wl_bl,'nifi','nifi') b on toString(a.msisdn)=toString(b.msisdn)
             where toString(msisdn) like '519%' and b.wl='X' group by 1";
+        } else if(in_array('17', $arrayBaseFlag) && $whiteList === 2){
+            $sql = "SELECT msisdn FROM cdrdatos.usuarios_estadio_{$this->userIdentifier}
+            where toString(msisdn) like '519%'
+            and msisdn in (
+                select fono
+                from remote('172.19.242.59',user_activity.net_subscriber_activity_weeks_hist_with_udb_rx,'nifi','nifi') x
+                left join remote('172.19.242.56',mlac.base_place_celdas_pap,'nifi','nifi') y
+                on x.idd1=y.id and y.flag_place='17'
+                where lunes = (select max(lunes) from remote('172.19.242.59',user_activity.net_subscriber_activity_weeks_hist_with_udb_rx,'nifi','nifi'))
+                and y.id is null
+                group by 1
+            )
+            group by 1";
         }else{
             $sql = "SELECT msisdn FROM cdrdatos.usuarios_estadio_{$this->userIdentifier}
             where toString(msisdn) like '519%' group by 1";
