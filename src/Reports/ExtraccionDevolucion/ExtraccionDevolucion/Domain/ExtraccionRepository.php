@@ -23,6 +23,7 @@ interface ExtraccionRepository
     public function getReporteDiligenciasWebCorreo($tickets);
     public function getReporteDiligenciasWebDocumento($tickets);
     public function getTicketsWithDevolucionWeb($tickets);
+    public function getRecentTickets(array $tickets, int $days);
     public function saveReporteValidacionRecarga($tickets);
 
     public function updateReporte($ticket, $departamento, $data);

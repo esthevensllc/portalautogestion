@@ -1439,6 +1439,13 @@ class EloquentExtraccionRepository implements ExtraccionRepository
             SET FEC_INICIO=TO_DATE('{$strCorteFechaIniF1}','YYYYMMDD'); -- FECHA DE INICIO DE CORTE
             COMMIT;
         END;"];
+
+        $ticketOsiptel = DB::connection($this->connection)->table("USRAES.BASE_PREV_BASEDEV_{$this->userIdentifier}")->select("ticket")->first();
+        $ticketOsiptel = $ticketOsiptel !== null ? $ticketOsiptel->ticket : null;
+
+        $informeTipoReporte = $this->getInputByTicket($ticketOsiptel);
+        $informeTipoReporte = $informeTipoReporte !== null ? $informeTipoReporte->tipo_reporte : 1;
+
         // save results
         $queries[] = ["sql" => "DECLARE
             V_TICKET VARCHAR2(100);
@@ -1461,7 +1468,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
             MTO_TOTAL_DEV_IGV, FCH_DEV, INTERES_AL, GLOSA, FAC_ULTI_SBS, FAC_NUEV_REFE, FAC_ACUM_PROY, FAC_ACUM_INI, FEC_INICIO,
             FECHA_HORA_EXEC, FECHA_INTERES
             )
-            SELECT
+            /*SELECT
             TICKET, MSISDN, MSISDN_ACTUAL, CELDA, ID_CLIENTE, NOMBRES, APELLIDOS, TIPO_DOCUMENTO, NRO_DOCUMENTO,
             CUSTOMER_FULL_NAME, TIPO_CLIENTE, SISTEMA_ORIGEN, TMCODE, PLAN_TARIFARIO, ESTADO_ACTUAL, CUSTOMER_ID,
             CUSTCODE, CONTRATO, MODO_CONTRATACION, FECHA_ACTIVACION, FECHA_BAJA, CICLOFACTURACION, DEPARTAMENTO,
@@ -1471,7 +1478,35 @@ class EloquentExtraccionRepository implements ExtraccionRepository
             SISTEMA_ORIGEN_DEV, DEV, MODALIDAD_DEV, CARGO_LINEA_IGV_DEV, MONTO_DEVOLVER_IGV_DEV, TASA, INTERES,
             MTO_TOTAL_DEV_IGV, FCH_DEV, INTERES_AL, GLOSA, FAC_ULTI_SBS, FAC_NUEV_REFE, FAC_ACUM_PROY, FAC_ACUM_INI, FEC_INICIO,
             sysdate, TO_DATE('{$strFechaInteres}', 'YYYYMMDD') fecha_interes
-            FROM USRAES.BASE_PREV_BASEDEV_{$this->userIdentifier};
+            FROM USRAES.BASE_PREV_BASEDEV_{$this->userIdentifier};*/
+
+            WITH BASE_DEV AS(
+                SELECT
+                AA.TICKET TICKET, MSISDN, MSISDN_ACTUAL, CELDA, ID_CLIENTE, NOMBRES, APELLIDOS, TIPO_DOCUMENTO, NRO_DOCUMENTO,
+                CUSTOMER_FULL_NAME, TIPO_CLIENTE, SISTEMA_ORIGEN, TMCODE, PLAN_TARIFARIO, ESTADO_ACTUAL, CUSTOMER_ID,
+                CUSTCODE, CONTRATO, MODO_CONTRATACION, FECHA_ACTIVACION, FECHA_BAJA, CICLOFACTURACION, DEPARTAMENTO,
+                PROVINCIA, DISTRITO, FECHA_CORTE, FECHA_CARGA, CARGO_ACCESO_NORMAL, CARGO_COMBO, CARGO_BOLSA, CARGO_LINEA,
+                FLG_GOB, CARGO_LINEA_IGV, MONTO_DEVOLVER_IGV, MSISDN_DEVOLVER, CUSTOMER_ID_DEVOLVER, CUSTCODE_DEVOLVER,
+                CO_ID_DEVOLVER, MODO_CONTRATACION_DEV, TIPO_CLIENTE_DEV, FECHA_ACTIVACION_DEV, CICLOFACTURACION_DEV,
+                SISTEMA_ORIGEN_DEV, DEV, MODALIDAD_DEV, CARGO_LINEA_IGV_DEV, MONTO_DEVOLVER_IGV_DEV, TASA, INTERES,
+                MTO_TOTAL_DEV_IGV, FCH_DEV, INTERES_AL, GLOSA, FAC_ULTI_SBS, FAC_NUEV_REFE, FAC_ACUM_PROY, FAC_ACUM_INI, FEC_INICIO,
+                sysdate FECHA_HORA_EXEC, TO_DATE('{$strFechaInteres}', 'YYYYMMDD') fecha_interes, {$informeTipoReporte} TIPO_REPORTE
+                FROM USRAES.BASE_PREV_BASEDEV_{$this->userIdentifier} AA
+            )
+            SELECT TICKET, MSISDN, MSISDN_ACTUAL, CELDA, ID_CLIENTE, NOMBRES, APELLIDOS, TIPO_DOCUMENTO, NRO_DOCUMENTO,
+            CUSTOMER_FULL_NAME, TIPO_CLIENTE, SISTEMA_ORIGEN, TMCODE, PLAN_TARIFARIO, ESTADO_ACTUAL, CUSTOMER_ID,
+            CUSTCODE, CONTRATO, MODO_CONTRATACION, FECHA_ACTIVACION, FECHA_BAJA, CICLOFACTURACION, DEPARTAMENTO,
+            PROVINCIA, DISTRITO, FECHA_CORTE, FECHA_CARGA, CARGO_ACCESO_NORMAL, CARGO_COMBO, CARGO_BOLSA, CARGO_LINEA,
+            FLG_GOB, CARGO_LINEA_IGV, MONTO_DEVOLVER_IGV, MSISDN_DEVOLVER, CUSTOMER_ID_DEVOLVER, CUSTCODE_DEVOLVER,
+            CO_ID_DEVOLVER, MODO_CONTRATACION_DEV, TIPO_CLIENTE_DEV, FECHA_ACTIVACION_DEV, CICLOFACTURACION_DEV,
+            SISTEMA_ORIGEN_DEV, DEV
+            , CASE WHEN TIPO_REPORTE=1 AND MODALIDAD_DEV LIKE '%WEB%' THEN NULL
+                WHEN TIPO_REPORTE=3 AND MODALIDAD_DEV LIKE '%WEB%' THEN MODALIDAD_DEV
+                WHEN MODALIDAD_DEV NOT LIKE '%WEB%' THEN MODALIDAD_DEV END AS MODALIDAD_DEV
+            , CARGO_LINEA_IGV_DEV, MONTO_DEVOLVER_IGV_DEV, TASA, INTERES,
+            MTO_TOTAL_DEV_IGV, FCH_DEV, INTERES_AL, GLOSA, FAC_ULTI_SBS, FAC_NUEV_REFE, FAC_ACUM_PROY, FAC_ACUM_INI, FEC_INICIO
+            ,FECHA_HORA_EXEC,fecha_interes
+            FROM BASE_DEV;
             COMMIT;
 
             DELETE FROM USRAES.BASE_PREV_BASEDEV_HIST WHERE TICKET = V_TICKET and DEPARTAMENTO = V_DEPARTAMENTO;
@@ -1881,6 +1916,18 @@ class EloquentExtraccionRepository implements ExtraccionRepository
         return $resultMapped;
     }
 
+    public function getRecentTickets(array $tickets, int $days) {
+        $now = new DateTime();
+        $now->modify("-{$days} days");
+
+        return DB::connection("oracle_reptdm")
+        ->table("USRAES.BASE_PREV_BASEDEV")->select("ticket")
+        ->whereIn("ticket", $tickets)
+        ->where("FECHA_HORA_EXEC", ">=", $now->format("Y-m-d"))
+        ->groupBy("ticket")
+        ->get();
+    }
+
     public function saveReporteValidacionRecarga($tickets){
         $this->userIdentifier = $this->authService->getUserIdentifier();
 
@@ -1907,7 +1954,8 @@ class EloquentExtraccionRepository implements ExtraccionRepository
         ,yy.recharge_date FECHA_RECARGA
         ,yy.served_number LINEA_RECARGA
         ,round(yy.recharge_qty/100,2) MONTO_RECARGA
-        ,yy.usage_str3 TIPI_RECARGA
+        ,yy.usage_str3 TIPI_RECARGA,
+        null FECHA_BAJA_FACTURACION
         from
         (
             select ticket,msisdn,nro_documento,msisdn_devolver,modalidad_dev,mto_total_dev_igv,toDate(substring(fecha_carga,1,10)) fecha_carga
@@ -1956,7 +2004,8 @@ class EloquentExtraccionRepository implements ExtraccionRepository
             FECHA_RECARGA VARCHAR2(20),
             LINEA_RECARGA VARCHAR2(20),
             MONTO_RECARGA NUMBER,
-            TIPI_RECARGA VARCHAR2(100)
+            TIPI_RECARGA VARCHAR2(100),
+            FECHA_BAJA_FACTURACION VARCHAR2(20)
         )"];
         $this->exec_sql($queries);
 
@@ -1984,6 +2033,88 @@ class EloquentExtraccionRepository implements ExtraccionRepository
             COMMIT;
         END;", "params" => $ticketValues];
         $this->exec_sql($queries);
+
+        $data = DB::select("SELECT
+        MSISDN_DEVOLVER,
+        TO_CHAR(FECHA_BAJA, 'YYYY-MM-DD') FECHA_BAJA
+        FROM
+        (
+            SELECT SUBSCRIPTION_ACCESS_NUMBER MSISDN_DEVOLVER
+            ,AGREEMENT_START_DATE
+            ,AGREEMENT_STATUS_DATE
+            ,AGREEMENT_END_DATE FECHA_BAJA 
+            ,ROW_NUMBER() OVER (PARTITION BY SUBSCRIPTION_ACCESS_NUMBER ORDER BY AGREEMENT_END_DATE DESC,AGREEMENT_STATUS_DATE DESC) ORDEN
+            FROM DWA.DW_M_SUBSCRIPTION
+            WHERE SUBSCRIPTION_ACCESS_NUMBER IN (SELECT MSISDN_DEVOLVER FROM USRAES.VALIDACION_PREPAGO_{$this->userIdentifier}@DBL_REPTDM WHERE MONTO_RECARGA IS NULL)
+            AND AGREEMENT_MODE='PREPAGO' AND AGREEMENT_STATUS='D'
+        ) WHERE ORDEN=1");
+
+        $queries = [];
+        $queries[] = ["sql" => "BEGIN
+            EXECUTE IMMEDIATE 'DROP TABLE USRAES.VALIDACION_PREPAGO_{$this->userIdentifier}_FECHA_BAJA';
+        EXCEPTION
+        WHEN OTHERS THEN
+            IF SQLCODE != -942 THEN RAISE; END IF;
+        END;"];
+        $queries[] = ["sql" => "CREATE TABLE USRAES.VALIDACION_PREPAGO_{$this->userIdentifier}_FECHA_BAJA(
+            MSISDN_DEVOLVER VARCHAR2(20),
+            FECHA_BAJA VARCHAR2(20)
+        )"];
+        $this->exec_sql($queries);
+
+        $chunk = [];
+        $lastIndex = count($data)-1;
+        foreach($data as $index => $row){
+            $chunk[] = ["msisdn_devolver" => $row->msisdn_devolver, "fecha_baja" => $row->fecha_baja];
+            if(count($chunk) === 20 || $index === $lastIndex){
+                DB::connection($this->connection)->table("USRAES.VALIDACION_PREPAGO_{$this->userIdentifier}_FECHA_BAJA")->insert($chunk);
+                $chunk = [];
+            }
+        }
+
+        $queries = [];
+        $queries[] = ["sql" => "BEGIN
+            MERGE INTO USRAES.VALIDACION_PREPAGO_{$this->userIdentifier} A
+            USING USRAES.VALIDACION_PREPAGO_{$this->userIdentifier}_FECHA_BAJA B
+            ON(A.MSISDN_DEVOLVER = B.MSISDN_DEVOLVER)
+            WHEN MATCHED THEN UPDATE SET
+            A.FECHA_BAJA_FACTURACION = B.FECHA_BAJA;
+            COMMIT;
+
+            MERGE INTO USRAES.BASE_PREV_BASEDEV BPB
+            USING USRAES.VALIDACION_PREPAGO_{$this->userIdentifier} VP
+            ON(BPB.TICKET = VP.TICKET AND BPB.MSISDN=VP.MSISDN)
+            WHEN MATCHED THEN
+            UPDATE SET
+            BPB.fecha_baja_facturacion = TO_DATE(VP.fecha_baja_facturacion,'YYYY-MM-DD'),
+            BPB.MODALIDAD_DEV='WEB'
+            WHERE MODALIDAD_DEV like '%PREPAGO%' and VP.MONTO_RECARGA IS NULL
+            AND TICKET in ({$strBindsOracle});
+        END;", "params" => $ticketValues];
+        $this->exec_sql($queries);
+
+        $data = DB::select("SELECT
+        distinct A.TICKET,B.TIPO_REPORTE,NUM_REPORTE
+        FROM usraes.noc_informe_de_fallas A
+        JOIN USRAES.BASE_EXT_DEV_INPUT@DBL_REPTDM B
+        ON A.NUMERO_DE_REPORTE=B.NUM_REPORTE
+        JOIN USRAES.VALIDACION_PREPAGO_{$this->userIdentifier}@DBL_REPTDM C
+        ON A.TICKET=C.TICKET
+        WHERE C.MONTO_RECARGA IS NULL AND B.TIPO_REPORTE=1");
+
+        if (count($data) > 0) {
+            $numReportes = [];
+            foreach($data as $row){
+                $numReportes[] = $row->num_reporte;
+            }
+
+            DB::connection($this->connection)
+            ->table("USRAES.BASE_EXT_DEV_INPUT")
+            ->whereIn("NUM_REPORTE", $numReportes)
+            ->update([
+                "TIPO_REPORTE" => 3
+            ]);
+        }
     }
 
     public function getPrepagoLog($tickets)

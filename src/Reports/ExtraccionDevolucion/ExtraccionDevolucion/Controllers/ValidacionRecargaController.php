@@ -31,7 +31,10 @@ class ValidacionRecargaController
     public function update(Request $request)
     {
         $ticket = $request->input('ticket');
-        $this->updater->__invoke($ticket);
+        $response = $this->updater->__invoke($ticket);
+        if ($response->fails()) {
+            return response()->json($response->errors(), 400);
+        }
         $response = $this->exporter->__invoke($ticket);
         if ($response->fails()) {
             return response()->json($response->errors(), 400);

@@ -5,9 +5,11 @@ namespace AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services;
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Domain\ExtraccionRepository;
 use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Domain\ExtraccionRepository as InformeFallasRepository;
 use AMovil\Reports\ExtraccionDevolucion\TicketReports\Domain\TicketReportRepository;
+use AMovil\Shared\Application\Response;
 use AMovil\Shared\EmailNotification\Domain\EmailNotification;
 use AMovil\Shared\EmailNotification\Domain\EmailNotificationService;
 use AMovil\Shared\NotificationUser\Domain\NotificationUserRepository;
+use Exception;
 
 class ValidacionRecargaUpdater
 {
@@ -39,6 +41,15 @@ class ValidacionRecargaUpdater
 
         if (count($ticketsArray) > 100) {
             return Response::respError(["message" => "No se puede ingresar mas de 100 tickets"]);
+        }
+
+        $recentTickets = $this->extraccionRepo->getRecentTickets($ticketsArray, 2);
+        if (count($recentTickets) > 0) {
+            foreach($recentTickets as $index => $row){
+                $recentTickets[$index] = $row->ticket;
+            }
+            $recentTickets = implode(",", $recentTickets);
+            return Response::respError(["message" => "No se puede procesar porque hay tickets que no superan los dos dias de carga: {$recentTickets}"]);
         }
 
         $this->extraccionRepo->saveReporteValidacionRecarga($ticketsArray);
@@ -76,5 +87,6 @@ class ValidacionRecargaUpdater
             }
 
         }
+        return Response::respData();
     }
 }

@@ -36,30 +36,34 @@ class EloquentMODEVRepository implements MODEVRepository
         ROUND(aa.CARGO_LINEA_IGV,2) monto_plan,
             bb.diferencia tiempo_averia,
             -- aa.MTO_DEV_FACTURACION MONTO_DEVOLVER_IGV,
-	    CASE WHEN MODO_CONTRATACION_DEV='POSTPAGO' THEN aa.MTO_DEV_FACTURACION
-	    WHEN MODO_CONTRATACION_DEV='PREPAGO' THEN aa.MTO_DEV
-	    WHEN aa.MODALIDAD_DEV like '%WEB%' THEN NULL END MONTO_DEVOLVER_IGV,
+	    CASE WHEN aa.MODALIDAD_DEV like '%POSTPAGO%' THEN aa.MTO_DEV_FACTURACION
+	    WHEN aa.MODALIDAD_DEV like '%PREPAGO%' THEN aa.MTO_DEV
+	    WHEN aa.MODALIDAD_DEV like '%WEB%' THEN aa.MTO_TOTAL_DEV_IGV END MONTO_DEVOLVER_IGV,
             'SOLES' unidad,
-            case when aa.MSISDN_DEVOLVER is not null then aa.FECHA_DEVOLUCION 
-                when aa.MSISDN_DEVOLVER is null then NULL END fecha_dev_fecha_comun,
+	    case when aa.MSISDN_DEVOLVER is not null AND MODALIDAD_DEV LIKE '%POSTPAGO%' then aa.FECHA_DEVOLUCION
+                when aa.MSISDN_DEVOLVER is not null AND MODALIDAD_DEV LIKE '%PREPAGO%' and FECHA_DEVOLUCION<>TO_DATE('01/01/1970','DD/MM/YYYY') then aa.FECHA_DEVOLUCION
+                when aa.MSISDN_DEVOLVER is null and FECHA_DEVOLUCION=TO_DATE('01/01/1970','DD/MM/YYYY') then NULL END fecha_dev_fecha_comun,
             case when aa.MSISDN_DEVOLVER is not null then aa.FACTURA_APLICADA END FACTURA_APLICADA,
-            case when aa.MSISDN_DEVOLVER is not null then 'ACTIVO' 
-                WHEN aa.MSISDN_DEVOLVER is null then 'INACTIVO' END ESTADO,
-            case when aa.MSISDN_DEVOLVER is null then aa.FECHA_BAJA 
-                when aa.MSISDN_DEVOLVER is not null then NULL END fecha_baja,
-            case when aa.MSISDN_DEVOLVER is null then aa.CUSTOMER_FULL_NAME 
+            case when aa.MSISDN_DEVOLVER is not null and aa.fecha_baja_facturacion is null then 'ACTIVO'
+                WHEN aa.MSISDN_DEVOLVER is null or aa.fecha_baja_facturacion is not null then 'INACTIVO' END ESTADO,
+            case when aa.MSISDN_DEVOLVER is null then aa.FECHA_BAJA
+                when aa.fecha_baja_facturacion is not null then aa.fecha_baja_facturacion
+                when aa.MSISDN_DEVOLVER is not null and aa.fecha_baja_facturacion is null then NULL END fecha_baja,
+	    case when aa.MSISDN_DEVOLVER is null then aa.CUSTOMER_FULL_NAME 
                 END NOMBRE_RAZON_SOCIAL,
-            case when aa.fecha_baja_facturacion is not null or aa.MODALIDAD_DEV like '%WEB%' THEN 'CAC' 
+            case when aa.fecha_baja_facturacion is not null or aa.MODALIDAD_DEV like '%WEB%' THEN 'CENTRO DE ATENCIÃ“N AL CLIENTE'
             WHEN aa.fecha_baja_facturacion is not null or aa.MODALIDAD_DEV NOT LIKE '%WEB%' THEN '' END LUGAR_DONDE_COBRAR,
-            case when aa.fecha_baja_facturacion is not null or aa.MODALIDAD_DEV like '%WEB%' THEN 'documento' 
+            case when aa.fecha_baja_facturacion is not null or aa.MODALIDAD_DEV like '%WEB%' THEN 'CONTAR CON DOCUMENTO DE IDENTIDAD'
             WHEN aa.fecha_baja_facturacion is not null or aa.MODALIDAD_DEV NOT LIKE '%WEB%' THEN '' END REQUISITO_COBRO,
-            case when aa.fecha_baja_facturacion is not null or aa.MODALIDAD_DEV like '%WEB%' THEN 'SI' 
-            WHEN aa.fecha_baja_facturacion is not null or aa.MODALIDAD_DEV NOT LIKE '%WEB%' THEN 'NO' END COMUNICACION, 
-            case when aa.fecha_baja_facturacion is not null or aa.MODALIDAD_DEV like '%WEB%' THEN 'WEB' 
+            case when aa.fecha_baja_facturacion is not null or aa.MODALIDAD_DEV like '%WEB%' THEN 'SI'
+            WHEN aa.fecha_baja_facturacion is not null or aa.MODALIDAD_DEV NOT LIKE '%WEB%' THEN 'NO' END COMUNICACION,
+            case when aa.fecha_baja_facturacion is not null or aa.MODALIDAD_DEV like '%WEB%' THEN 'CORREO'
             WHEN aa.fecha_baja_facturacion is not null or aa.MODALIDAD_DEV NOT LIKE '%WEB%' then 'NO_APLICA' END MEDIO_COMUNICACION,
-            'NO_APLICA' NO_CORRESPONDE,
-            CASE WHEN MODALIDAD_DEV like '%POSTPAGO%' THEN 'DEVOLUCION APLICADA-POSTPAGO' 
-            WHEN MODALIDAD_DEV like '%PREPAGO%' THEN 'DEVOLUCION APLICADA-PREPAGO' 
+	    'NO_APLICA' NO_CORRESPONDE,
+            CASE WHEN MODALIDAD_DEV like '%POSTPAGO%' and aa.MTO_DEV_FACTURACION is not null THEN 'DEVOLUCION APLICADA-POSTPAGO' 
+		WHEN MODALIDAD_DEV like '%POSTPAGO%' and aa.MTO_DEV_FACTURACION is null THEN 'DEVOLUCION PENDIENTE-POSTPAGO'
+            WHEN MODALIDAD_DEV like '%PREPAGO%' and aa.MTO_DEV is not null THEN 'DEVOLUCION APLICADA-PREPAGO' 
+		WHEN MODALIDAD_DEV like '%PREPAGO%' and aa.MTO_DEV is null THEN 'DEVOLUCION PENDIENTE-PREPAGO'
             WHEN aa.MODALIDAD_DEV like '%WEB%' THEN 'DEVOLUCION WEB' END COMENTARIOS,
             null liberado
         from USRAES.BASE_PREV_BASEDEV aa
@@ -79,7 +83,7 @@ class EloquentMODEVRepository implements MODEVRepository
         $ticketBinds = $this->getQueryBinds($tickets);
         return DB::select(DB::raw("
         with base_portal as (
-            SELECT aa.ticket,
+            SELECT DISTINCT aa.ticket,
             aa.NRO_DOCUMENTO,
             aa.ID_CLIENTE,
             aa.MSISDN,
@@ -88,36 +92,38 @@ class EloquentMODEVRepository implements MODEVRepository
             ROUND(aa.CARGO_LINEA_IGV,2) monto_plan,
             bb.diferencia tiempo_averia,
             -- aa.MTO_DEV_FACTURACION MONTO_DEVOLVER_IGV,
-            CASE WHEN MODO_CONTRATACION_DEV='POSTPAGO' THEN aa.MTO_DEV_FACTURACION
-            WHEN MODO_CONTRATACION_DEV='PREPAGO' THEN aa.MTO_DEV
-            WHEN aa.MODALIDAD_DEV like '%WEB%' THEN NULL END MONTO_DEVOLVER_IGV,
+            CASE WHEN aa.MODALIDAD_DEV like '%POSTPAGO%' THEN aa.MTO_DEV_FACTURACION
+            WHEN aa.MODALIDAD_DEV like '%PREPAGO%' THEN aa.MTO_DEV
+            WHEN aa.MODALIDAD_DEV like '%WEB%' THEN aa.MTO_TOTAL_DEV_IGV END MONTO_DEVOLVER_IGV,
             'SOLES' unidad,
             case when aa.MSISDN_DEVOLVER is not null AND MODALIDAD_DEV LIKE '%POSTPAGO%' then aa.FECHA_DEVOLUCION
-                when aa.MSISDN_DEVOLVER is not null AND MODALIDAD_DEV LIKE '%PREPAGO%' then aa.FCH_DEV
-                when aa.MSISDN_DEVOLVER is null then NULL END fecha_dev_fecha_comun,
-            case when aa.MSISDN_DEVOLVER is not null then aa.FACTURA_APLICADA END FACTURA_APLICADA,
+                when aa.MSISDN_DEVOLVER is not null AND MODALIDAD_DEV LIKE '%PREPAGO%' and FECHA_DEVOLUCION<>TO_DATE('01/01/1970','DD/MM/YYYY') then aa.FECHA_DEVOLUCION
+                when aa.MSISDN_DEVOLVER is null and FECHA_DEVOLUCION=TO_DATE('01/01/1970','DD/MM/YYYY') then NULL END fecha_dev_fecha_comun,
+	    case when aa.MSISDN_DEVOLVER is not null then aa.FACTURA_APLICADA END FACTURA_APLICADA,
             case when aa.MSISDN_DEVOLVER is not null and aa.fecha_baja_facturacion is null then 'ACTIVO'
                 WHEN aa.MSISDN_DEVOLVER is null or aa.fecha_baja_facturacion is not null then 'INACTIVO' END ESTADO,
             case when aa.MSISDN_DEVOLVER is null then aa.FECHA_BAJA
 		when aa.fecha_baja_facturacion is not null then aa.fecha_baja_facturacion
                 when aa.MSISDN_DEVOLVER is not null and aa.fecha_baja_facturacion is null then NULL END fecha_baja,
-            case when aa.MSISDN_DEVOLVER is null then aa.CUSTOMER_FULL_NAME
+            case when aa.MSISDN_DEVOLVER is null or aa.fecha_baja_facturacion is not null then aa.CUSTOMER_FULL_NAME
                 END NOMBRE_RAZON_SOCIAL,
-            case when aa.fecha_baja_facturacion is not null or aa.MODALIDAD_DEV like '%WEB%' THEN 'CAC'
+            case when aa.fecha_baja_facturacion is not null or aa.MODALIDAD_DEV like '%WEB%' THEN 'CENTRO DE ATENCIÃ“N AL CLIENTE'
             WHEN aa.fecha_baja_facturacion is not null or aa.MODALIDAD_DEV NOT LIKE '%WEB%' THEN '' END LUGAR_DONDE_COBRAR,
-            case when aa.fecha_baja_facturacion is not null or aa.MODALIDAD_DEV like '%WEB%' THEN 'documento'
+            case when aa.fecha_baja_facturacion is not null or aa.MODALIDAD_DEV like '%WEB%' THEN 'CONTAR CON DOCUMENTO DE IDENTIDAD'
             WHEN aa.fecha_baja_facturacion is not null or aa.MODALIDAD_DEV NOT LIKE '%WEB%' THEN '' END REQUISITO_COBRO,
             case when aa.fecha_baja_facturacion is not null or aa.MODALIDAD_DEV like '%WEB%' THEN 'SI'
             WHEN aa.fecha_baja_facturacion is not null or aa.MODALIDAD_DEV NOT LIKE '%WEB%' THEN 'NO' END COMUNICACION,
-            case when aa.fecha_baja_facturacion is not null or aa.MODALIDAD_DEV like '%WEB%' THEN 'WEB'
+            case when aa.fecha_baja_facturacion is not null or aa.MODALIDAD_DEV like '%WEB%' THEN 'CORREO'
             WHEN aa.fecha_baja_facturacion is not null or aa.MODALIDAD_DEV NOT LIKE '%WEB%' then 'NO_APLICA' END MEDIO_COMUNICACION,
-            'NO_APLICA' NO_CORRESPONDE,
-            CASE WHEN MODALIDAD_DEV like '%POSTPAGO%' THEN 'DEVOLUCION APLICADA-POSTPAGO'
-            WHEN MODALIDAD_DEV like '%PREPAGO%' THEN 'DEVOLUCION APLICADA-PREPAGO'
+	    'NO_APLICA' NO_CORRESPONDE,
+            CASE WHEN MODALIDAD_DEV like '%POSTPAGO%' and aa.MTO_DEV_FACTURACION is not null THEN 'DEVOLUCION APLICADA-POSTPAGO'
+                WHEN MODALIDAD_DEV like '%POSTPAGO%' and aa.MTO_DEV_FACTURACION is null THEN 'DEVOLUCION PENDIENTE-POSTPAGO'
+            WHEN MODALIDAD_DEV like '%PREPAGO%' and aa.MTO_DEV is not null THEN 'DEVOLUCION APLICADA-PREPAGO'
+                WHEN MODALIDAD_DEV like '%PREPAGO%' and aa.MTO_DEV is null THEN 'DEVOLUCION PENDIENTE-PREPAGO'
             WHEN aa.MODALIDAD_DEV like '%WEB%' THEN 'DEVOLUCION WEB' END COMENTARIOS,
-            null LIBERADO,
+	    null LIBERADO,
             cc.TIPO_REPORTE TIPO_REPORTE,
-            MODALIDAD_DEV
+            MODALIDAD_DEV, DEPARTAMENTO
             from USRAES.BASE_PREV_BASEDEV@DBL_REPTDM aa
             left join 
             (
@@ -139,19 +145,13 @@ class EloquentMODEVRepository implements MODEVRepository
         ,LUGAR_DONDE_COBRAR,REQUISITO_COBRO,COMUNICACION,MEDIO_COMUNICACION,NO_CORRESPONDE,COMENTARIOS,LIBERADO 
         from base_portal
         where (MODALIDAD_DEV LIKE '%POSTPAGO%' or MODALIDAD_DEV LIKE '%PREPAGO%') and TIPO_REPORTE=1 and ticket in ({$ticketBinds['str_binds']})
-	    group by TICKET,NRO_DOCUMENTO,ID_CLIENTE,MSISDN,SERVICIO_AFECTADO,MODO_CONTRATACION,MONTO_PLAN,TIEMPO_AVERIA
-        ,MONTO_DEVOLVER_IGV,UNIDAD,FECHA_DEV_FECHA_COMUN,FACTURA_APLICADA,ESTADO,FECHA_BAJA,NOMBRE_RAZON_SOCIAL
-        ,LUGAR_DONDE_COBRAR,REQUISITO_COBRO,COMUNICACION,MEDIO_COMUNICACION,NO_CORRESPONDE,COMENTARIOS,LIBERADO
         union all
         select TICKET,NRO_DOCUMENTO,ID_CLIENTE,MSISDN,SERVICIO_AFECTADO,MODO_CONTRATACION,MONTO_PLAN,TIEMPO_AVERIA
         ,MONTO_DEVOLVER_IGV,UNIDAD,FECHA_DEV_FECHA_COMUN,FACTURA_APLICADA,ESTADO,FECHA_BAJA,NOMBRE_RAZON_SOCIAL
         ,LUGAR_DONDE_COBRAR,REQUISITO_COBRO,COMUNICACION,MEDIO_COMUNICACION,NO_CORRESPONDE,COMENTARIOS,LIBERADO
         from base_portal
         where (MODALIDAD_DEV LIKE '%POSTPAGO%' or MODALIDAD_DEV LIKE '%PREPAGO%' or MODALIDAD_DEV LIKE '%WEB%')
-        and TIPO_REPORTE=3 and ticket in ({$ticketBinds['str_binds']})
-	    group by TICKET,NRO_DOCUMENTO,ID_CLIENTE,MSISDN,SERVICIO_AFECTADO,MODO_CONTRATACION,MONTO_PLAN,TIEMPO_AVERIA
-        ,MONTO_DEVOLVER_IGV,UNIDAD,FECHA_DEV_FECHA_COMUN,FACTURA_APLICADA,ESTADO,FECHA_BAJA,NOMBRE_RAZON_SOCIAL
-        ,LUGAR_DONDE_COBRAR,REQUISITO_COBRO,COMUNICACION,MEDIO_COMUNICACION,NO_CORRESPONDE,COMENTARIOS,LIBERADO"), $ticketBinds["values"]);
+        and TIPO_REPORTE=3 and ticket in ({$ticketBinds['str_binds']})"), $ticketBinds["values"]);
     }
 
     public function validateRecargas(array $ticket)
