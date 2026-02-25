@@ -96,6 +96,20 @@ $(function() {
         link.parentNode.removeChild(link);
     }
 
+    let p_min = "";
+    let p_max = "";
+
+    function yyyymmFromDateInput(dateStr) {
+        if (!dateStr || dateStr.length < 7) return NaN; // "yyyy-mm-dd"
+        return Number(dateStr.slice(0, 4) + dateStr.slice(5, 7)); // "yyyymm"
+    }
+
+    function stopWithError(msg) {
+        alert(msg);
+        $(".btn_export").prop('disabled', false);
+        $(".loader_component").hide();
+    }
+
     $("#form_export").on('submit', function(e){
         e.preventDefault();
         $(".btn_export").prop('disabled', true);
@@ -106,6 +120,37 @@ $(function() {
         const fecha1 = $("#form_export input[name=fecha1]").val();
         const fecha2 = $("#form_export input[name=fecha2]").val();
         const consumo_sin_cargo = $("#form_export select[name=consumo_sin_cargo]").val();
+
+        // ✅ VALIDACIÓN POR AÑO+MES (ignorando día)
+        const minPeriod = Number(p_min);                 // yyyymm
+        const maxPeriod = Number(p_max);                 // yyyymm
+        const yyyymmFecha1 = yyyymmFromDateInput(fecha1);
+        const yyyymmFecha2 = yyyymmFromDateInput(fecha2);
+
+        let msg_error = `La factura para el numero de cuenta ${cod_cliente} en los periodos ${fecha1} y ${fecha2} no cuenta con registros en las siguientes tablas TEMP_TAG1480, TEMP_TAG1460, TEMP_TAG1470. Por favor registrar el Nintex solicitando el restore de las tablas e indicando el periodo necesario a traves del siguiente link http://wfportalnintex/dir/red/soporte/_layouts/15/start.aspx#/Solicitud%20BR/Forms/AllItems.aspx y enviar correo a Orlando Caurino con el asunto "Restore TEMP_TAG".
+                Detalle de requerimiento
+                Nombre del servidor: scan-dbto.tim.com.pe
+                Dirección IP: 172.20.193.21
+                Motor de la Base de datos: ORACLE
+                Nombre de base de datos / instancia: DBTO.TEMP_TAG_1460, DBTO.TEMP_TAG_1470, DBTO.TEMP_TAG_1480`;
+
+        if (![minPeriod, maxPeriod, yyyymmFecha1, yyyymmFecha2].every(Number.isFinite)) {
+            return stopWithError("Fechas inválidas o rango (p_min/p_max) inválido.");
+        }
+
+        if (yyyymmFecha1 < minPeriod) {            
+            return stopWithError(msg_error);
+        }
+
+        if (yyyymmFecha2 > maxPeriod) {
+            return stopWithError(msg_error);
+        }
+
+        // (opcional recomendado) coherencia: fecha1 <= fecha2
+        if (yyyymmFecha1 > yyyymmFecha2) {
+            return stopWithError("Rango inválido: la fecha inicial no puede ser mayor que la fecha final.");
+        }
+
         utils.fetch("{{asset($data['url_validator'])}}"+`?cod_cliente=${cod_cliente}&periodo=${periodo}&tipo_input=${tipo_input}&fecha1=${fecha1}&fecha2=${fecha2}`, {
             method: 'GET',
             headers: {"Accept": "application/json"}
@@ -163,6 +208,7 @@ $(function() {
             alert(error);
         });
     });
+
     if("{{ isset($data['url_export']) ? $data['url_export'] : '' }}" === ''){
         $(".btn_export").prop('disabled', true);
     }
@@ -180,6 +226,9 @@ $(function() {
         })
         .then(response => response.json())
         .then(resp => {
+            p_min = resp.min_periodo;
+            p_max = resp.max_periodo;
+
             if(resp.min_periodo === undefined){
                 $(".min_periodo").html("Periodo mínimo: yyyymm<br>Periodo máximo: yyyymm <br>*Verificar que el numero de cuenta sea correcto");
             }else{
