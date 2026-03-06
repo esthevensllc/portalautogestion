@@ -755,7 +755,7 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
         END;"];
         $queries[] = ["sql" => "CREATE TABLE USRAES.TMP_DEVINSTXPROD_{$this->userIdentifier} NOLOGGING PARALLEL 4
         AS
-        SELECT S.CODCLI,S.ESTINSSRV,S.CODINSSRV,
+        SELECT /*+ PARALLEL(4)*/ S.CODCLI,S.ESTINSSRV,S.CODINSSRV,
                I.MONTOCR,I.IDMONEDACR,I.IDINSTPROD,
                I.ESTADO,I.FECINI,I.FECFIN,
                I.CICFAC,I.DESCRIPCION DSC_PRODUCTO,
@@ -778,7 +778,7 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
             IF SQLCODE != -942 THEN RAISE; END IF;
         END;"];
         $queries[] = ["sql" => "CREATE TABLE USRAES.TMP_SA_DEVOL_CASO1_{$this->userIdentifier} NOLOGGING PARALLEL 4
-        AS SELECT I.CODCLI,P.PID,P.DESCRIPCION,I.ESTINSSRV,P.ESTINSPRD,P.CODINSSRV,
+        AS SELECT /*+ PARALLEL(4)*/ I.CODCLI,P.PID,P.DESCRIPCION,I.ESTINSSRV,P.ESTINSPRD,P.CODINSSRV,
             P.FECINI FECINI_INSPRD,P.FECFIN FECFIN_INSPRD,
             P.NUMSLC,TY.DSCSRV,P.CODSRV,
             I.MONTOCR,I.IDMONEDACR,I.IDINSTPROD,I.ESTADO,
