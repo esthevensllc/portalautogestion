@@ -2,6 +2,7 @@
 
 namespace AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers;
 
+use AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Domain\ExtraccionDevFijaFilterFlag;
 use AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Services\FindReportInputs;
 use AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Services\ProcessExtraccionDevFija;
 use AMovil\Reports\ExtraccionDevFija\InformesFalla\Domain\InformeFijaTipoReporte;
@@ -10,6 +11,7 @@ use AMovil\Reports\ExtraccionDevFija\InformesFalla\Services\DeleteInformeFallas;
 use AMovil\Reports\ExtraccionDevFija\InformesFalla\Services\InformeFallasFinder;
 use AMovil\Reports\ExtraccionDevFija\InformesFalla\Services\InformeFallasUpdater;
 use AMovil\Reports\ExtraccionDevFija\InformesFalla\Services\NotifyUsersOnInformeFallasProcessed;
+use AMovil\Shared\Application\FileInput;
 use DateTime;
 use Exception;
 use Illuminate\Http\Request;
@@ -50,6 +52,7 @@ class InformeFallasController
             'title' => 'Informe de Fallas',
             'url' => url('extraccion-dev-fija/informes-falla/search'),
             'updateStatusApi' => url('extraccion-dev-fija/informes-falla/update-status'),
+            'updateTicketApi' => url('extraccion-dev-fija/informes-falla/update-ticket'),
             'deleteApi' => url('extraccion-dev-fija/informes-falla/[numReporte]/[servicioAfectadoId]/delete'),
             'downloadApi' => url('extraccion-dev-fija/informes-falla/[numReporte]/download'),
             "serviciosAfectados" => $serviciosAfectados
@@ -92,6 +95,15 @@ class InformeFallasController
                 throw new Exception("Estado de informe de fallas no valido");
                 break;
         }
+        return response()->json([]);
+    }
+
+    public function updateTicket(Request $request)
+    {
+        $numReporte = $request->input("numero_reporte");
+        $servicioAfectadoId = $request->input("servicio_afectado_id");
+        $ticket = $request->input("ticket");
+        $this->updater->updateTicketReporteProcesado($numReporte, $servicioAfectadoId, $ticket);
         return response()->json([]);
     }
 
@@ -179,8 +191,13 @@ class InformeFallasController
                 "compensacionId" => $compensaciones[$index],
             ];
         }
+
+        $excelFile = new FileInput(
+            $request->file("excel")->getPathname(),
+            $request->file("excel")->getClientOriginalName()
+        );
         
-        $this->creator->__invoke($request->input("num_reporte"), InformeFijaTipoReporte::DEFAULT, $request->file("excel"), $detallePlanos, $detalleServicios);
+        $this->creator->__invoke($request->input("num_reporte"), InformeFijaTipoReporte::DEFAULT, $excelFile, null, $detallePlanos, $detalleServicios);
         // $this->creator->__invoke($request->input("num_reporte"), $request->file("excel"), $detallesExtraccion);
         return response()->json([]);
     }
@@ -260,7 +277,8 @@ class InformeFallasController
 
         $this->process->processEnd(
             $ticket,
-            $grupoUsuarios
+            $grupoUsuarios,
+            ExtraccionDevFijaFilterFlag::NONE
         )->data();
 
         $this->updater->updateStatusToProcesado($input->numero_reporte, $input->servicio_afectado_id, $request->ip());

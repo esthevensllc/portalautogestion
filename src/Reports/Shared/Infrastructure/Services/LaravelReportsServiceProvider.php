@@ -308,5 +308,13 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\AlertaMml\Domain\AlertaMmlRepository::class,
             \AMovil\Reports\AlertaMml\Infrastructure\EloquentAlertaMmlRepository::class
         );
+        $this->app->bind(
+            \AMovil\Reports\BajaPrepago\Domain\BajaPrepagoRepository::class,
+            \AMovil\Reports\BajaPrepago\Infrastructure\EloquentBajaPrepagoRepository::class
+        );
+        $this->app->bind(
+            \AMovil\Reports\ExtraccionDevFija\DiligenciasWebFija\Domain\DiligenciaWebFijaRepository::class,
+            \AMovil\Reports\ExtraccionDevFija\DiligenciasWebFija\Infrastructure\EloquentDiligenciaWebFijaRepository::class
+        );
     }
 }

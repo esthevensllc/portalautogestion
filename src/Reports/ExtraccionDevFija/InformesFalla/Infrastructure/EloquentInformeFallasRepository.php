@@ -3,9 +3,11 @@
 namespace AMovil\Reports\ExtraccionDevFija\InformesFalla\Infrastructure;
 
 use AMovil\Reports\ExtraccionDevFija\InformesFalla\Domain\InformeFallasRepository;
+use AMovil\Reports\ExtraccionDevFija\InformesFalla\Domain\InformeFijaTipoReporte;
 use AMovil\Shared\Infrastructure\Eloquent\EloquentCriteriaConverter;
 use DateTime;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
 class EloquentInformeFallasRepository implements InformeFallasRepository
 {
@@ -167,5 +169,41 @@ class EloquentInformeFallasRepository implements InformeFallasRepository
         return DB::table("usraes.INPUT_DEVO_FIJA_SERVICIOS_AFECTADOS")
         ->where("id", $servicioAfectadoId)
         ->first();
+    }
+
+    public function updateTicketToReporteProcesado(string $numReporte, int $servicioAfectadoId, $ticketAnterior, $ticketNuevo)
+    {
+        DB::statement("declare
+            v_ticket varchar2(30) := :p_ticket;
+            v_ticket_anterior varchar2(30) := :p_ticket_anterior;
+        begin
+            UPDATE INPUT_DEVO_FIJA SET ticket = v_ticket where ticket = v_ticket_anterior;
+            UPDATE NOC_INFORME_DE_FALLAS_FIJA SET ticket = v_ticket where ticket = v_ticket_anterior;
+            UPDATE DWH_DEVOLUCION_MASIV_DETALLE_HIST SET ticket = v_ticket where ticket = v_ticket_anterior;
+            UPDATE DWH_DEVOLUCION_MASIV_DETALLE_TOTAL SET ticket = v_ticket where ticket = v_ticket_anterior;
+            commit;
+        exception
+            when others then
+                rollback;
+                raise;
+        end;", ["p_ticket" => $ticketNuevo, "p_ticket_anterior" => $ticketAnterior]);
+    }
+
+    public function updateNombreArchivo(string $numReporte, string $nombreArchivo)
+    {
+        $informeFalla = DB::table("usraes.noc_informe_de_fallas_fija")
+        ->where('numero_reporte', $numReporte)
+        ->first();
+
+        if ((int) $informeFalla->tipo_reporte !== InformeFijaTipoReporte::BY_CODCLI) {
+            throw new InvalidArgumentException("Solo se puede actualizar el nombre de archivo para informes de falla de mantenimiento");
+        }
+        
+        DB::table("usraes.noc_informe_de_fallas_fija")
+        ->where('numero_reporte', $numReporte)
+        ->update([
+            "numero_reporte" => $numReporte,
+            "name_file" => $nombreArchivo,
+        ]);
     }
 }

@@ -17,8 +17,10 @@
             <th>Fecha</th>
             <th>Servicio Afectado</th>
             <th>Abonados Afectados</th>
-            <th>Acreditados</th>
-            <th>No Acreditados</th>
+            <th>Acreditados Post</th>
+            <th>No Acreditados Post</th>
+            <th>Acreditados Pre</th>
+            <th>No Acreditados Pre</th>
         </tr>
     </thead>
     <tbody>
@@ -47,7 +49,9 @@ $(function() {
             {data: 'servicio_afectado'},
             {data: 'abonados_afectados'},
             {data: 'acreditados'},
-            {data: 'no_acreditados'}
+            {data: 'no_acreditados'},
+            {data: 'acreditados_pre'},
+            {data: 'no_acreditados_pre'},
         ],
         "fnDrawCallback": function() {
             // $(".btn-delete").on("click", deleteFilenameHandler);

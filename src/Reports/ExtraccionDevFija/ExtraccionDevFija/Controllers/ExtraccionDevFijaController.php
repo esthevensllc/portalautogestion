@@ -2,6 +2,7 @@
 
 namespace AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Controllers;
 
+use AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Domain\ExtraccionDevFijaFilterFlag;
 use AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Services\ExportExtraccionFijaPostpago;
 use AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Services\ExportExtraccionFijaUsuariosAfectados;
 use AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Services\FindReportInputs;
@@ -122,7 +123,7 @@ class ExtraccionDevFijaController
         $response = $this->process->processEnd(
             $request->input("ticket"),
             1,
-            $request->ip()
+            ExtraccionDevFijaFilterFlag::NONE
         )->data();
         
         return response($response["content"], 200, [
@@ -221,11 +222,18 @@ class ExtraccionDevFijaController
             ];
         }
 
+        $excelFile = new FileInput(
+            $request->file("excel")->getPathname(),
+            $request->file("excel")->getClientOriginalName()
+        );
+
         $response = $this->processExtraccionMsisdn->__invoke(
             $request->input("numero_reporte"),
-            $request->file("excel"),
+            $excelFile,
+            $excelFile,
             // $request->input("ticket"),
             $detalleServicios,
+            ExtraccionDevFijaFilterFlag::NONE,
             $request->ip()
             // $request->input("servicio_afectado_id"),
             // $request->input("fecha_ini"),

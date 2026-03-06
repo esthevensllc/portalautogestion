@@ -65,7 +65,7 @@ class ProcessExtraccionDevFija
         ]);
     }
 
-    public function processEnd($ticket, $grupoUsuarios): Response
+    public function processEnd($ticket, $grupoUsuarios, int $filterFlag): Response
     {
         // grupoUsuarios (1=usuarios activos, 2=usuarios con trafico)
         $reportCount = $this->repo->countReportByTicketDepartamento($ticket);
@@ -73,7 +73,7 @@ class ProcessExtraccionDevFija
             throw new Exception("Ya se tiene procesado el TK_{$ticket}");
         }
 
-        $data = $this->repo->processEnd($ticket, $grupoUsuarios);
+        $data = $this->repo->processEnd($ticket, $grupoUsuarios, $filterFlag);
 
         $headers = [
             "ticket" => ["label" => "TICKET"],

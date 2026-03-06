@@ -8,6 +8,7 @@ use AMovil\Reports\ExtraccionDevFija\InformesFalla\Domain\InformeFijaTipoReporte
 use AMovil\Shared\Application\Response;
 use AMovil\Shared\Exports\Domain\ExportService;
 use AMovil\Shared\Exports\Domain\WriterType;
+use DateTime;
 use PhpOffice\PhpSpreadsheet\Style as SpreadsheetStyle;
 
 class ExportModevLogFija
@@ -25,7 +26,7 @@ class ExportModevLogFija
 
     public function __invoke($ticket)
     {
-        $result = $this->informeFallarepo->getByCriteria(["ticket.eq.{$ticket}"]);
+        /*$result = $this->informeFallarepo->getByCriteria(["ticket.eq.{$ticket}"]);
         if(count($result["data"]) === 0){
             throw new \Exception("No se encontro el informe de fallas para el ticket");
         }
@@ -35,13 +36,19 @@ class ExportModevLogFija
             $data = $this->repo->getReporteModevMantenimiento([$ticket]);
         } else {
             $data = $this->repo->getReporteModev([$ticket]);
+        }*/
+
+        $tickets = explode(",", str_replace(" ", "", $ticket));
+        $data = $this->repo->getReporteModev($tickets);
+
+        if(count($data) === 0){
+            return Response::respError(["message" => "El ticket no tiene ningun acreditado prepago"]);
         }
 
-        // $tickets = explode(",", str_replace(" ", "", $ticket));
-        // $data = $this->repo->getReporteModev($tickets);
+        $numberFormat = ['numberFormat' => ['formatCode' => SpreadsheetStyle\NumberFormat::FORMAT_TEXT]];
 
         $headers = [
-            "ticket" => ["label" => "TICKET"],
+            "ticket" => ["label" => "TICKET", 'bodyStyles' => $numberFormat],
             "tipo_documento" => ["label" => "TIPO_DOCUMENTO"],
             "nro_doc" => ["label" => "NRO_DOC"],
             "id_cliente" => ["label" => "ID_CLIENTE"],
@@ -87,9 +94,61 @@ class ExportModevLogFija
         $this->exportService->loadData($headers, $data, $options);
 
         $exportContent = $this->exportService->getWriter(WriterType::XLSX)->stream();
+
+        $strToday = (new DateTime())->format('Ymd');
         
         return new Response([], [
-            "filename" => "MODEV_LOG_FIJA.xlsx",
+            "filename" => "MODEV_LOG_FIJA_{$strToday}.xlsx",
+            "type" => "xlsx",
+            "content" => $exportContent,
+        ]);
+    }
+
+    public function exportLogPrepago($ticket){
+        $tickets = explode(",", str_replace(" ", "", $ticket));
+        $data = $this->repo->getReporteLogPrepago($tickets);
+
+        if(count($data) === 0){
+            return Response::respError(["message" => "El ticket no tiene ningun acreditado prepago"]);
+        }
+
+        $numberFormat = ['numberFormat' => ['formatCode' => SpreadsheetStyle\NumberFormat::FORMAT_TEXT]];
+
+        $headers = [
+            "ticket" => ["label" => "TICKET", 'bodyStyles' => $numberFormat],
+            "numero" => ["label" => "NUMERO"],
+            "cantidad" => ["label" => "CANTIDAD"],
+            "recharge_date" => ["label" => "RECHARGE_DATE"],
+            "recarga" => ["label" => "RECARGA"],
+            "msisdn_devolver" => ["label" => "MSISDN_DEVOLVER"],
+            "usage_str3" => ["label" => "USAGE_STR3"],
+        ];
+
+        $options = [
+            'sheetIndex' => 0,
+            // 'rowType' => 'object',
+            'title' => "REP",
+            'styles' => [
+                'header' => [
+                    'font' => ['bold' => true, 'size' => 9],
+                    'borders'=> [
+                        'allBorders' => ['borderStyle' => SpreadsheetStyle\Border::BORDER_THIN, 'color' => array('rgb'=>'000000')]
+                    ]
+                ],
+                'body' => [
+                    'font' => ['size' => 9],
+                ]
+            ]
+        ];
+
+        $this->exportService->loadData($headers, $data, $options);
+
+        $exportContent = $this->exportService->getWriter(WriterType::XLSX)->stream();
+
+        $strToday = (new DateTime())->format('Ymd');
+        
+        return new Response([], [
+            "filename" => "LOG_PREPAGO_FIJA_{$strToday}.xlsx",
             "type" => "xlsx",
             "content" => $exportContent,
         ]);

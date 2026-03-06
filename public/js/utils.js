@@ -61,6 +61,7 @@ const utils = {
         const button = document.querySelector(config['btn_export']);
         const loader_component = document.querySelector('.loader_component');
         button.disabled = true;
+        const startButtonText = button.innerHTML;
         button.innerHTML = 'Cargando ...';
         loader_component.style.display = 'block';
         try {
@@ -104,7 +105,7 @@ const utils = {
             }
         }
         button.disabled = false;
-        button.innerHTML = 'Descargar';
+        button.innerHTML = startButtonText;
         loader_component.style.display = 'none';
     },
     fetchAuthMiddleware: (response) => {

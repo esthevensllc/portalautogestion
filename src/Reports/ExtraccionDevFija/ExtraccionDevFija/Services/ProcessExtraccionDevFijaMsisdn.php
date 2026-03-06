@@ -10,6 +10,7 @@ use AMovil\Reports\ExtraccionDevFija\InformesFalla\Services\InformeFallasFinder;
 use AMovil\Reports\ExtraccionDevFija\InformesFalla\Services\InformeFallasUpdater;
 use AMovil\Reports\ExtraccionDevFija\InformesFalla\Services\NotifyUsersOnInformeFallasProcessed;
 use AMovil\Reports\ExtraccionDevolucion\TablaInteres\Domain\TablaInteresRepository;
+use AMovil\Shared\Application\FileInput;
 use AMovil\Shared\Application\Response;
 use DateTime;
 use Exception;
@@ -25,6 +26,7 @@ class ProcessExtraccionDevFijaMsisdn
     private $updater;
     private $tablaInteresRepo;
     private $notifyOnProcessed;
+    private $sendFilePrepagoEvent;
 
     public function __construct(
         InformeFallasRepository $informeFallasrepo,
@@ -51,7 +53,7 @@ class ProcessExtraccionDevFijaMsisdn
     }
 
     // public function __invoke($numReporte, $excel, $ticket, $servicioAfectadoId, $fechasIni, $horasIni, $fechasFin, $horasFin, $compensacionId)
-    public function __invoke($numReporte, $excel, $detalleServicios, $userIpAddress)
+    public function __invoke($numReporte, FileInput $excel, FileInput $clientesFile, $detalleServicios, $filterFlag, $userIpAddress)
     {
         $validationTablaInteres = $this->validateTablaInteres();
         if ($validationTablaInteres !== null) {
@@ -77,7 +79,7 @@ class ProcessExtraccionDevFijaMsisdn
             $tickets[] = $ticket;
         }
 
-        $this->createInformeFallas($numReporte, $excel, $detalleServicios);
+        $this->createInformeFallas($numReporte, $excel, $clientesFile, $detalleServicios);
 
         foreach ($detalleServicios as $row) {
             $servicioAfectadoId = $row['servicioAfectadoId'];
@@ -86,7 +88,7 @@ class ProcessExtraccionDevFijaMsisdn
             $this->informeFallasrepo->updateStatusToAprobado($numReporte, $servicioAfectadoId, $ticket);
             $this->extraccionFijaRepo->updateTicketServicioInputByNumReporte($numReporte, $servicioAfectadoId, $ticket);
 
-            $this->process($numReporte, $ticket, $userIpAddress);
+            $this->process($numReporte, $ticket, $filterFlag, $userIpAddress);
         }
 
         return Response::respData(["tickets" => $tickets]);
@@ -113,7 +115,7 @@ class ProcessExtraccionDevFijaMsisdn
         }
     }
 
-    private function createInformeFallas($numReporte, $excel, $detalleServicios){
+    private function createInformeFallas($numReporte, $excel, $clientesFile, $detalleServicios){
         // $serviciosAfectados = $request->input("servicio_afectado_id");
         // $fechasIni = $request->input("fecha_ini");
         // $horasIni = $request->input("hora_ini");
@@ -137,10 +139,10 @@ class ProcessExtraccionDevFijaMsisdn
         //     "compensacionId" => $compensacionId,
         // ]];
         
-        $this->creator->__invoke($numReporte, InformeFijaTipoReporte::BY_CODCLI, $excel, $detallePlanos, $detalleServicios);
+        $this->creator->__invoke($numReporte, InformeFijaTipoReporte::BY_CODCLI, $excel, $clientesFile, $detallePlanos, $detalleServicios);
     }
 
-    private function process($numReporte, $ticket, $userIpAddress){
+    private function process($numReporte, $ticket, $filterFlag, $userIpAddress){
         $serviciosById = [];
         $serviciosAfectados = $this->finder->getServiciosAfectados();
         foreach($serviciosAfectados as $row){
@@ -185,7 +187,7 @@ class ProcessExtraccionDevFijaMsisdn
         $this->extraccion->processEnd(
             $input->ticket,
             1,
-            $userIpAddress
+            $filterFlag
         )->data();
 
         $this->updater->updateStatusToProcesado($input->numero_reporte, $input->servicio_afectado_id, $userIpAddress);

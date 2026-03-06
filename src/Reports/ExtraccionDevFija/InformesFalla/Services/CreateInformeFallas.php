@@ -36,10 +36,10 @@ class CreateInformeFallas
         $this->notifyUsers = $notifyUsers;
     }
 
-    public function __invoke(string $numReporte, int $tipoReporte, $file, array $planos, array $serviciosAfectados)
+    public function __invoke(string $numReporte, int $tipoReporte, FileInput $file, ?FileInput $clientesFile, array $planos, array $serviciosAfectados)
     {
-        $filename = $numReporte.'_'.$file->getClientOriginalName();
-        $tempFilePath = $file->getPathname();
+        $filename = $numReporte.'_'.$file->getFilename();
+        $tempFilePath = $file->getFilePath();
 
         $filters = ["numero_reporte.eq.{$numReporte}"];
         $result = $this->repo->getByCriteria($filters);
@@ -85,7 +85,8 @@ class CreateInformeFallas
         }
 
         if ($tipoReporte === InformeFijaTipoReporte::BY_CODCLI) {
-            $codcli_list = $this->getCodCliDataFromCsv($tempFilePath);
+            $clientesFilePath = ($clientesFile !== null ? $clientesFile : $file)->getFilePath();
+            $codcli_list = $this->getCodCliDataFromCsv($clientesFilePath);
             $this->repo->createInformeFallasCodcli($numReporte, $codcli_list);
         }
         

@@ -19,6 +19,8 @@ interface InformeFallasRepository
     public function updateStatusToProcesado(string $numReporte, int $servicioAfectadoId);
     public function updateStatusToSinProcesar(string $numReporte, int $servicioAfectadoId);
     public function delete(string $numReporte, int $servicioAfectadoId);
+    public function updateTicketToReporteProcesado(string $numReporte, int $servicioAfectadoId, $ticketAnterior, $ticketNuevo);
+    public function updateNombreArchivo(string $numReporte, string $nombreReporte);
     public function getServiciosAfectados();
     public function findServicioAfectado(int $servicioAfectadoId);
 }

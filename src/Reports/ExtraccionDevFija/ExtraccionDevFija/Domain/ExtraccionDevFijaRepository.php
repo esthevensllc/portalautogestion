@@ -7,7 +7,7 @@ use DateTime;
 interface ExtraccionDevFijaRepository
 {
     public function processAndGetGruposUsuario($distritos, $ticket, $servicioAfectado, DateTime $fechaIni, DateTime $fechaFin, $mesesInteres);
-    public function processEnd($ticket, int $gruposUsuario);
+    public function processEnd($ticket, int $gruposUsuario, int $filterFlag);
     public function countReportByTicketDepartamento($ticket);
     public function findInputsByNumReporteAndTicket($numReporte, $ticket);
     public function getInputs();

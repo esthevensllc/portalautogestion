@@ -3,6 +3,7 @@
 namespace AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Infrastructure;
 
 use AMovil\Auth\AccessControl\Domain\AuthService;
+use AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Domain\ExtraccionDevFijaFilterFlag;
 use AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Domain\ExtraccionDevFijaRepository;
 use AMovil\Reports\ExtraccionDevFija\InformesFalla\Domain\InformeFijaTipoReporte;
 use AMovil\Shared\Infrastructure\Repository\ClickhouseDB;
@@ -1467,7 +1468,7 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
         return $cantidadUsuarios[0];
     }
 
-    public function processEnd($ticket, int $gruposUsuario){
+    public function processEnd($ticket, int $gruposUsuario, int $filterFlag){
         $this->userIdentifier = $this->authService->getUserIdentifier();
 
         $queries = [];
@@ -1485,6 +1486,54 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
                 WHERE customer_id not in (
                     select b.customer_id from USRAES.base_ext_cod_cli_{$this->userIdentifier} b
                 );
+                COMMIT;
+            END;"];
+        }
+
+        if (ExtraccionDevFijaFilterFlag::OLT === $filterFlag) {
+            $queries[] = ["sql" => "BEGIN
+                DELETE FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier}
+                WHERE FAMILIA='Telefonia Fija'
+                AND to_number(regexp_replace(NRO_DOC, '[^0-9]+', '')) NOT IN (SELECT to_number(regexp_replace(DNI_RUC, '[^0-9]+', '')) FROM USRAES.OLT_MAC_FINAL_{$this->userIdentifier}
+                WHERE SERVICIO_PRODUCTO IN ('PLAN 2 PLAY INTERNET -TELEFONO','PLAN FTTH CN 2PLAY INT - TLF','PLAN FTTH CN 3PLAY','PLAN HFC 3PLAY','PLAN 1 PLAY TELEFONIA')
+                AND DESCRIPCION_PRODUCTO LIKE '%TELEFONIA%');
+                COMMIT;
+
+                DELETE FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier}
+                WHERE FAMILIA='Acceso Dedicado a Internet'
+                AND NRO_DOC NOT IN (SELECT DNI_RUC FROM USRAES.OLT_MAC_FINAL_{$this->userIdentifier}
+                WHERE SERVICIO_PRODUCTO  IN ('PLAN FTTH CN 3PLAY','PLAN HFC 3PLAY','PLAN 1 PLAY INTERNET','PLAN 2 PLAY CABLE - INTERNET','PLAN 2 PLAY INTERNET -TELEFONO','PLAN FTTH CN 2PLAY INT - TLF','PLAN FTTH CN 2PLAY TV - INT','PLAN HFC CN 1PLAY INT')
+                AND DESCRIPCION_PRODUCTO LIKE '%MBPS%');
+                COMMIT;
+
+                DELETE FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier}
+                WHERE TRIM(FAMILIA)='Cable'
+                AND NRO_DOC NOT IN (SELECT DNI_RUC FROM USRAES.OLT_MAC_FINAL_{$this->userIdentifier}
+                WHERE SERVICIO_PRODUCTO IN ('PLAN 2 PLAY CABLE - INTERNET','PLAN FTTH CN 2PLAY TV - INT','PLAN FTTH CN 3PLAY','PLAN HFC 3PLAY')
+                AND DESCRIPCION_PRODUCTO LIKE '%TV%');
+                COMMIT;
+            END;"];
+        } else if (ExtraccionDevFijaFilterFlag::CMTS === $filterFlag) {
+            $queries[] = ["sql" => "BEGIN
+                DELETE FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier}
+                WHERE FAMILIA='Telefonia Fija'
+                AND to_number(regexp_replace(NRO_DOC, '[^0-9]+', '')) NOT IN (SELECT to_number(regexp_replace(DNI_RUC, '[^0-9]+', '')) FROM USRAES.cmts_table_final_{$this->userIdentifier}
+                WHERE SERVICIO_PRODUCTO IN ('PLAN 2 PLAY INTERNET -TELEFONO','PLAN FTTH CN 2PLAY INT - TLF','PLAN FTTH CN 3PLAY','PLAN HFC 3PLAY','PLAN 1 PLAY TELEFONIA')
+                AND DESCRIPCION_PRODUCTO LIKE '%TELEFONIA%');
+                COMMIT;
+
+                DELETE FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier}
+                WHERE FAMILIA='Acceso Dedicado a Internet'
+                AND NRO_DOC NOT IN (SELECT DNI_RUC FROM USRAES.cmts_table_final_{$this->userIdentifier}
+                WHERE SERVICIO_PRODUCTO  IN ('PLAN FTTH CN 3PLAY','PLAN HFC 3PLAY','PLAN 1 PLAY INTERNET','PLAN 2 PLAY CABLE - INTERNET','PLAN 2 PLAY INTERNET -TELEFONO','PLAN FTTH CN 2PLAY INT - TLF','PLAN FTTH CN 2PLAY TV - INT','PLAN HFC CN 1PLAY INT')
+                AND DESCRIPCION_PRODUCTO LIKE '%MBPS%');
+                COMMIT;
+
+                DELETE FROM USRAES.DWH_DEVOLUCION_MASIV_DETALLE_{$this->userIdentifier}
+                WHERE TRIM(FAMILIA)='Cable'
+                AND NRO_DOC NOT IN (SELECT DNI_RUC FROM USRAES.cmts_table_final_{$this->userIdentifier}
+                WHERE SERVICIO_PRODUCTO IN ('PLAN 2 PLAY CABLE - INTERNET','PLAN FTTH CN 2PLAY TV - INT','PLAN FTTH CN 3PLAY','PLAN HFC 3PLAY')
+                AND DESCRIPCION_PRODUCTO LIKE '%TV%');
                 COMMIT;
             END;"];
         }
@@ -1525,14 +1574,19 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
             COMMIT;
 
             INSERT INTO USRAES.DWH_DEVOLUCION_MASIV_DETALLE_TOTAL(
-                TICKET, DEPARTAMENTO, FECHA, SERVICIO_AFECTADO, ABONADOS_AFECTADOS, ACREDITADOS, NO_ACREDITADOS
+                TICKET, DEPARTAMENTO, FECHA, SERVICIO_AFECTADO, ABONADOS_AFECTADOS, ACREDITADOS, NO_ACREDITADOS, ACREDITADOS_PRE, NO_ACREDITADOS_PRE
             )
             SELECT ticket,max(DPTO) Departamento,sysdate fecha,familia Servicio_Afectado,
-            count(1) abonados_afectados, 0 ACREDITADOS, COUNT(1) NO_ACREDITADOS
-            from USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST
+            count(1) abonados_afectados
+            ,0 ACREDITADOS
+            ,COUNT(1) NO_ACREDITADOS
+            ,0 ACREDITADOS_PRE
+            ,0 NO_ACREDITADOS_PRE
+            from USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST X
             WHERE (ticket) IN (
                 SELECT TICKET FROM USRAES.INPUT_DEVO_FIJA_TMP_{$this->userIdentifier} GROUP BY TICKET, DEPARTAMENTO
             )
+            AND EXISTS (SELECT * FROM noc_informe_de_fallas_fija Y WHERE X.TICKET=Y.TICKET AND TIPO_REPORTE=1)
             AND MONTO_PRINCIPAL is not null
             AND ESTADO_CONTRATO = 'A'
             AND (CASE FUENTE
@@ -1540,6 +1594,20 @@ class EloquentExtraccionDevFijaRepository implements ExtraccionDevFijaRepository
                 WHEN 'SGA' THEN (CASE WHEN CICFAC_DEVOL IS NOT NULL AND FCHFIN_INST IS NULL THEN 1 ELSE 0 END)
                 ELSE 0 END
             ) = 1
+            GROUP BY ticket,familia
+            UNION ALL
+            SELECT ticket,max(DPTO) Departamento,sysdate fecha,familia Servicio_Afectado,
+            count(1) abonados_afectados
+            ,0 ACREDITADOS
+            ,SUM(CASE WHEN COMENTARIOS LIKE '%POSTPAGO%' THEN 1 ELSE 0 END) NO_ACREDITADOS
+            ,0 ACREDITADOS_PRE
+            ,SUM(CASE WHEN COMENTARIOS LIKE '%PREPAGO%' THEN 1 ELSE 0 END) NO_ACREDITADOS_PRE
+            from USRAES.DWH_DEVOLUCION_MASIV_DETALLE_HIST X
+            WHERE (ticket) IN (
+                SELECT TICKET FROM USRAES.INPUT_DEVO_FIJA_TMP_{$this->userIdentifier} GROUP BY TICKET, DEPARTAMENTO
+            )
+            AND EXISTS (SELECT * FROM noc_informe_de_fallas_fija Y WHERE X.TICKET=Y.TICKET AND TIPO_REPORTE=2)
+            AND MONTO_PRINCIPAL is not null
             GROUP BY ticket,familia;
             COMMIT;
         END;"];

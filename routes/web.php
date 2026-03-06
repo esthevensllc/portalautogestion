@@ -449,6 +449,7 @@ Route::group([
         Route::get('/', [\AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers\InformeFallasController::class, 'view']);
         Route::get('search', [\AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers\InformeFallasController::class, 'search']);
         Route::post('update-status', [\AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers\InformeFallasController::class, 'updateStatus']);
+        Route::post('update-ticket', [\AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers\InformeFallasController::class, 'updateTicket']);
         Route::post('{numReporte}/{servicioAfectadoId}/delete', [\AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers\InformeFallasController::class, 'delete']);
         Route::get('{numReporte}/download', [\AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers\InformeFallasController::class, 'download']);
     });
@@ -465,6 +466,14 @@ Route::group([
         Route::get('/', [\AMovil\Reports\ExtraccionDevFija\Modev\Controllers\ModevLogFijaController::class, 'view']);
         Route::post('/export', [\AMovil\Reports\ExtraccionDevFija\Modev\Controllers\ModevLogFijaController::class, 'export']);
     });
+    /*Route::group(['prefix' => 'extraccion-dev-fija/log-prepago', 'trac_name' => 'extraccion-dev-fija.log_prepago'], function(){
+        Route::get('/', [\AMovil\Reports\ExtraccionDevFija\Modev\Controllers\ModevLogFijaController::class, 'logPrepagoView']);
+        Route::post('/export', [\AMovil\Reports\ExtraccionDevFija\Modev\Controllers\ModevLogFijaController::class, 'exportLogPrepago']);
+    });
+    Route::group(['prefix' => 'extraccion-dev-fija/diligencias-web', 'trac_name' => 'extraccion-dev-fija.diligencias_web'], function(){
+        Route::get('/', [\AMovil\Reports\ExtraccionDevFija\DiligenciasWebFija\Controllers\DiligenciasWebController::class, 'view']);
+        Route::post('/export', [\AMovil\Reports\ExtraccionDevFija\DiligenciasWebFija\Controllers\DiligenciasWebController::class, 'export']);
+    });*/
     Route::group(['prefix' => 'extraccion-dev-fija/msisdn', 'trac_name' => 'extraccion-dev-fija.msisdn'], function(){
         Route::get('/', [\AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Controllers\ExtraccionDevFijaController::class, 'processByMsisdnView']);
         Route::post('process', [\AMovil\Reports\ExtraccionDevFija\ExtraccionDevFija\Controllers\ExtraccionDevFijaController::class, 'processByMsisdn']);
@@ -597,7 +606,9 @@ Route::group([
     Route::group(['prefix' => 'olt-cmts', 'trac_name' => 'olt-cmts'], function(){
         Route::get('/', [\AMovil\Reports\OltCmts\Controllers\OltCmtsController::class, 'view']);
         Route::get('find-values', [\AMovil\Reports\OltCmts\Controllers\OltCmtsController::class, 'findValues']);
+        Route::get('search', [\AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers\InformeFallasController::class, 'search']);
         Route::post('export', [\AMovil\Reports\OltCmts\Controllers\OltCmtsController::class, 'export']);
+        // Route::post('export-final', [\AMovil\Reports\OltCmts\Controllers\OltCmtsController::class, 'exportFinal']);
     });
 
     Route::group(['prefix' => 'reporte-esim', 'trac_name' => 'reporte-esim'], function(){
@@ -725,4 +736,12 @@ Route::group([
         Route::get('/', [\AMovil\Reports\AlertaMml\Controllers\AlertaMmlController::class, 'logView']);
         Route::get('search', [\AMovil\Reports\AlertaMml\Controllers\AlertaMmlController::class, 'logSearch']);
     });
+
+    /*Route::group(['prefix' => 'bajas-prepago', 'trac_name' => 'bajas-prepago'], function(){
+        Route::get('/', [\AMovil\Reports\BajaPrepago\Controllers\BajaPrepagoController::class, 'view']);
+        Route::get('search', [\AMovil\Reports\BajaPrepago\Controllers\BajaPrepagoController::class, 'search']);
+        Route::post('/pre-import', [\AMovil\Reports\BajaPrepago\Controllers\BajaPrepagoController::class, 'preImport']);
+        Route::post('/import', [\AMovil\Reports\BajaPrepago\Controllers\BajaPrepagoController::class, 'importFinal']);
+        Route::get('{id}/{estado}/download', [\AMovil\Reports\BajaPrepago\Controllers\BajaPrepagoController::class, 'export']);
+    });*/
 });

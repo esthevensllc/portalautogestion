@@ -74,6 +74,7 @@ class ExportOltCmtsReport
             unlink($tempfile);
             return Response::respData([
                 "filename" => "OLT_CMTS_{$strNow}.xlsx",
+                "filepath" => "/space/scripts/joel_mt/reporte_olt_cmts/{$filenameToSend}",
                 "type" => "xlsx",
                 "content" => $content
             ]);
@@ -82,6 +83,72 @@ class ExportOltCmtsReport
             $this->reportLog(null, $dtStart, $dtEnd);
             throw $th;
         }
+    }
+
+    public function exportFinal(int $typeId, $tickets){
+        $this->exportService->reset();
+        $data = [];
+        if($typeId === 1){
+            $data = $this->repo->getOltFinalReport($tickets);
+        } elseif ($typeId === 2){
+            $data = $this->repo->getCmtsFinalReport($tickets);
+        } else {
+            throw new Exception("El tipo de reporte no es valido");
+        }
+        
+        $headers = [
+            "customer_id_codcli" => ['label' => 'CUSTOMER_ID_CODCLI'],
+            "fuente" => ['label' => 'FUENTE'],
+            "serialnumber" => ['label' => 'SERIALNUMBER'],
+            "nombre" => ['label' => 'NOMBRE'],
+            "id_card_type_value" => ['label' => 'ID_CARD_TYPE_VALUE'],
+            "telefono_claro" => ['label' => 'TELEFONO_CLARO'],
+            "numero_adicional" => ['label' => 'NUMERO_ADICIONAL'],
+            "servicio_producto" => ['label' => 'SERVICIO_PRODUCTO'],
+            "correo" => ['label' => 'CORREO'],
+            "distrito" => ['label' => 'DISTRITO'],
+            "provincia" => ['label' => 'PROVINCIA'],
+            "departamento" => ['label' => 'DEPARTAMENTO'],
+            "descripcion_producto" => ['label' => 'DESCRIPCION_PRODUCTO'],
+            "agreement_status" => ['label' => 'AGREEMENT_STATUS'],
+            "agreement_status_date" => ['label' => 'AGREEMENT_STATUS_DATE'],
+            "agreement_start_date" => ['label' => 'AGREEMENT_START_DATE'],
+            "agreement_end_date" => ['label' => 'AGREEMENT_END_DATE'],
+            "installation_map" => ['label' => 'INSTALLATION_MAP'],
+            "numero" => ['label' => 'NUMERO'],
+            "dni_ruc" => ['label' => 'DNI_RUC'],
+        ];
+
+        $this->exportService->loadData($headers, $data, [
+            'sheetIndex' => 0,
+            'title' => "OLT_CMTS",
+            'styles' => [
+                'header' => [
+                    'font' => ['bold' => true, 'size' => 9],
+                    'borders'=> [
+                        'allBorders' => ['borderStyle' => SpreadsheetStyle\Border::BORDER_THIN, 'color' => array('rgb'=>'000000')]
+                    ]
+                ],
+                'body' => [
+                    'font' => ['size' => 9],
+                ]
+            ]
+        ]);
+
+        $now = new DateTime();
+        $content = $this->exportService->getWriter(WriterType::XLSX)->getOutput();
+
+        $strDate = $now->format('Ymd');
+        $strNow = $now->format("YmdHis");
+        $filenameToSend = "OLT_CMTS_FINAL_{$this->userIdentifier}_{$strDate}_{$strNow}.xlsx";
+        $this->localStorage->put("/space/scripts/joel_mt/reporte_olt_cmts/{$filenameToSend}", $content);
+
+        return Response::respData([
+            "filename" => "OLT_CMTS_{$strNow}.xlsx",
+            "filepath" => "/space/scripts/joel_mt/reporte_olt_cmts/{$filenameToSend}",
+            "type" => "xlsx",
+            "content" => $content
+        ]);
     }
 
     private function getAllInputs(int $typeId, Datetime $fecha)

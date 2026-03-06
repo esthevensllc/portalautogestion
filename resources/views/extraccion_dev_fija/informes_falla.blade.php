@@ -9,6 +9,9 @@
     .dataTables_scrollBody{
         position: unset !important;
     }
+    div.dt-buttons {
+        display: block !important;
+    }
 </style>
 @endsection
 
@@ -41,6 +44,33 @@
         </div>
     </form>
 </div>
+<div class="modal" id="update-ticket-modal" tabindex="-1" role="dialog">
+    <form id="frm-update-ticket">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">¿Estás seguro?</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    @csrf
+                    <input type="hidden" name="numero_reporte" value="">
+                    <input type="hidden" name="servicio_afectado_id" value="">
+                    <p class="label">¿Estás seguro de que quieres actualizar el ticket?</p>
+                    <div class="extra-content">
+                        <input type="text" class="form-control" name="ticket" placeholder="ingrese Ticket" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
 @endsection
 
 @section('content')
@@ -59,7 +89,8 @@ class="bg-white table table-striped table-hover nowrap rounded shadow-xs border-
             <th>Aprobado</th>
             <th>Procesado</th>
             <th>En Ejecución</th>
-            <th>Acreditado</th>
+            <th>Acreditado Post</th>
+            <th>Acreditado Pre</th>
             <th>#</th>
         </tr>
     </thead>
@@ -70,7 +101,16 @@ class="bg-white table table-striped table-hover nowrap rounded shadow-xs border-
 @endsection
 
 @section('after_scripts')
-@include('includes.datatables_js')
+<script type="text/javascript" src="{{ asset('packages/datatables.net/js/jquery.dataTables.min.js') }}"></script>
+<script type="text/javascript" src="{{ asset('packages/datatables.net-bs4/js/dataTables.bootstrap4.min.js') }}"></script>
+<script type="text/javascript" src="{{ asset('packages/datatables.net-responsive/js/dataTables.responsive.min.js') }}"></script>
+<script type="text/javascript" src="{{ asset('packages/datatables.net-responsive-bs4/js/responsive.bootstrap4.min.js') }}"></script>
+<script type="text/javascript" src="{{ asset('packages/datatables.net-fixedheader/js/dataTables.fixedHeader.min.js') }}"></script>
+<script type="text/javascript" src="{{ asset('packages/datatables.net-fixedheader-bs4/js/fixedHeader.bootstrap4.min.js') }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" integrity="sha384-+mbV2IY1Zk/X1p/nWllGySJSUN8uMs+gUAN10Or95UBH0fpj6GfKgPmgC5EXieXG" crossorigin="anonymous"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap4.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
 @include('includes.utils_js')
 <script>
 $(function() {
@@ -81,6 +121,19 @@ $(function() {
     });
 
     let _datatable = $(".tbl-documentlog").DataTable({
+        dom: 'Bfrtip',
+        buttons: [
+            {
+                extend: 'excelHtml5',
+                text: '<i class="la la-download"></i> Descargar tabla',
+                className: 'btn btn-danger btn-sm',
+                filename: 'informe_fallas',
+                exportOptions: {
+                    modifier: { page: 'all' },
+                    columns: ':not(:last-child)'
+                }
+            }
+        ],
         language: {url: "{{ url('packages/datatables-language/spanish.json') }}"},
         ajax: {
             url: config.url,
@@ -100,6 +153,7 @@ $(function() {
             {data: 'procesado'},
             {data: 'en_ejecucion'},
             {data: 'acreditado'},
+            {data: 'acreditado_pre'},
             {render: function(data, type, row){
                 let html = `<button
                         class="btn btn-sm btn-info btn-download"
@@ -133,6 +187,12 @@ $(function() {
                             data-id="${row['numero_reporte']}" data-servicioafectadoid="${row['servicio_afectado_id']}" data-name="enEspera">
                             <li class="la la-circle"></li> En Espera
                         </a>
+                        ${Number(row.tipo_reporte) === 2 ? `
+                            <a class="dropdown-item show-alert-updateticket" href="#"
+                                data-id="${row['numero_reporte']}" data-servicioafectadoid="${row['servicio_afectado_id']}" data-ticket="${row.ticket}">
+                                <li class="la la-circle"></li> Actualizar ticket
+                            </a>
+                        `:''}
                     </div>
                 </div>
                 <div class="dropdown d-inline-block" style="position: unset;">
@@ -237,6 +297,13 @@ $(function() {
                 .addClass(`${btnClass}`);
                 $("#update-status-modal").modal("show");
             });
+            $(".show-alert-updateticket").on('click', function(e){
+                let id = e.target.attributes["data-id"].value;
+                let servicioAfectadoId = e.target.attributes["data-servicioafectadoid"].value;
+                $("#frm-update-ticket input[name=numero_reporte]").val(id);
+                $("#frm-update-ticket input[name=servicio_afectado_id]").val(servicioAfectadoId);
+                $("#update-ticket-modal").modal('show');
+            });
         },
         lengthChange: false,
         searching: true,
@@ -252,6 +319,35 @@ $(function() {
         // let numero_reporte = $("#frm-update-status input[name=numero_reporte]").val();
         let formData = new FormData(e.target);
         utils.fetch(config.updateStatusApi, {
+            method: "POST",
+            headers: {"Accept": "application/json"},
+            body: formData
+        })
+        .then(async (resp) => {
+            let isOK = resp.ok;
+            let json = await resp.json();
+            if(isOK){
+                _datatable.ajax.reload();
+                new Noty({
+                    type: 'success',
+                    layout: 'topRight',
+                    text: "Se actualizo correctamente"
+                }).show();
+            }else{
+                new Noty({
+                    type: 'error',
+                    layout: 'topRight',
+                    text: "Error: "+json.message
+                }).show();
+            }
+        });
+    });
+
+    $('#frm-update-ticket').on("submit", function(e) {
+        e.preventDefault();
+        $("#update-ticket-modal").modal("hide");
+        let formData = new FormData(e.target);
+        utils.fetch(config.updateTicketApi, {
             method: "POST",
             headers: {"Accept": "application/json"},
             body: formData
