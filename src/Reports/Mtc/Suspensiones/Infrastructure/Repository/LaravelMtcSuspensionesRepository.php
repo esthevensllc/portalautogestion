@@ -993,7 +993,7 @@ class LaravelMtcSuspensionesRepository implements MtcSuspensionesRepository
     public function getLineasMoviles()
     {
         return DB::table("USRAES.TMP_SUSPENSIONES_1_{$this->userIdentifier}")
-        ->select(DB::raw('\'51\'||MSISDN||\',TEXT,"A solicitud del MTC el trafico saliente de voz y datos de tu servicio sera suspendido por realizar comunicaciones malintencionadas"\' as mensaje'))
+        ->select(DB::raw('\'51\'||MSISDN||\',"A solicitud del MTC el trafico saliente de voz y datos de tu servicio sera suspendido por realizar comunicaciones malintencionadas"\' as mensaje'))
         ->where('estado_subs', 'not like', 'D')
         ->where(DB::raw("substr(msisdn,1,1)"), '9')
         ->get();

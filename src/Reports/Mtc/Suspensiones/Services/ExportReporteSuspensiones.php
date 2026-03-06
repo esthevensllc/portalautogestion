@@ -164,6 +164,7 @@ class ExportReporteSuspensiones
         $lineas_moviles = $this->repo->getLineasMoviles();
         $filename3 = "{$this->storage_path}/".Uuid::uuid4()->toString()."txt";
         $fp = fopen($filename3, 'w');
+	    fwrite($fp, "MSISDN,MENSAJE\n");
         foreach($lineas_moviles as $row){
             fwrite($fp, $row->mensaje."\n");
         }
@@ -192,7 +193,7 @@ class ExportReporteSuspensiones
         $csv_content = utf8_decode(file_get_contents($filename1));
         $zip->addFromString("MTC_E_SUS_{$str_fecha}.csv", str_replace('"', '', $csv_content));
         $zip->addFromString("LINEAS_{$str_fecha}.xlsx", file_get_contents($filename2));
-        $zip->addFromString("Movil_SMS_".$dt->format('dmY').".txt", file_get_contents($filename3));
+        $zip->addFromString("SMS_REGU_MT_MREG_LLA_MAL_".$dt->format('dmY').".txt", file_get_contents($filename3));
         $zip->addFromString("Fija_IVR_".$dt->format('d-m-Y').".txt", file_get_contents($filename4));
         //$zip->addFromString('test.txt', 'ñ');
         $zip->close();
