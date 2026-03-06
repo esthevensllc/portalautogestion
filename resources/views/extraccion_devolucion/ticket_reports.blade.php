@@ -12,6 +12,12 @@
     table.dataTable td, table.dataTable th{
         padding: 0.4rem;
     }
+    .dataTables_scrollBody{
+        position: unset !important;
+    }
+    div.dt-buttons {
+        display: block !important;
+    }
 </style>
 @endsection
 
@@ -54,9 +60,26 @@
 <script type="text/javascript" src="{{ asset('packages/datatables.net-responsive-bs4/js/responsive.bootstrap4.min.js') }}"></script>
 <script type="text/javascript" src="{{ asset('packages/datatables.net-fixedheader/js/dataTables.fixedHeader.min.js') }}"></script>
 <script type="text/javascript" src="{{ asset('packages/datatables.net-fixedheader-bs4/js/fixedHeader.bootstrap4.min.js') }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" integrity="sha384-+mbV2IY1Zk/X1p/nWllGySJSUN8uMs+gUAN10Or95UBH0fpj6GfKgPmgC5EXieXG" crossorigin="anonymous"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap4.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
 <script>
     const config = @json($config);
     const _datatable = $(".table").DataTable({
+        dom: 'Bfrtip',
+        buttons: [
+            {
+                extend: 'excelHtml5',
+                text: '<i class="la la-download"></i> Descargar tabla',
+                className: 'btn btn-danger btn-sm',
+                filename: 'registros_de_ticket',
+                exportOptions: {
+                    modifier: { page: 'all' },
+                    columns: ':not(:last-child)'
+                }
+            }
+        ],
         language: {url: "{{ asset('packages/datatables-language/spanish.json') }}"},
         ajax: {
             url: config.url,
