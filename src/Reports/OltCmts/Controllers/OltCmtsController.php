@@ -68,20 +68,27 @@ class OltCmtsController
     {
         ini_set('max_execution_time', '3600');
 
+        /*
         $numeroReporte = $request->input("numero_reporte");
 
         $result = $this->informeFinder->__invoke(["numero_reporte.eq.{$numeroReporte}"]);
         if(count($result["data"]) > 0){
             return response()->json(["message" => "El informe de fallas '{$numeroReporte}' ya existe"], 400);
-        }
+        }*/
 
         $response = $this->exporter->__invoke(
             $request->input("type_id"),
-            $request->input("fecha_ini"),
+            $request->input("fecha"),
             $request->input("values", [])
         )->data();
-        $response['content'] = null;
+        return response($response["content"], 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment;filename="'. $response["filename"] .'"'
+        ]);
 
+        /* $response['content'] = null;
+
+        
         $now = new DateTime();
         $fechaIni = $request->input("fecha_ini");
         $horaIni = $request->input("hora_ini");
@@ -147,6 +154,7 @@ class OltCmtsController
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition' => 'attachment;filename="'. $responseFinal["filename"] .'"'
         ]);
+        */
     }
 
     public function exportFinal(Request $request)
