@@ -316,5 +316,9 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\ExtraccionDevFija\DiligenciasWebFija\Domain\DiligenciaWebFijaRepository::class,
             \AMovil\Reports\ExtraccionDevFija\DiligenciasWebFija\Infrastructure\EloquentDiligenciaWebFijaRepository::class
         );
+        $this->app->bind(
+            \AMovil\Reports\FacturaDetallada\FacturacionDetallada\Domain\FacturacionDetalladaRepository::class,
+            \AMovil\Reports\FacturaDetallada\FacturacionDetallada\Infrastructure\EloquentFacturacionDetalladaRepository::class
+        );
     }
 }
