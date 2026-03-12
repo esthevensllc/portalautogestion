@@ -94,7 +94,7 @@ class ExportFacturacionDetallada
             "otros_cargo_abonos" => ["label" => "otros cargos y abonos"],
             "total_cobranzas_diferidas" => ["label" => "cargos diferidos (*)"],
             "cargo_ldn" => ["label" => "cargos ldn"],
-            "cargo_vas " => ["label" => "cargos vas"],
+            "cargo_vas" => ["label" => "cargos vas"],
         ];
 
         $this->exportService->loadData($headers, $data, [
