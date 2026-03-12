@@ -737,6 +737,12 @@ Route::group([
         Route::get('search', [\AMovil\Reports\AlertaMml\Controllers\AlertaMmlController::class, 'logSearch']);
     });
 
+    //FACTURA DETALLADA
+    Route::group(['prefix' => 'facutra-detallada', 'trac_name' => 'facutra-detallada'], function(){
+        Route::get('/', [\AMovil\Reports\FacturaDetallada\Controllers\FacturaDetalladaController::class, 'view']);
+        Route::post('/export', [\AMovil\Reports\FacturaDetallada\Controllers\FacturaDetalladaController::class, 'export']);
+    });
+
     /*Route::group(['prefix' => 'bajas-prepago', 'trac_name' => 'bajas-prepago'], function(){
         Route::get('/', [\AMovil\Reports\BajaPrepago\Controllers\BajaPrepagoController::class, 'view']);
         Route::get('search', [\AMovil\Reports\BajaPrepago\Controllers\BajaPrepagoController::class, 'search']);
