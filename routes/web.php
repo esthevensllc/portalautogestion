@@ -738,7 +738,7 @@ Route::group([
     });
 
     //FACTURA DETALLADA
-    Route::group(['prefix' => 'facutra-detallada', 'trac_name' => 'facutra-detallada'], function(){
+    Route::group(['prefix' => 'factura-detallada', 'trac_name' => 'factura-detallada'], function(){
         Route::get('/', [\AMovil\Reports\FacturaDetallada\Controllers\FacturaDetalladaController::class, 'view']);
         Route::post('/export', [\AMovil\Reports\FacturaDetallada\Controllers\FacturaDetalladaController::class, 'export']);
     });
