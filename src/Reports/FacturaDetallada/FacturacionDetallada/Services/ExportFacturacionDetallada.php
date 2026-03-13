@@ -35,7 +35,7 @@ class ExportFacturacionDetallada
         try {
             $dtPeriodo = DateTime::createFromFormat("Ym", $periodo);
             $data = $this->getDataBy($value, $dtPeriodo);
-            $tempfile = $this->export($data);
+            $tempfile = $this->export($data, $dtPeriodo, $value);
             $now = new DateTime();
             $content = file_get_contents($tempfile);
             $dtEnd = new DateTime();
@@ -74,9 +74,8 @@ class ExportFacturacionDetallada
         return $values;
     }
 
-    private function export($data)
+   private function export($data, $periodo, $nroCuenta)
     {
-        
         $headers = [
             "nro_factura" => ["label" => "N°"],
             "nro_telefono" => ["label" => "Línea"],
@@ -100,18 +99,84 @@ class ExportFacturacionDetallada
         $this->exportService->loadData($headers, $data, [
             'sheetIndex' => 0,
             'title' => "FACTURA_DETALLADA",
+            'y_start_index' => 6, // header de tabla en fila 7, data desde fila 8
             'styles' => [
+                // Título
+                'A2:Q2' => [
+                    'font' => ['bold' => true, 'size' => 14],
+                ],
+
+                // Labels de cabecera superior
+                'A4:A5' => [
+                    'font' => ['bold' => true, 'size' => 11],
+                ],
+                'C4:C5' => [
+                    'font' => ['bold' => true, 'size' => 11],
+                ],
+                'D4:D5' => [
+                    'font' => ['size' => 11],
+                ],
+
+                // Cabecera de tabla
                 'header' => [
                     'font' => ['bold' => true, 'size' => 9],
-                    'borders'=> [
-                        'allBorders' => ['borderStyle' => SpreadsheetStyle\Border::BORDER_THIN, 'color' => array('rgb'=>'000000')]
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => SpreadsheetStyle\Border::BORDER_THIN,
+                            'color' => ['rgb' => '000000']
+                        ]
                     ]
                 ],
+
+                // Cuerpo
                 'body' => [
                     'font' => ['size' => 9],
                 ]
             ]
         ]);
+
+        $sheet = $this->exportService->objPHPExcel->getActiveSheet();
+
+        // Título
+        $sheet->setCellValue('A2', 'FACTURA DETALLADA');
+
+        // Datos superiores
+        $sheet->setCellValue('A4', 'Periodo');
+        $sheet->setCellValue('C4', ':');
+        $sheet->setCellValue('D4', $periodo);
+
+        $sheet->setCellValue('A5', 'Nro. Cuenta');
+        $sheet->setCellValue('C5', ':');
+        $sheet->setCellValue('D5', $nroCuenta);
+
+        // Anchos de columnas para que se parezca al formato adjunto
+        $widths = [
+            'A' => 18,
+            'B' => 14,
+            'C' => 30,
+            'D' => 22,
+            'E' => 12,
+            'F' => 22,
+            'G' => 18,
+            'H' => 18,
+            'I' => 20,
+            'J' => 20,
+            'K' => 12,
+            'L' => 15,
+            'M' => 18,
+            'N' => 20,
+            'O' => 18,
+            'P' => 12,
+            'Q' => 12,
+        ];
+
+        foreach ($widths as $column => $width) {
+            $sheet->getColumnDimension($column)->setWidth($width);
+        }
+
+        // Opcional: alinear verticalmente la cabecera
+        $sheet->getStyle('A7:Q7')->getAlignment()->setWrapText(true);
+
         return $this->exportService->getWriter(WriterType::XLSX)->saveToTempfile();
     }
 
