@@ -135,7 +135,7 @@ class ExportFacturacionDetallada
             ]
         ]);
 
-        $sheet = $this->exportService->objPHPExcel->getActiveSheet();
+        $sheet = $this->exportService->getExportReference()->getActiveSheet();
 
         // Título
         $sheet->setCellValue('A2', 'FACTURA DETALLADA');
