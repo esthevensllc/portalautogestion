@@ -74,7 +74,7 @@ class ExportFacturacionDetallada
         return $values;
     }
 
-   private function export($data, $periodo, $nroCuenta)
+    private function export($data, $periodo, $nroCuenta)
     {
         $headers = [
             "nro_factura" => ["label" => "N°"],
@@ -96,30 +96,37 @@ class ExportFacturacionDetallada
             "cargo_vas" => ["label" => "cargos vas"],
         ];
 
+        $firstRow = $data[0] ?? null;
+
+        $nroRecibo = '';
+
+        if (is_array($firstRow)) {
+            $nroRecibo = $firstRow['nro_factura'] ?? '';
+        } elseif (is_object($firstRow)) {
+            $nroRecibo = $firstRow->nro_factura ?? '';
+        }
+
         $this->exportService->loadData($headers, $data, [
             'sheetIndex' => 0,
             'title' => "FACTURA_DETALLADA",
-            'y_start_index' => 6, // header de tabla en fila 7, data desde fila 8
+            'y_start_index' => 8, // encabezado en fila 9, data desde fila 10
             'styles' => [
-                // Título
                 'A2:Q2' => [
-                    'font' => ['bold' => true, 'size' => 14],
+                    'font' => [
+                        'bold' => true,
+                        'size' => 12,
+                    ],
                 ],
-
-                // Labels de cabecera superior
-                'A4:A5' => [
-                    'font' => ['bold' => true, 'size' => 11],
+                'A4:B6' => [
+                    'font' => [
+                        'size' => 10,
+                    ],
                 ],
-                'C4:C5' => [
-                    'font' => ['bold' => true, 'size' => 11],
-                ],
-                'D4:D5' => [
-                    'font' => ['size' => 11],
-                ],
-
-                // Cabecera de tabla
                 'header' => [
-                    'font' => ['bold' => true, 'size' => 9],
+                    'font' => [
+                        'bold' => true,
+                        'size' => 9
+                    ],
                     'borders' => [
                         'allBorders' => [
                             'borderStyle' => SpreadsheetStyle\Border::BORDER_THIN,
@@ -127,55 +134,51 @@ class ExportFacturacionDetallada
                         ]
                     ]
                 ],
-
-                // Cuerpo
                 'body' => [
-                    'font' => ['size' => 9],
+                    'font' => [
+                        'size' => 9
+                    ],
                 ]
             ]
         ]);
 
         $sheet = $this->exportService->getExportReference()->getActiveSheet();
 
-        // Título
+        // bloque superior
         $sheet->setCellValue('A2', 'FACTURA DETALLADA');
+        $sheet->setCellValue('A4', 'Periodo:');
+        $sheet->setCellValue('B4', $periodo);
+        $sheet->setCellValue('A5', 'Nro. Cuenta:');
+        $sheet->setCellValue('B5', $nroCuenta);
+        $sheet->setCellValue('A6', 'Nro. Recibo:');
+        $sheet->setCellValue('B6', $nroRecibo);
 
-        // Datos superiores
-        $sheet->setCellValue('A4', 'Periodo');
-        $sheet->setCellValue('C4', ':');
-        $sheet->setCellValue('D4', $periodo);
+        // estilos bloque superior
+        $sheet->getStyle('A2')->getFont()->setBold(true);
+        $sheet->getStyle('A4:A6')->getFont()->setBold(true);
+        $sheet->getStyle('A2')->getFont()->setSize(12);
 
-        $sheet->setCellValue('A5', 'Nro. Cuenta');
-        $sheet->setCellValue('C5', ':');
-        $sheet->setCellValue('D5', $nroCuenta);
+        // ajustar ancho de columnas según el formato del excel correcto
+        $sheet->getColumnDimension('A')->setWidth(18);
+        $sheet->getColumnDimension('B')->setWidth(22.71);
+        $sheet->getColumnDimension('C')->setWidth(30);
+        $sheet->getColumnDimension('D')->setWidth(22);
+        $sheet->getColumnDimension('E')->setWidth(12);
+        $sheet->getColumnDimension('F')->setWidth(22);
+        $sheet->getColumnDimension('G')->setWidth(18);
+        $sheet->getColumnDimension('H')->setWidth(13);
+        $sheet->getColumnDimension('I')->setWidth(20);
+        $sheet->getColumnDimension('J')->setWidth(13);
+        $sheet->getColumnDimension('K')->setWidth(12);
+        $sheet->getColumnDimension('L')->setWidth(15);
+        $sheet->getColumnDimension('M')->setWidth(18);
+        $sheet->getColumnDimension('N')->setWidth(20);
+        $sheet->getColumnDimension('O')->setWidth(18);
+        $sheet->getColumnDimension('P')->setWidth(12);
+        $sheet->getColumnDimension('Q')->setWidth(13);
 
-        // Anchos de columnas para que se parezca al formato adjunto
-        $widths = [
-            'A' => 18,
-            'B' => 14,
-            'C' => 30,
-            'D' => 22,
-            'E' => 12,
-            'F' => 22,
-            'G' => 18,
-            'H' => 18,
-            'I' => 20,
-            'J' => 20,
-            'K' => 12,
-            'L' => 15,
-            'M' => 18,
-            'N' => 20,
-            'O' => 18,
-            'P' => 12,
-            'Q' => 12,
-        ];
-
-        foreach ($widths as $column => $width) {
-            $sheet->getColumnDimension($column)->setWidth($width);
-        }
-
-        // Opcional: alinear verticalmente la cabecera
-        $sheet->getStyle('A7:Q7')->getAlignment()->setWrapText(true);
+        // wrap del encabezado
+        $sheet->getStyle('A9:Q9')->getAlignment()->setWrapText(true);
 
         return $this->exportService->getWriter(WriterType::XLSX)->saveToTempfile();
     }
