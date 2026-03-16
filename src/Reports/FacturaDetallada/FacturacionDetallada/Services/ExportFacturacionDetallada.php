@@ -141,18 +141,21 @@ class ExportFacturacionDetallada
                 ]
             ]
         ]);
-        
-        $periodoExcel = preg_match('/^\d{6}$/', (string)$periodoInput)
-            ? (string)$periodoInput
-            : date('Ym', strtotime($periodoInput));
+
+        $periodoExcel = $periodoInput instanceof \DateTimeInterface
+            ? $periodoInput->format('Ym')
+            : date('Ym', strtotime((string)$periodoInput));
 
         $sheet = $this->exportService->getExportReference()->getActiveSheet();
 
         // bloque superior
         $sheet->setCellValue('A2', 'FACTURA DETALLADA');
         $sheet->setCellValue('A4', 'Periodo:');
-        $sheet->setCellValue('A4', 'Periodo:');
-        $sheet->setCellValueExplicit('B4', $periodoExcel, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit(
+            'B4',
+            $periodoExcel,
+            \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING
+        );
         $sheet->setCellValue('A5', 'Nro. Cuenta:');
         $sheet->setCellValue('B5', $nroCuenta);
         $sheet->setCellValue('A6', 'Nro. Recibo:');
