@@ -142,7 +142,7 @@ $(function() {
             return stopWithError(msg_error);
         }
 
-        if (yyyymmFecha2 > maxPeriod) {
+        if (yyyymmFecha2 < minPeriod) {
             return stopWithError(msg_error);
         }
 
