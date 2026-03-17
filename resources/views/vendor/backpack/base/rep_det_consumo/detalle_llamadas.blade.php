@@ -163,7 +163,7 @@ $(function() {
         })
         .then(response => response.json())
         .then(response => {
-            if(response.passes === true){
+            if(response.passes === true || response.errors.message.startsWith('La factura para el numero de cuenta'.toLowercase())){
                 utils.fetch("{{asset(isset($data['url_export']) ? $data['url_export'] : '')}}"+`?cod_cliente=${cod_cliente}&periodo=${periodo}&tipo_input=${tipo_input}&fecha1=${fecha1}&fecha2=${fecha2}&consumo_sin_cargo=${consumo_sin_cargo}`, {
                     method: 'GET'
                 })
