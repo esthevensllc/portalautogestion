@@ -150,10 +150,9 @@ $(function() {
         if (yyyymmFecha1 > yyyymmFecha2) {
             return stopWithError("Rango inválido: la fecha inicial no puede ser mayor que la fecha final.");
         }
-
-        utils.fetch("{{asset($data['url_validator'])}}"+`?cod_cliente=${cod_cliente}&periodo=${periodo}&tipo_input=${tipo_input}&fecha1=${fecha1}&fecha2=${fecha2}`, {
-            method: 'GET',
-            headers: {"Accept": "application/json"}
+        
+        utils.fetch("{{asset(isset($data['url_export']) ? $data['url_export'] : '')}}"+`?cod_cliente=${cod_cliente}&periodo=${periodo}&tipo_input=${tipo_input}&fecha1=${fecha1}&fecha2=${fecha2}&consumo_sin_cargo=${consumo_sin_cargo}`, {
+            method: 'GET'
         })
         .then(response => {
             if(!response.ok){
@@ -161,51 +160,28 @@ $(function() {
             }
             return response;
         })
-        .then(response => response.json())
-        .then(response => {
-            if(response.passes === true || response.errors.message.startsWith('La factura para el numero de cuenta'.toLowerCase())){
-                utils.fetch("{{asset(isset($data['url_export']) ? $data['url_export'] : '')}}"+`?cod_cliente=${cod_cliente}&periodo=${periodo}&tipo_input=${tipo_input}&fecha1=${fecha1}&fecha2=${fecha2}&consumo_sin_cargo=${consumo_sin_cargo}`, {
-                    method: 'GET'
-                })
-                .then(response => {
-                    if(!response.ok){
-                        throw new Error(response.statusText);
-                    }
-                    return response;
-                })
-                //.then(response => response.blob())
-                .then(async(response) => {
-                    const content_disp = response.headers.get('Content-Disposition');
-                    let filename = config['filename'];
+        //.then(response => response.blob())
+        .then(async(response) => {
+            const content_disp = response.headers.get('Content-Disposition');
+            let filename = config['filename'];
 
-                    const header_parts = content_disp.replaceAll('"', '').split(";");
-                    header_parts.forEach(row => {
-                        if(row.split("=")[1] !== undefined){
-                            filename = row.split("=")[1];
-                        }
-                    });
-                    const response_content = await response.blob();
-                    downloadFile(response_content , filename);
-                    $(".loader_component").hide();
-                    $(".btn_export").prop('disabled', false);
-                })
-                .catch(error => {
-                    $(".loader_component").hide();
-                    $(".btn_export").prop('disabled', false);
-                    Promise.reject();
-                    alert(error);
-                    //throw(error);
-                });
-            }else{
-                $(".loader_component").hide();
-                $(".btn_export").prop('disabled', false);
-                alert(response.errors.message);
-            }
+            const header_parts = content_disp.replaceAll('"', '').split(";");
+            header_parts.forEach(row => {
+                if(row.split("=")[1] !== undefined){
+                    filename = row.split("=")[1];
+                }
+            });
+            const response_content = await response.blob();
+            downloadFile(response_content , filename);
+            $(".loader_component").hide();
+            $(".btn_export").prop('disabled', false);
         })
         .catch(error => {
             $(".loader_component").hide();
             $(".btn_export").prop('disabled', false);
+            Promise.reject();
             alert(error);
+            //throw(error);
         });
     });
 
