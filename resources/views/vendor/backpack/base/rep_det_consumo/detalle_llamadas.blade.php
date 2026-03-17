@@ -127,7 +127,7 @@ $(function() {
         const yyyymmFecha1 = yyyymmFromDateInput(fecha1);
         const yyyymmFecha2 = yyyymmFromDateInput(fecha2);
 
-        let msg_error = `La factura para el numero de cuenta ${cod_cliente} en los periodos ${fecha1} y ${fecha2} no cuenta con registros en las siguientes tablas TEMP_TAG1480, TEMP_TAG1460, TEMP_TAG1470. Por favor registrar el Nintex solicitando el restore de las tablas e indicando el periodo necesario a traves del siguiente link http://wfportalnintex/dir/red/soporte/_layouts/15/start.aspx#/Solicitud%20BR/Forms/AllItems.aspx y enviar correo a Orlando Caurino con el asunto "Restore TEMP_TAG".
+        let msg_error = `test La factura para el numero de cuenta ${cod_cliente} en los periodos ${fecha1} y ${fecha2} no cuenta con registros en las siguientes tablas TEMP_TAG1480, TEMP_TAG1460, TEMP_TAG1470. Por favor registrar el Nintex solicitando el restore de las tablas e indicando el periodo necesario a traves del siguiente link http://wfportalnintex/dir/red/soporte/_layouts/15/start.aspx#/Solicitud%20BR/Forms/AllItems.aspx y enviar correo a Orlando Caurino con el asunto "Restore TEMP_TAG".
                 Detalle de requerimiento
                 Nombre del servidor: scan-dbto.tim.com.pe
                 Dirección IP: 172.20.193.21
