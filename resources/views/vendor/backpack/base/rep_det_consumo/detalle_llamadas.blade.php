@@ -127,7 +127,7 @@ $(function() {
         const yyyymmFecha1 = yyyymmFromDateInput(fecha1);
         const yyyymmFecha2 = yyyymmFromDateInput(fecha2);
 
-        let msg_error = `test La factura para el numero de cuenta ${cod_cliente} en los periodos ${fecha1} y ${fecha2} no cuenta con registros en las siguientes tablas TEMP_TAG1480, TEMP_TAG1460, TEMP_TAG1470. Por favor registrar el Nintex solicitando el restore de las tablas e indicando el periodo necesario a traves del siguiente link http://wfportalnintex/dir/red/soporte/_layouts/15/start.aspx#/Solicitud%20BR/Forms/AllItems.aspx y enviar correo a Orlando Caurino con el asunto "Restore TEMP_TAG".
+        let msg_error = `La factura para el numero de cuenta ${cod_cliente} en los periodos ${fecha1} y ${fecha2} no cuenta con registros en las siguientes tablas TEMP_TAG1480, TEMP_TAG1460, TEMP_TAG1470. Por favor registrar el Nintex solicitando el restore de las tablas e indicando el periodo necesario a traves del siguiente link http://wfportalnintex/dir/red/soporte/_layouts/15/start.aspx#/Solicitud%20BR/Forms/AllItems.aspx y enviar correo a Orlando Caurino con el asunto "Restore TEMP_TAG".
                 Detalle de requerimiento
                 Nombre del servidor: scan-dbto.tim.com.pe
                 Dirección IP: 172.20.193.21
@@ -150,9 +150,10 @@ $(function() {
         if (yyyymmFecha1 > yyyymmFecha2) {
             return stopWithError("Rango inválido: la fecha inicial no puede ser mayor que la fecha final.");
         }
-        
-        utils.fetch("{{asset(isset($data['url_export']) ? $data['url_export'] : '')}}"+`?cod_cliente=${cod_cliente}&periodo=${periodo}&tipo_input=${tipo_input}&fecha1=${fecha1}&fecha2=${fecha2}&consumo_sin_cargo=${consumo_sin_cargo}`, {
-            method: 'GET'
+
+        utils.fetch("{{asset($data['url_validator'])}}"+`?cod_cliente=${cod_cliente}&periodo=${periodo}&tipo_input=${tipo_input}&fecha1=${fecha1}&fecha2=${fecha2}`, {
+            method: 'GET',
+            headers: {"Accept": "application/json"}
         })
         .then(response => {
             if(!response.ok){
@@ -160,28 +161,51 @@ $(function() {
             }
             return response;
         })
-        //.then(response => response.blob())
-        .then(async(response) => {
-            const content_disp = response.headers.get('Content-Disposition');
-            let filename = config['filename'];
+        .then(response => response.json())
+        .then(response => {
+            if(response.passes === true){
+                utils.fetch("{{asset(isset($data['url_export']) ? $data['url_export'] : '')}}"+`?cod_cliente=${cod_cliente}&periodo=${periodo}&tipo_input=${tipo_input}&fecha1=${fecha1}&fecha2=${fecha2}&consumo_sin_cargo=${consumo_sin_cargo}`, {
+                    method: 'GET'
+                })
+                .then(response => {
+                    if(!response.ok){
+                        throw new Error(response.statusText);
+                    }
+                    return response;
+                })
+                //.then(response => response.blob())
+                .then(async(response) => {
+                    const content_disp = response.headers.get('Content-Disposition');
+                    let filename = config['filename'];
 
-            const header_parts = content_disp.replaceAll('"', '').split(";");
-            header_parts.forEach(row => {
-                if(row.split("=")[1] !== undefined){
-                    filename = row.split("=")[1];
-                }
-            });
-            const response_content = await response.blob();
-            downloadFile(response_content , filename);
-            $(".loader_component").hide();
-            $(".btn_export").prop('disabled', false);
+                    const header_parts = content_disp.replaceAll('"', '').split(";");
+                    header_parts.forEach(row => {
+                        if(row.split("=")[1] !== undefined){
+                            filename = row.split("=")[1];
+                        }
+                    });
+                    const response_content = await response.blob();
+                    downloadFile(response_content , filename);
+                    $(".loader_component").hide();
+                    $(".btn_export").prop('disabled', false);
+                })
+                .catch(error => {
+                    $(".loader_component").hide();
+                    $(".btn_export").prop('disabled', false);
+                    Promise.reject();
+                    alert(error);
+                    //throw(error);
+                });
+            }else{
+                $(".loader_component").hide();
+                $(".btn_export").prop('disabled', false);
+                alert(response.errors.message);
+            }
         })
         .catch(error => {
             $(".loader_component").hide();
             $(".btn_export").prop('disabled', false);
-            Promise.reject();
             alert(error);
-            //throw(error);
         });
     });
 

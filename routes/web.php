@@ -100,7 +100,7 @@ Route::group([
     Route::group(['prefix' => 'rep-det-consumo/detalle-consumo', 'trac_name' => 'detallle_consumo.detallado'], function(){
         Route::get('detallado', [AMovil\Reports\RepDetConsumo\Controllers\DetalleConsumoController::class, 'detallado']);
         Route::get('detallado/export', [AMovil\Reports\RepDetConsumo\Controllers\DetalleConsumoController::class, 'exportDetallado']);
-        Route::get('detallado/validator', [AMovil\Reports\RepDetConsumo\Controllers\DetalleConsumoController::class, 'validation']);
+        Route::get('detallado/validator', [AMovil\Reports\RepDetConsumo\Controllers\DetalleConsumoController::class, 'validationDetallado']);
         Route::get('detallado/clientes', [AMovil\Reports\RepDetConsumo\Controllers\DetalleConsumoController::class, 'clienteValidator']);
     });
     Route::group(['prefix' => 'rep-det-consumo/detalle-consumo', 'trac_name' => 'detallado_consumo.consolidado'], function(){
