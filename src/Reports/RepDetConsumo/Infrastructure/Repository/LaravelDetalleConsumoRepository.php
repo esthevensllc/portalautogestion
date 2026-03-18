@@ -934,6 +934,8 @@ class LaravelDetalleConsumoRepository
         $params = ['p_cliente' => $cliente, 'p_periodo' => $periodo];
         $resp = DB::connection('oracle_dbtodb')->select(DB::Raw("SELECT COUNT(*) AS flag FROM (SELECT invoicenumber, clientacctno, cycle, periodo,accountname  ,fecregistro ,customerid,PERIODSTART,PERIODEND
         FROM TEMP_TAG_11  WHERE CLIENTACCTNO IN (:p_cliente) AND PERIODO=:p_periodo ORDER BY PERIODO DESC)A"), $params);
+
+        dd($resp[0]);
         return $resp[0]->flag > 0;
     }
 
