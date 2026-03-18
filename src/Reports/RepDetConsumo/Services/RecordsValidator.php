@@ -83,6 +83,7 @@ class RecordsValidator
                     DateTime::createFromFormat("Y-m-d", $fecha1),
                     DateTime::createFromFormat("Y-m-d", $fecha2)
                 );
+                dd($periodos);
             }
             $invalid_periods = [];
             foreach($periodos as $p){
