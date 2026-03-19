@@ -92,7 +92,8 @@ class RecordsValidator
             }
             if(count($invalid_periods) > 0){
                 $str_periodos = implode(",", $invalid_periods);
-                $errors['message'] = "No hay registros para el cliente {$cliente} en los periodos {$str_periodos} en la tabla TEMP_TAG_11 de la DBTODB. Por favor comunicarse con Carlos Eduardo Farfan Castro - carlos.farfan@claro.com.pe - COLOCAR EN EL ASUNTO LA PALABRA CLAVE \"TEMP_TAG_11 \"";
+                //$errors['message'] = "No hay registros para el cliente {$cliente} en los periodos {$str_periodos} en la tabla TEMP_TAG_11 de la DBTODB. Por favor comunicarse con Carlos Eduardo Farfan Castro - carlos.farfan@claro.com.pe - COLOCAR EN EL ASUNTO LA PALABRA CLAVE \"TEMP_TAG_11 \"";
+                $errors['message'] = "No hay registros para el cliente {$cliente} en los periodos {$str_periodos} en la tabla TEMP_TAG_11 de la DBTODB. Por favor comunicarse con soporte facturación - FacturacionPostpago@claro.com.pe con copia Carlos Eduardo Farfan Castro - carlos.farfan@claro.com.pe - COLOCAR EN EL ASUNTO LA PALABRA CLAVE \"TEMP_TAG_11 \"";
             }else{
                 $invalid_periods = [];
                 foreach($periodos as $p){

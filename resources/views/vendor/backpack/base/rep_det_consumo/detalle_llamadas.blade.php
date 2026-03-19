@@ -71,7 +71,7 @@
             </div>
             <div class="text-danger">
                 *Toda consulta que se realice se registrara en un log
-                <br>*Si el periodo a consultar no se entra en el rango mostrado comunicarse con el área de Facturación a Clientes
+                <br>*Si el periodo a consultar no se entra en el rango mostrado comunicarse con el área correspondiente
                 <br>*El equipo de facturación cuenta con 5 dias de plazo luego del ciclo de cierre para cargar información del recibo
             </div>
         </form>
@@ -127,12 +127,14 @@ $(function() {
         const yyyymmFecha1 = yyyymmFromDateInput(fecha1);
         const yyyymmFecha2 = yyyymmFromDateInput(fecha2);
 
-        let msg_error = `La factura para el numero de cuenta ${cod_cliente} en los periodos ${fecha1} y ${fecha2} no cuenta con registros en las siguientes tablas TEMP_TAG1480, TEMP_TAG1460, TEMP_TAG1470. Por favor registrar el Nintex solicitando el restore de las tablas e indicando el periodo necesario a traves del siguiente link http://wfportalnintex/dir/red/soporte/_layouts/15/start.aspx#/Solicitud%20BR/Forms/AllItems.aspx y enviar correo a Orlando Caurino con el asunto "Restore TEMP_TAG".
+        /* let msg_error = `La factura para el numero de cuenta ${cod_cliente} en los periodos ${fecha1} y ${fecha2} no cuenta con registros en las siguientes tablas TEMP_TAG1480, TEMP_TAG1460, TEMP_TAG1470. Por favor registrar el Nintex solicitando el restore de las tablas e indicando el periodo necesario a traves del siguiente link http://wfportalnintex/dir/red/soporte/_layouts/15/start.aspx#/Solicitud%20BR/Forms/AllItems.aspx y enviar correo a Orlando Caurino con el asunto "Restore TEMP_TAG".
                 Detalle de requerimiento
                 Nombre del servidor: scan-dbto.tim.com.pe
                 Dirección IP: 172.20.193.21
                 Motor de la Base de datos: ORACLE
-                Nombre de base de datos / instancia: DBTO.TEMP_TAG_1460, DBTO.TEMP_TAG_1470, DBTO.TEMP_TAG_1480`;
+                Nombre de base de datos / instancia: DBTO.TEMP_TAG_1460, DBTO.TEMP_TAG_1470, DBTO.TEMP_TAG_1480`; */
+                
+        let msg_error = `La factura para el numero de cuenta ${cod_cliente} en los periodos ${fecha1} y ${fecha2} no cuenta con registros en las siguientes tablas TEMP_TAG_1480, TEMP_TAG_1460 y TEMP_TAG_1470. Por favor comunicarse con soporte facturación - FacturacionPostpago@claro.com.pe con copia Carlos Eduardo Farfan Castro - carlos.farfan@claro.com.pe - COLOCAR EN EL ASUNTO LA PALABRA CLAVE "TEMP_TAG_1480,TEMP_TAG_1460,TEMP_TAG_1470"`;
 
         if (![minPeriod, maxPeriod, yyyymmFecha1, yyyymmFecha2].every(Number.isFinite)) {
             return stopWithError("Fechas inválidas o rango (p_min/p_max) inválido.");
