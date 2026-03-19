@@ -37,6 +37,9 @@ class GeoMarketingController
                 ["id" => "12,13,14,15", "label" => "MALL PLAZA AREQUIPA"],
                 ["id" => "16", "label" => "PLAZA NORTE"],
                 ["id" => "17", "label" => "PLAYAS SUR"],
+                ["id" => "18", "label" => "MALL SANTA ANITA"],
+                ["id" => "19", "label" => "PLAZA SAN MIGUEL"],                
+                ["id" => "21", "label" => "AEROPUERTO JORGE CHAVEZ"]
                 // ["id" => "13", "label" => "NAT CRISTO REY"],
                 // ["id" => "14", "label" => "HIPODROMO AREQUIPA"],
                 // ["id" => "15", "label" => "CAC PORONGOCHE AQP"],
@@ -80,6 +83,9 @@ class GeoMarketingController
                 ["id" => "9", "label" => "COUNTRY CLUB VILLA DE GOLF"], 
                 ["id" => "10", "label" => "PARQUE DE LA EXPOSICION - ANFITEATRO"],
                 ["id" => "11", "label" => "GRAN TEATRO NACIONAL"],            
+                ["id" => "18", "label" => "MALL SANTA ANITA"],
+                ["id" => "19", "label" => "PLAZA SAN MIGUEL"],                
+                ["id" => "21", "label" => "AEROPUERTO JORGE CHAVEZ"]
             ]
         ];
         return view("geomarketing.geomarketing_log", compact("config"));
