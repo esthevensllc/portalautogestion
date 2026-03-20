@@ -1,0 +1,1 @@
+<script type="text/javascript" src="{{ asset('packages/jszip/jszip.min.js') }}"></script>
