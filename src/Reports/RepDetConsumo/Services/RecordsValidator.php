@@ -101,19 +101,19 @@ class RecordsValidator
                         $invalid_periods[] = $p;
                     }
                 }
-                /* if(count($invalid_periods) > 0){
+                if(count($invalid_periods) > 0){
                     $str_periodos = implode(",", $invalid_periods);
                     //$errors['message'] = "La factura para el numero de cuenta {$cliente} en los periodos {$str_periodos} no cuenta con registros en las siguientes tablas TEMP_TAG_1480, TEMP_TAG_1460 y TEMP_TAG_1470. Por favor comunicarse con Carlos Eduardo Farfan Castro - carlos.farfan@claro.com.pe - COLOCAR EN EL ASUNTO LA PALABRA CLAVE \"TEMP_TAG_1480,TEMP_TAG_1460,TEMP_TAG_1470\"";
-                
-                    $errors['message'] = <<<MSG
+                    $errors['message'] = "La factura para el numero de cuenta {$cliente} en los periodos {$str_periodos} no cuenta con registros en las siguientes tablas TEMP_TAG_1480, TEMP_TAG_1460 y TEMP_TAG_1470. Por favor comunicarse con soporte facturación - FacturacionPostpago@claro.com.pe con copia Carlos Eduardo Farfan Castro - carlos.farfan@claro.com.pe - COLOCAR EN EL ASUNTO LA PALABRA CLAVE \"TEMP_TAG_1480,TEMP_TAG_1460,TEMP_TAG_1470\"";
+                    /* $errors['message'] = <<<MSG
                     La factura para el numero de cuenta {$cliente} en los periodos {$str_periodos} no cuenta con registros en las siguientes tablas TEMP_TAG1480, TEMP_TAG1460, TEMP_TAG1470. Por favor registrar el Nintex solicitando el restore de las tablas e indicando el periodo necesario a traves del siguiente link http://wfportalnintex/dir/red/soporte/_layouts/15/start.aspx#/Solicitud%20BR/Forms/AllItems.aspx y enviar correo a Orlando Caurino con el asunto "Restore TEMP_TAG".
                     Detalle de requerimiento
                     Nombre del servidor: scan-dbto.tim.com.pe
                     Dirección IP: 172.20.193.21
                     Motor de la Base de datos: ORACLE
                     Nombre de base de datos / instancia: DBTO.TEMP_TAG_1460, DBTO.TEMP_TAG_1470, DBTO.TEMP_TAG_1480
-                    MSG;
-                } */
+                    MSG; */
+                }
             }
         }
         return ['errors' => $errors, 'passes' => count($errors) === 0];
