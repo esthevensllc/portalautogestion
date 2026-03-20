@@ -137,16 +137,16 @@ $(function() {
         let msg_error = `La factura para el numero de cuenta ${cod_cliente} en los periodos ${fecha1} y ${fecha2} no cuenta con registros en las siguientes tablas TEMP_TAG_1480, TEMP_TAG_1460 y TEMP_TAG_1470. Por favor comunicarse con soporte facturación - FacturacionPostpago@claro.com.pe con copia Carlos Eduardo Farfan Castro - carlos.farfan@claro.com.pe - COLOCAR EN EL ASUNTO LA PALABRA CLAVE "TEMP_TAG_1480,TEMP_TAG_1460,TEMP_TAG_1470"`;
 
         if (![minPeriod, maxPeriod, yyyymmFecha1, yyyymmFecha2].every(Number.isFinite)) {
-            return stopWithError("Fechas inválidas o rango (p_min/p_max) inválido.");
+            return stopWithError("Fechas inválidas o rango (min/max) inválido.");
         }
 
-        if (yyyymmFecha1 < minPeriod) {            
+        /* if (yyyymmFecha1 < minPeriod) {            
             return stopWithError(msg_error);
         }
 
         if (yyyymmFecha2 < minPeriod) {
             return stopWithError(msg_error);
-        }
+        } */
 
         // (opcional recomendado) coherencia: fecha1 <= fecha2
         if (yyyymmFecha1 > yyyymmFecha2) {
