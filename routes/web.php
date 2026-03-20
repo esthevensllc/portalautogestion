@@ -610,6 +610,12 @@ Route::group([
         Route::post('export', [\AMovil\Reports\OltCmts\Controllers\OltCmtsController::class, 'export']);
         // Route::post('export-final', [\AMovil\Reports\OltCmts\Controllers\OltCmtsController::class, 'exportFinal']);
     });
+    Route::group(['prefix' => 'olt-cmts/trabajo-mantenimiento', 'trac_name' => 'olt-cmts.extraccion-fija'], function(){
+        Route::get('/', [\AMovil\Reports\OltCmts\Controllers\OltCmtsExtraccionFijaController::class, 'view']);
+        Route::get('find-values', [\AMovil\Reports\OltCmts\Controllers\OltCmtsExtraccionFijaController::class, 'findValues']);
+        Route::get('search', [\AMovil\Reports\OltCmts\Controllers\OltCmtsExtraccionFijaController::class, 'search']);
+        Route::post('export', [\AMovil\Reports\OltCmts\Controllers\OltCmtsExtraccionFijaController::class, 'export']);
+    });
 
     Route::group(['prefix' => 'reporte-esim', 'trac_name' => 'reporte-esim'], function(){
         Route::get('/', [\AMovil\Reports\ReporteEsim\Controllers\ReporteEsimController::class, 'view']);

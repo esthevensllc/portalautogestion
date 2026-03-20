@@ -3,6 +3,7 @@
 namespace AMovil\Reports\ExtraccionDevFija\InformesFalla\Services;
 
 use AMovil\Reports\ExtraccionDevFija\InformesFalla\Domain\InformeFallasRepository;
+use AMovil\Reports\ExtraccionDevFija\InformesFalla\Domain\InformeFijaTipoReporte;
 use AMovil\Shared\Application\Response;
 use AMovil\Shared\FileStorage\Domain\StorageService;
 use AMovil\Shared\FileStorage\Domain\StorageSystemName;
@@ -38,6 +39,12 @@ class InformeFallasFinder
         $filters[] = "revisado.eq.1";
         $filters[] = "aprobado.eq.1";
         $filters[] = "procesado.eq.1";
+        return $this->repo->getByCriteria($filters);
+    }
+
+    public function getTrabajosMantenimiento($filters = [])
+    {
+        $filters[] = "tipo_reporte.eq.".InformeFijaTipoReporte::BY_CODCLI;
         return $this->repo->getByCriteria($filters);
     }
 
