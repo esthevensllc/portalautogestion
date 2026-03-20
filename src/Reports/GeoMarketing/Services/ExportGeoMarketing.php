@@ -30,6 +30,9 @@ class ExportGeoMarketing
         "12,13,14,15" => ["name" => "MALL_PLAZA_AREQUIPA"],
         "16" => ["name" => "PLAZA NORTE"],
         "17" => ["name" => "PLAYAS_SUR"],
+	"21" => ["name" => "AEROPUERTO JORGE CHAVEZ"],
+	"19" => ["name" => "PLAZA SAN MIGUEL"],	
+	"18" => ["name" => "MALL SANTA ANITA"],
     ];
     private $repository;
     private $saveReportLog;

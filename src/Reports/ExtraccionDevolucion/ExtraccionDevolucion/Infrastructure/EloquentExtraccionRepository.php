@@ -109,7 +109,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
                     END IF;
             END;"];
             $queries[] = ["sql" => "CREATE TABLE USRAES.T_U_VOZ_{$this->userIdentifier} tablespace WORKAREA AS
-            SELECT /*+ PARALLEL(16)*/
+            SELECT /*+ PARALLEL(24)*/
             'VOZ' SERVICIO,
             cdr.tim_number MSISDN
             ,cdr.tim_number_subs_firts_ci CELDA
@@ -153,7 +153,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
             END;"];
             $queries[] = ["sql" => "CREATE TABLE USRAES.TMP_USER_DATOS_{$this->userIdentifier} tablespace WORKAREA AS
             SELECT SERVICIO,MSISDN,CELDA,FECHA FROM (
-            SELECT 
+            SELECT /*+ PARALLEL(24)*/
             'DATOS' SERVICIO,
             gp.served_msisdn MSISDN
             ,gp.cell_identity CELDA
