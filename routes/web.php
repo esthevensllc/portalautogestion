@@ -749,11 +749,11 @@ Route::group([
         Route::post('/export', [\AMovil\Reports\FacturaDetallada\FacturacionDetallada\Controllers\FacturacionDetalladaController::class, 'export']);
     });
 
-    /*Route::group(['prefix' => 'bajas-prepago', 'trac_name' => 'bajas-prepago'], function(){
+    Route::group(['prefix' => 'bajas-prepago', 'trac_name' => 'bajas-prepago'], function(){
         Route::get('/', [\AMovil\Reports\BajaPrepago\Controllers\BajaPrepagoController::class, 'view']);
         Route::get('search', [\AMovil\Reports\BajaPrepago\Controllers\BajaPrepagoController::class, 'search']);
         Route::post('/pre-import', [\AMovil\Reports\BajaPrepago\Controllers\BajaPrepagoController::class, 'preImport']);
         Route::post('/import', [\AMovil\Reports\BajaPrepago\Controllers\BajaPrepagoController::class, 'importFinal']);
         Route::get('{id}/{estado}/download', [\AMovil\Reports\BajaPrepago\Controllers\BajaPrepagoController::class, 'export']);
-    });*/
+    });
 });
