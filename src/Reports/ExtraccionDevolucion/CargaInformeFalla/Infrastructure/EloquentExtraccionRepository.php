@@ -1421,7 +1421,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
     public function getReportes()
     {
         return DB::table("usraes.noc_informe_de_fallas")
-        ->selectRaw("numero_de_reporte,ticket,name_file,fecha_carga,revisado,aprobado,procesado,acreditado_pre,acreditado_post,
+        ->selectRaw("numero_de_reporte,ticket,name_file,fecha_carga,fase_final,revisado,aprobado,procesado,acreditado_pre,acreditado_post,
         en_ejecucion_pre, en_ejecucion_post")
         ->orderByDesc('fecha_carga')
         // ->take(10)
@@ -1431,7 +1431,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
     public function findInputFor($numero)
     {
         return DB::table("usraes.noc_informe_de_fallas")
-        ->selectRaw("numero_de_reporte,ticket,name_file,fecha_carga,revisado,aprobado,procesado,acreditado_pre,acreditado_post,
+        ->selectRaw("numero_de_reporte,ticket,name_file,fecha_carga,fase_final,revisado,aprobado,procesado,acreditado_pre,acreditado_post,
         en_ejecucion_pre, en_ejecucion_post")
         ->where('numero_de_reporte',$numero)
         ->get();
@@ -1440,7 +1440,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
     public function findInformeByTicket($ticket)
     {
         return DB::table("usraes.noc_informe_de_fallas")
-        ->selectRaw("numero_de_reporte,ticket,name_file,fecha_carga,revisado,aprobado,procesado,acreditado_pre,acreditado_post,
+        ->selectRaw("numero_de_reporte,ticket,name_file,fecha_carga,fase_final,revisado,aprobado,procesado,acreditado_pre,acreditado_post,
         en_ejecucion_pre, en_ejecucion_post")
         ->where('ticket', $ticket)
         ->first();
@@ -1699,6 +1699,25 @@ class EloquentExtraccionRepository implements ExtraccionRepository
                 "distrito" => $row[2],
             ]);
         }
+    }
+
+    public function getFase($num_reporte) {
+        $exists = DB::table("usraes.noc_informe_de_fallas")->where('numero_de_reporte', $num_reporte)->exists();
+        $fase =  DB::table("usraes.noc_informe_de_fallas")
+                ->selectRaw("fase_final")
+                ->where('num_reporte', $num_reporte)->first();
+        return $fase;
+    }
+
+    public function saveFase($num_reporte, $fase){
+        $exists = DB::table("usraes.noc_informe_de_fallas")->where('numero_de_reporte', $num_reporte)->exists();
+        if(!$exists) {
+            DB::table("usraes.noc_informe_de_fallas")
+            ->where('numero_de_reporte',$num_reporte)
+            ->update(['fase_final' => $fase]);
+            return 1;
+        }
+        return 0;
     }
 
     public function saveInputMsisdn($num_reporte, $data){

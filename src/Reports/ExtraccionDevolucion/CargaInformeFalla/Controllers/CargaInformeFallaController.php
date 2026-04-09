@@ -12,6 +12,7 @@ use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Services\AprobarReport
 use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Services\DesaprobarReport;
 use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Services\EnEsperaReport;
 use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Services\RevisadoReport;
+use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Services\FaseFinalReport;
 use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Services\UpdateReportStatus;
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services\ExportExtraccion;
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services\ExportMontoDevolucion;
@@ -35,6 +36,7 @@ class CargaInformeFallaController
     private $desaprobarReport;
     private $enEsperaReport;
     private $revisadoReport;
+    private $faseFinalReport;
     private $updateReportStatus;
     private $service;
     private $exportRepMontoDevolucion;
@@ -55,6 +57,7 @@ class CargaInformeFallaController
         DesaprobarReport $desaprobarReport,
         EnEsperaReport $enEsperaReport,
         RevisadoReport $revisadoReport,
+        FaseFinalReport $faseFinalReport,
         UpdateReportStatus $updateReportStatus,
         ExportExtraccion $service,
         ExportMontoDevolucion $exportRepMontoDevolucion,
@@ -74,6 +77,7 @@ class CargaInformeFallaController
         $this->desaprobarReport = $desaprobarReport;
         $this->enEsperaReport = $enEsperaReport;
         $this->revisadoReport = $revisadoReport;
+        $this->faseFinalReport = $faseFinalReport;
         $this->updateReportStatus = $updateReportStatus;
         $this->exportRepMontoDevolucion = $exportRepMontoDevolucion;
         $this->processExtraccion = $processExtraccion;
@@ -158,12 +162,15 @@ class CargaInformeFallaController
             ];
         }
 
+        $fase = $request->input("fase");
+
         $reporte = $this->cargarReporte->__invoke(
             $request->input('numero_reporte'),
             InformeTipoReporte::DEFAULT,
             $request->file('excel'),
             $detalleExtraccion,
-            $request->ip()
+            $request->ip(),
+            $fase
             /*implode(",", $strCeldas),
             $request->input("provincias"),
             $request->input('corte_fecha1_date')." ".$request->input('corte_fecha1_time'),
@@ -229,6 +236,12 @@ class CargaInformeFallaController
     public function revisado(Request $request)
     {
         $response = $this->revisadoReport->__invoke($request->input('id'), $request->ip());
+        return response()->json(["result" => $response]);
+    }
+
+    public function faseFinal(Request $request)
+    {
+        $response = $this->faseFinalReport->__invoke($request->input('numero_reporte'),$request->input('estado'), $request->ip());
         return response()->json(["result" => $response]);
     }
 

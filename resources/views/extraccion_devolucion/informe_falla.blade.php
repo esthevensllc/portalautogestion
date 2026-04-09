@@ -159,6 +159,52 @@
         </div>
     </div>
 </div>
+
+<!-- Modal para fase final-->
+<div class="modal fade" id="faseFinalModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="myModalLabel">Ticket</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que quieres aplicar fase final?</p>
+            </div>
+            <div class="modal-footer">
+                <!-- Botón "Cancelar" -->
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <!-- Botón "Confirmar" -->
+                <button type="button" class="btn btn-success" id="btn-fase-final" data-id="0">Aplicar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para fase preventivo-->
+<div class="modal fade" id="fasePreventivoModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="myModalLabel">Ticket</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que quieres aplicar fase preventivo?</p>
+            </div>
+            <div class="modal-footer">
+                <!-- Botón "Cancelar" -->
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <!-- Botón "Confirmar" -->
+                <button type="button" class="btn btn-success" id="btn-fase-preventivo" data-id="0">Aplicar</button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('content')
@@ -199,6 +245,7 @@
             <th>Ticket</th>
             <th>Reporte</th>
             <th>Fecha</th>
+            <th>Fase Final</th>
             <th>Revisado</th>
             <th>Aprobado</th>
             <th>Procesado</th>
@@ -256,6 +303,7 @@ $(function() {
             {data: 'ticket'},
             {data: 'name_file'},
             {data: 'fecha_carga'},
+            {data: 'fase_final'},
             {data: 'revisado'},
             {data: 'aprobado'},
             {data: 'procesado'},
@@ -273,6 +321,8 @@ $(function() {
                         <a class="dropdown-item" href="#" data-toggle="modal" data-target="#aprobarModal"  data-id="${row['numero_de_reporte']}"><li class="la la-check-circle text-success"></li> Aprobar</a>
                         <a class="dropdown-item" href="#" data-toggle="modal" data-target="#desaprobarModal" data-id="${row['numero_de_reporte']}"><li class="la la-times-circle text-danger"></li> Desaprobar</a>
                         <a class="dropdown-item" href="#" data-toggle="modal" data-target="#enEsperaModal" data-id="${row['numero_de_reporte']}"><li class="la la-circle"></li> En Espera</a>
+                        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#faseFinalModal"  data-id="${row['numero_de_reporte']}"><li class="la la-check-circle text-success"></li> Fase final</a>
+                        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#fasePreventivoModal" data-id="${row['numero_de_reporte']}"><li class="la la-circle"></li> Fase Preventivo</a>
                     </div>
                 </div>
                 <div class="dropdown d-inline-block" style="position: unset;">
@@ -467,6 +517,21 @@ $(function() {
         $('#btn-revisado').attr("data-id", value);
     });
 
+    // Agregar el valor del input al atributo data del botón
+    $('#faseFinalModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        var value = $(button).data('id');
+        $('#btn-fase-final').attr("data-id", value);
+    });
+
+    // Agregar el valor del input al atributo data del botón
+    $('#fasePreventivoModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        var value = $(button).data('id');
+        $('#btn-fase-preventivo').attr("data-id", value);
+    });
+
+
     // confirmacion del modal de aprobacion
     $('#btn-aprobar').click(function() {
         var ticket = $('#input-modal').val();
@@ -595,6 +660,70 @@ $(function() {
                         type: 'error',
                         layout: 'topRight',
                         text: "Ocurrio un error, no se pudo poner en revisado"
+                    }).show();
+                }
+            },
+            error: function(xhr, status, error) {
+                console.log(xhr.responseText);
+                // Aquí puedes agregar código para manejar errores de la solicitud AJAX
+            }
+        });
+    });
+
+    // confirmacion del modal de aprobacion
+    $('#btn-fase-final').click(function() {
+        numero_reporte = $(this).data('id');
+        $.ajax({
+            url: '{{ asset('extraccion-devolucion/informe-fallas/fase-final') }}',
+            type: 'POST',
+            data: {numero_reporte: numero_reporte, estado: 1},
+            success: function(response) {
+                $('#faseFinalModal').modal('hide');
+                console.log(response);
+                if(response.result){
+                    _datatable.ajax.reload();
+                    new Noty({
+                        type: 'success',
+                        layout: 'topRight',
+                        text: "Se estabelcio la fase correctamente"
+                    }).show();
+                }else{
+                    new Noty({
+                        type: 'error',
+                        layout: 'topRight',
+                        text: "Ocurrio un error"
+                    }).show();
+                }
+            },
+            error: function(xhr, status, error) {
+                console.log(xhr.responseText);
+                // Aquí puedes agregar código para manejar errores de la solicitud AJAX
+            }
+        });
+    });
+
+    // confirmacion del modal de aprobacion
+    $('#btn-fase-preventivo').click(function() {
+        numero_reporte = $(this).data('id');
+        $.ajax({
+            url: '{{ asset('extraccion-devolucion/informe-fallas/fase-final') }}',
+            type: 'POST',
+            data: {numero_reporte: numero_reporte, estado: 0},
+            success: function(response) {
+                $('#faseFinalModal').modal('hide');
+                console.log(response);
+                if(response.result){
+                    _datatable.ajax.reload();
+                    new Noty({
+                        type: 'success',
+                        layout: 'topRight',
+                        text: "Se estabelcio la fase correctamente"
+                    }).show();
+                }else{
+                    new Noty({
+                        type: 'error',
+                        layout: 'topRight',
+                        text: "Ocurrio un error"
                     }).show();
                 }
             },

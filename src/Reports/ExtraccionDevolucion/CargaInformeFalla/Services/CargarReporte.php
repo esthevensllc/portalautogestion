@@ -36,7 +36,7 @@ class CargarReporte
         $this->groupId = config("app.env")."/ext_cargado";
     }
 
-    public function __invoke($numero, $tipoReporte, $excel, $detalleExtraccion, $userIpAddress)
+    public function __invoke($numero, $tipoReporte, $excel, $detalleExtraccion, $userIpAddress, $fase)
     {
         $this->validate($detalleExtraccion);
         $filename = $excel->getClientOriginalName();
@@ -52,6 +52,8 @@ class CargarReporte
                     $row["corteFechaFin"]
                 );
             }
+
+            $faseReturn = $this->repo->saveFase($numero, $fase);
 
             $excel->storeAs('carga_informe_falla', $numero.'_'.$excel->getClientOriginalName());
             // $reportes = $this->repo->getReportesSnRevisado();

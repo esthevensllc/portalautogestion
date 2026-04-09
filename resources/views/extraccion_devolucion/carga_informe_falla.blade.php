@@ -217,7 +217,7 @@
                                             @foreach ($config["distritos"] as $row)
                                                 <option data-dep="{{ $row->departamento }}"data-prov="{{ $row->provincia }}">{{ $row->distrito }}</option>
                                             @endforeach
-                                        </select>
+                                            </select>
                                         </th>
                                         <th>
                                             <button type="button" class="btn btn-primary btn-sm btn_add_ubicacion">+</button>
@@ -249,6 +249,16 @@
                         </div>
                         <div class="col-lg-3 col-md-4">
                             <button type="button" class="btn btn-secondary btn-sm btn-add-detalle">Agregar a detalle</button>
+                        </div>
+                        <div class="col-lg-6 col-md-4">                            
+                        </div>
+                        <div class="col-lg-3 col-md-4">
+                            <label for="">FASE</label>
+                            <select name="fase" class="form-control form-control-sm" required>
+                                <option val="">Seleccione</option>
+                                <option val="0">PREVENTIVO</option>
+                                <option val="1">FINAL</option>
+                            </select>
                         </div>
                     </div>
                 </div>
