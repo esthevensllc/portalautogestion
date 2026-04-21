@@ -321,8 +321,6 @@ $(function() {
                         <a class="dropdown-item" href="#" data-toggle="modal" data-target="#aprobarModal"  data-id="${row['numero_de_reporte']}"><li class="la la-check-circle text-success"></li> Aprobar</a>
                         <a class="dropdown-item" href="#" data-toggle="modal" data-target="#desaprobarModal" data-id="${row['numero_de_reporte']}"><li class="la la-times-circle text-danger"></li> Desaprobar</a>
                         <a class="dropdown-item" href="#" data-toggle="modal" data-target="#enEsperaModal" data-id="${row['numero_de_reporte']}"><li class="la la-circle"></li> En Espera</a>
-                        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#faseFinalModal"  data-id="${row['numero_de_reporte']}"><li class="la la-check-circle text-success"></li> Fase final</a>
-                        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#fasePreventivoModal" data-id="${row['numero_de_reporte']}"><li class="la la-circle"></li> Fase Preventivo</a>
                     </div>
                 </div>
                 <div class="dropdown d-inline-block" style="position: unset;">
@@ -551,6 +549,14 @@ $(function() {
             success: function(response) {
                 $('#aprobarModal').modal('hide');
                 console.log(response);
+                if(!response.result && response.message){
+                    new Noty({
+                        type: 'error',
+                        layout: 'topRight',
+                        text: response.message
+                    }).show();
+                    return;
+                }
                 if(response.result){
                     _datatable.ajax.reload();
                     new Noty({
@@ -710,7 +716,7 @@ $(function() {
             type: 'POST',
             data: {numero_reporte: numero_reporte, estado: 0},
             success: function(response) {
-                $('#faseFinalModal').modal('hide');
+                $('#fasePreventivoModal').modal('hide');
                 console.log(response);
                 if(response.result){
                     _datatable.ajax.reload();

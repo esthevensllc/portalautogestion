@@ -214,12 +214,13 @@ class CargaInformeFallaController
         $response = $this->deleteReport->__invoke($id);
         return response()->json($response);
     }
-
+    
     public function aprobar(Request $request)
     {
         $response = $this->aprobarReport->__invoke($request->input('id'),$request->input('ticket'), $request->ip());
-        return response()->json(["result" => $response]);
+        return response()->json($response);
     }
+
 
     public function desaprobar(Request $request)
     {

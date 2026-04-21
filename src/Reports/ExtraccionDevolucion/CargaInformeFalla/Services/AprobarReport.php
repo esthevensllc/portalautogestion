@@ -31,12 +31,18 @@ class AprobarReport
 
     public function __invoke($id,$ticket,$userIpAddress)
     {
-        $data = $this->repo->aprobar($id,$ticket);
-        $this->repo->registerStatusChanges($id, null, $this->authService->getUserIdentifier(), $userIpAddress, InformeStatus::APROBADO, new DateTime());
-
-        // $reportes = $this->repo->getReportesAprobados();
         $reportes = $this->repo->findInputFor($id);
+        if(count($reportes) === 0){
+            return [
+                "result" => false,
+                "message" => "El informe de fallas no existe"
+            ];
+        }
+
+        $data = $this->repo->aprobar($id,$ticket);
         if($data){
+            $this->repo->registerStatusChanges($id, null, $this->authService->getUserIdentifier(), $userIpAddress, InformeStatus::APROBADO, new DateTime());
+            $reportes = $this->repo->findInputFor($id);
             $reporteFinded = $reportes[0];
             
             $emails = $this->notificationUserRepo->getEmailsByGroupId($this->groupId);
@@ -46,8 +52,16 @@ class AprobarReport
             ->view("notificacionAprobado")
             ->with(["reportes" => $reportes]);
             $this->emailNotification->send($email);
+
+            return [
+                "result" => true,
+                "reportes" => $reportes
+            ];
         }
 
-        return response()->json(["reportes" => $reportes], 500);
+        return [
+            "result" => false,
+            "message" => "El n\u00famero de Ticket ya existe, no se aprob\u00f3"
+        ];
     }
 }

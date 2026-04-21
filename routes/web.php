@@ -360,6 +360,7 @@ Route::group([
         Route::post('/desaprobar', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'desaprobar']);
         Route::post('/en-espera', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'enEspera']);
         Route::post('/revisado', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'revisado']);
+        Route::post('/fase-final', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'faseFinal']);
         Route::get('{numReporte}/download', [\AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Controllers\CargaInformeFallaController::class, 'download']);
     });
     Route::group(['prefix' => 'extraccion-devolucion/carga-informe-fallas-msisdn', 'trac_name' => 'extraccion-devolucion.carga-info-fallas-msisdn'], function(){
@@ -756,5 +757,11 @@ Route::group([
         Route::post('/pre-import', [\AMovil\Reports\BajaPrepago\Controllers\BajaPrepagoController::class, 'preImport']);
         Route::post('/import', [\AMovil\Reports\BajaPrepago\Controllers\BajaPrepagoController::class, 'importFinal']);
         Route::get('{id}/{estado}/download', [\AMovil\Reports\BajaPrepago\Controllers\BajaPrepagoController::class, 'export']);
+    });
+
+    //OSINFOR
+    Route::group(['prefix' => 'osinfor', 'trac_name' => 'osinfor'], function(){
+        Route::get('/', [\AMovil\Reports\OSINFOR\Controllers\OSINFORController::class, 'view']);
+        Route::post('export', [\AMovil\Reports\OSINFOR\Controllers\OSINFORController::class, 'export']);
     });
 });

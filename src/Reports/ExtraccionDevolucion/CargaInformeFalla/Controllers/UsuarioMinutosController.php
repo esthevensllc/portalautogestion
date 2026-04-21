@@ -33,6 +33,7 @@ class UsuarioMinutosController
             ["revisado", 1],
             ["aprobado", 1],
             ["procesado", 0],
+            ["fase_final", 1],
         ])->data();
 
         $config = [
@@ -79,6 +80,19 @@ class UsuarioMinutosController
         $num_reporte = $request->input("num_reporte");
         $departamento = $request->input("departamento");
         $minutos_usuarios = $request->input("minutos_usuarios");
+
+        $reportes = $this->getReportesByCriteria->__invoke([
+            ["numero_de_reporte", $num_reporte],
+            ["revisado", 1],
+            ["aprobado", 1],
+            ["procesado", 0],
+            ["fase_final", 1],
+        ])->data();
+        if(count($reportes) === 0){
+            return response()->json([
+                "message" => "El informe de fallas debe estar revisado, aprobado, no procesado y en estado FINAL para continuar"
+            ], 422);
+        }
 
         $input = $this->getUsuariosExtraccion->getInputs($num_reporte, $departamento)->data();
         $distritos = [];

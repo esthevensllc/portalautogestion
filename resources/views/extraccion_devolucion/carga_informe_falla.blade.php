@@ -127,6 +127,47 @@
     </div>
   </div>
 </div>
+<!-- Modal para fase final-->
+<div class="modal fade" id="faseFinalModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="myModalLabel">Ticket</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>Estas seguro de que quieres aplicar fase final?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-success" id="btn-fase-final" data-id="0">Aplicar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para fase preventivo-->
+<div class="modal fade" id="fasePreventivoModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="myModalLabel">Ticket</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>Estas seguro de que quieres aplicar fase preventivo?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-success" id="btn-fase-preventivo" data-id="0">Aplicar</button>
+      </div>
+    </div>
+  </div>
+</div>
 @endsection
 
 @section('content')
@@ -255,9 +296,9 @@
                         <div class="col-lg-3 col-md-4">
                             <label for="">FASE</label>
                             <select name="fase" class="form-control form-control-sm" required>
-                                <option val="">Seleccione</option>
-                                <option val="0">PREVENTIVO</option>
-                                <option val="1">FINAL</option>
+                                <option value="">Seleccione</option>
+                                <option value="0">PREVENTIVO</option>
+                                <option value="1">FINAL</option>
                             </select>
                         </div>
                     </div>
@@ -315,6 +356,7 @@
             <th>Ticket</th>
             <th>Reporte</th>
             <th>Fecha</th>
+            <th>Fase Final</th>
             <th>Revisado</th>
             <th>Aprobado</th>
             <th>Procesado</th>
@@ -484,13 +526,14 @@ $(function() {
             {data: 'ticket'},
             {data: 'name_file'},
             {data: 'fecha_carga'},
+            {data: 'fase_final'},
             {data: 'revisado'},
             {data: 'aprobado'},
             {data: 'procesado'},
             {data: 'acreditado_pre'},
             {data: 'acreditado_post'},
             {render: function(data, type, row){
-                var buttonAprobar = `<div class="dropdown d-inline-block">
+                var buttonAprobar = `<div class="dropdown d-inline-block" style="position: unset;">
                     <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         Aprobación
                     </button>
@@ -499,6 +542,8 @@ $(function() {
                         <a class="dropdown-item" href="#" data-toggle="modal" data-target="#aprobarModal"  data-id="${row['numero_de_reporte']}"><li class="la la-check-circle text-success"></li> Aprobar</a>
                         <a class="dropdown-item" href="#" data-toggle="modal" data-target="#desaprobarModal" data-id="${row['numero_de_reporte']}"><li class="la la-times-circle text-danger"></li> Desaprobar</a>
                         <a class="dropdown-item" href="#" data-toggle="modal" data-target="#enEsperaModal" data-id="${row['numero_de_reporte']}"><li class="la la-circle"></li> En Espera</a>
+                        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#faseFinalModal"  data-id="${row['numero_de_reporte']}"><li class="la la-check-circle text-success"></li> Fase final</a>
+                        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#fasePreventivoModal" data-id="${row['numero_de_reporte']}"><li class="la la-circle"></li> Fase Preventivo</a>
                     </div>
                 </div>`;
                 return `<button
@@ -879,6 +924,18 @@ $(function() {
         $('#btn-revisado').attr("data-id", value);
     });
 
+    $('#faseFinalModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        var value = $(button).data('id');
+        $('#btn-fase-final').attr("data-id", value);
+    });
+
+    $('#fasePreventivoModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        var value = $(button).data('id');
+        $('#btn-fase-preventivo').attr("data-id", value);
+    });
+
     // confirmacion del modal de aprobacion
     $('#btn-aprobar').click(function() {
         var ticket = $('#input-modal').val();
@@ -898,6 +955,14 @@ $(function() {
             success: function(response) {
                 $('#aprobarModal').modal('hide');
                 console.log(response);
+                if(!response.result && response.message){
+                    new Noty({
+                        type: 'error',
+                        layout: 'topRight',
+                        text: response.message
+                    }).show();
+                    return;
+                }
                 if(response.result){
                     _datatable.ajax.reload();
                     new Noty({
@@ -1013,6 +1078,67 @@ $(function() {
             error: function(xhr, status, error) {
                 console.log(xhr.responseText);
                 // Aquí puedes agregar código para manejar errores de la solicitud AJAX
+            }
+        });
+    });
+    $('#btn-fase-final').click(function() {
+        let numero_reporte = $(this).data('id');
+        $.ajax({
+            url: '{{ asset('extraccion-devolucion/carga-informe-fallas/fase-final') }}',
+            type: 'POST',
+            data: {numero_reporte: numero_reporte, estado: 1},
+            success: function(response) {
+                $('#faseFinalModal').modal('hide');
+                console.log(response);
+                if(response.result){
+                    _datatable.ajax.reload();
+                    new Noty({
+                        type: 'success',
+                        layout: 'topRight',
+                        text: "Se establecio la fase correctamente"
+                    }).show();
+                }else{
+                    new Noty({
+                        type: 'error',
+                        layout: 'topRight',
+                        text: "Ocurrio un error"
+                    }).show();
+                }
+            },
+            error: function(xhr, status, error) {
+                console.log(xhr.responseText);
+                // AquÃ­ puedes agregar cÃ³digo para manejar errores de la solicitud AJAX
+            }
+        });
+    });
+
+    $('#btn-fase-preventivo').click(function() {
+        let numero_reporte = $(this).data('id');
+        $.ajax({
+            url: '{{ asset('extraccion-devolucion/carga-informe-fallas/fase-final') }}',
+            type: 'POST',
+            data: {numero_reporte: numero_reporte, estado: 0},
+            success: function(response) {
+                $('#fasePreventivoModal').modal('hide');
+                console.log(response);
+                if(response.result){
+                    _datatable.ajax.reload();
+                    new Noty({
+                        type: 'success',
+                        layout: 'topRight',
+                        text: "Se establecio la fase correctamente"
+                    }).show();
+                }else{
+                    new Noty({
+                        type: 'error',
+                        layout: 'topRight',
+                        text: "Ocurrio un error"
+                    }).show();
+                }
+            },
+            error: function(xhr, status, error) {
+                console.log(xhr.responseText);
+                // AquÃ­ puedes agregar cÃ³digo para manejar errores de la solicitud AJAX
             }
         });
     });

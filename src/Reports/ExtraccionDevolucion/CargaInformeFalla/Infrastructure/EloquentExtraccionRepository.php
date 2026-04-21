@@ -1711,7 +1711,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
 
     public function saveFase($num_reporte, $fase){
         $exists = DB::table("usraes.noc_informe_de_fallas")->where('numero_de_reporte', $num_reporte)->exists();
-        if(!$exists) {
+        if($exists) {
             DB::table("usraes.noc_informe_de_fallas")
             ->where('numero_de_reporte',$num_reporte)
             ->update(['fase_final' => $fase]);
