@@ -1082,9 +1082,9 @@ $(function() {
         });
     });
     $('#btn-fase-final').click(function() {
-        let numero_reporte = $(this).data('id');
+        let numero_reporte = $(this).attr('data-id');
         $.ajax({
-            url: '{{ asset('extraccion-devolucion/carga-informe-fallas/fase-final') }}',
+            url: "{{ asset('extraccion-devolucion/carga-informe-fallas/fase-final') }}",
             type: 'POST',
             data: {numero_reporte: numero_reporte, estado: 1},
             success: function(response) {
@@ -1113,9 +1113,9 @@ $(function() {
     });
 
     $('#btn-fase-preventivo').click(function() {
-        let numero_reporte = $(this).data('id');
+        let numero_reporte = $(this).attr('data-id');
         $.ajax({
-            url: '{{ asset('extraccion-devolucion/carga-informe-fallas/fase-final') }}',
+            url: "{{ asset('extraccion-devolucion/carga-informe-fallas/fase-final') }}",
             type: 'POST',
             data: {numero_reporte: numero_reporte, estado: 0},
             success: function(response) {
