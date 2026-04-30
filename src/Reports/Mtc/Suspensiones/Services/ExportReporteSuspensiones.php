@@ -171,11 +171,11 @@ class ExportReporteSuspensiones
         fclose($fp);
 
         $lineas_fijas = $this->repo->getLineasFijas();
-        $filename4 = "{$this->storage_path}/".Uuid::uuid4()->toString()."txt";
+        $filename4 = "{$this->storage_path}/".Uuid::uuid4()->toString().".csv";
         $fp = fopen($filename4, 'w');
-        fwrite($fp, "ACCEPTPHONE\n");
+        fputcsv($fp, ['Called Number 1']);
         foreach($lineas_fijas as $row){
-            fwrite($fp, $row->acceptphone."\n");
+            fputcsv($fp, [$this->formatFixedIvrNumber($row->acceptphone)]);
         }
         fclose($fp);
 
@@ -194,7 +194,7 @@ class ExportReporteSuspensiones
         $zip->addFromString("MTC_E_SUS_{$str_fecha}.csv", str_replace('"', '', $csv_content));
         $zip->addFromString("LINEAS_{$str_fecha}.xlsx", file_get_contents($filename2));
         $zip->addFromString("SMS_REGU_MT_MREG_LLA_MAL_".$dt->format('dmY').".txt", file_get_contents($filename3));
-        $zip->addFromString("Fija_IVR_".$dt->format('d-m-Y').".txt", file_get_contents($filename4));
+        $zip->addFromString("Fija_IVR_".$dt->format('dmY').".csv", file_get_contents($filename4));
         //$zip->addFromString('test.txt', 'ñ');
         $zip->close();
 
@@ -351,6 +351,21 @@ class ExportReporteSuspensiones
         }
         fclose($file);
         return $data;
+    }
+
+    private function formatFixedIvrNumber($acceptphone): string
+    {
+        $digits = preg_replace('/\D+/', '', (string) $acceptphone);
+
+        if (strpos($digits, '511') === 0) {
+            return $digits;
+        }
+
+        if (strpos($digits, '51') === 0) {
+            return '511'.substr($digits, 2);
+        }
+
+        return '511'.$digits;
     }
 
     private function reportLog($local_file, DateTime $ini, DateTime $fin, $filename, array $extra_data = [])
