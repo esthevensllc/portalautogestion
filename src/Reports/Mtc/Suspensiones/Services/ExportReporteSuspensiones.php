@@ -193,8 +193,8 @@ class ExportReporteSuspensiones
         $csv_content = utf8_decode(file_get_contents($filename1));
         $zip->addFromString("MTC_E_SUS_{$str_fecha}.csv", str_replace('"', '', $csv_content));
         $zip->addFromString("LINEAS_{$str_fecha}.xlsx", file_get_contents($filename2));
-        $zip->addFromString("SMS_REGU_MT_MREG_LLA_MAL_".$dt->format('dmY').".txt", file_get_contents($filename3));
-        $zip->addFromString("Fija_IVR_".$dt->format('dmY').".csv", file_get_contents($filename4));
+        $zip->addFromString("SMS_REGU_MT_MREG_LLA_MAL_".$dt->format('Ymd').".txt", file_get_contents($filename3));
+        $zip->addFromString("Fija_IVR_".$dt->format('dmY').".csv", str_replace('"','',file_get_contents($filename4)));
         //$zip->addFromString('test.txt', 'ñ');
         $zip->close();
 
