@@ -32,17 +32,16 @@ class ExportHistoricoBloqueo
     public function export($type, $data): Response
     {
         $headers = [
-            "histd_fecha_mensaje" => ["label" => "HISTD_FECHA_MENSAJE"],
-            "imei" => ["label" => "IMEI"],
-            "histn_num_servici" => ["label" => "HISTN_NUM_SERVICI"],
+            "fecha" => ["label" => "FECHA"],
+            "accion" => ["label" => "ACCION"],
+            "modalidad" => ["label" => "MODALIDAD"],
+            "linea" => ["label" => "LINEA"],
+            "histn_imsi" => ["label" => "HISTN_IMSI"],
             "histv_imei" => ["label" => "HISTV_IMEI"],
-            "histd_fecha_reporte" => ["label" => "HISTD_FECHA_REPORTE"],
-            "nombre_apellidos" => ["label" => "NOMBRE_APELLIDOS"],
-            "histn_tipo_documento" => ["label" => "HISTN_TIPO_DOCUMENTO"],
-            "histv_numero_documento" => ["label" => "HISTV_NUMERO_DOCUMENTO"],
-            "histv_tipo_solicitud" => ["label" => "HISTV_TIPO_SOLICITUD"],
-            "histv_estado" => ["label" => "HISTV_ESTADO"],
-            "histv_accion_realizar" => ["label" => "HISTV_ACCION_REALIZAR"],
+            "tipo_documento" => ["label" => "TIPO_DOCUMENTO"],
+            "nro_documento" => ["label" => "NRO_DOCUMENTO"],
+            "nombre" => ["label" => "NOMBRE"],
+            "apellidos" => ["label" => "APELLIDOS"],
         ];
 
         $options = [

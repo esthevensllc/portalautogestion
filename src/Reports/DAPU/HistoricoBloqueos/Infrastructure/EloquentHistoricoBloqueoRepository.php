@@ -31,35 +31,21 @@ class EloquentHistoricoBloqueoRepository implements HistoricoBloqueoRepository
             DB::table("USRAES.DAPU_BLOQUEO_IMEI_INPUT_{$this->userIdentifier}")->insert(["imei" => $value]);
         }
 
-        $query = "SELECT
-        BB.HISTD_FECHA_MENSAJE,
-        AA.IMEI,
-        BB.HISTN_NUM_SERVICI,
-        BB.HISTV_IMEI,
-        BB.HISTD_FECHA_REPORTE,
-        BB.NOMBRE_APELLIDOS,
-        BB.HISTN_TIPO_DOCUMENTO,
-        BB.HISTV_NUMERO_DOCUMENTO,
-        BB.HISTV_TIPO_SOLICITUD,
-        BB.HISTV_ESTADO,
-        BB.HISTV_ACCION_REALIZAR 
-        FROM USRAES.DAPU_BLOQUEO_IMEI_INPUT_{$this->userIdentifier} AA 
-        LEFT JOIN (
-            SELECT HISTD_FECHA_MENSAJE,
-            TO_CHAR(HISTN_NUM_SERVICI) HISTN_NUM_SERVICI,
-            TO_CHAR(HISTN_IMSI) HISTN_IMSI,
-            HISTV_IMEI,
-            HISTD_FECHA_REPORTE,
-            HISTV_NOMBRE_USUARIO||' '||HISTV_APELLIDO_PATERNO||' '||HISTV_APELLIDO_MATERNO NOMBRE_APELLIDOS,
-            HISTN_TIPO_DOCUMENTO,
-            HISTV_NUMERO_DOCUMENTO,
-            HISTV_TIPO_SOLICITUD,
-            HISTV_ESTADO,
-            HISTV_ACCION_REALIZAR
-            FROM DWS.SA_RENTT_HISTORICO_RENTESEG
-            WHERE HISTV_IMEI IN (SELECT IMEI FROM USRAES.DAPU_BLOQUEO_IMEI_INPUT_{$this->userIdentifier})
-        ) BB 
-        ON AA.IMEI=BB.HISTV_IMEI";
+        $query = "SELECT /*+ PARALLEL(8) */ HISTD_FECHA_MENSAJE AS FECHA,
+                          HISTV_ACCION_REALIZAR ACCION,
+                          HISTV_TIPO_TIPIFICACION MODALIDAD,
+                          HISTN_NUM_SERVICI LINEA,
+                          HISTN_IMSI,
+                          HISTV_IMEI,
+                          HISTN_TIPO_DOCUMENTO AS TIPO_DOCUMENTO,
+                          HISTV_NUMERO_DOCUMENTO AS NRO_DOCUMENTO,
+                          HISTV_NOMBRE_USUARIO AS NOMBRE,
+                          HISTV_APELLIDO_PATERNO || ' ' || HISTV_APELLIDO_MATERNO AS APELLIDOS
+	FROM DWS.SA_RENTT_HISTORICO_RENTESEG A
+	WHERE HISTV_IMEI IN (SELECT IMEI FROM USRAES.DAPU_BLOQUEO_IMEI_INPUT_{$this->userIdentifier})
+	  AND HISTN_CODIGO_MENSAJE NOT IN ('301')
+	ORDER BY HISTV_IMEI,
+         HISTD_FECHA_MENSAJE DESC";
 
         $data = DB::select(DB::raw($query));
 
