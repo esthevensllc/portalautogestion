@@ -421,14 +421,6 @@ class EloquentOltCmtsNuevoRepository implements OltCmtsNuevoRepository
         }
     }
 
-    /**
-     * Fase 1 segura:
-     * Crea una tabla previa con los clientes/documentos que cumplen las mismas reglas
-     * de producto y descripcion que ya se usan al final del proceso.
-     *
-     * Esta tabla no reemplaza los filtros finales; solo reduce los CODCLI que entran
-     * al flujo pesado de extraccion temporal.
-     */
     private function rebuildSourceValidFilterTable(int $typeId): void
     {
         $validTable = $this->tableName('TMP_SRC_VALIDOS_OLT_CMTS');
