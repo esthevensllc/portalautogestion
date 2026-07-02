@@ -605,12 +605,18 @@ Route::group([
         Route::post('export', [\AMovil\Reports\DetallePlanes\ConsolidadoMinutos\Controllers\ConsolidadoMinutosController::class, 'export']);
     });
     
+    // Route::group(['prefix' => 'olt-cmts', 'trac_name' => 'olt-cmts'], function(){
+    //     Route::get('/', [\AMovil\Reports\OltCmts\Controllers\OltCmtsController::class, 'view']);
+    //     Route::get('find-values', [\AMovil\Reports\OltCmts\Controllers\OltCmtsController::class, 'findValues']);
+    //     Route::get('search', [\AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers\InformeFallasController::class, 'search']);
+    //     Route::post('export', [\AMovil\Reports\OltCmts\Controllers\OltCmtsController::class, 'export']);
+    //     // Route::post('export-final', [\AMovil\Reports\OltCmts\Controllers\OltCmtsController::class, 'exportFinal']);
+    // });
     Route::group(['prefix' => 'olt-cmts', 'trac_name' => 'olt-cmts'], function(){
-        Route::get('/', [\AMovil\Reports\OltCmts\Controllers\OltCmtsController::class, 'view']);
-        Route::get('find-values', [\AMovil\Reports\OltCmts\Controllers\OltCmtsController::class, 'findValues']);
+        Route::get('/', [\AMovil\Reports\OltCmts\Controllers\OltCmtsNuevoController::class, 'view']);
+        Route::get('find-values', [\AMovil\Reports\OltCmts\Controllers\OltCmtsNuevoController::class, 'findValues']);
         Route::get('search', [\AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers\InformeFallasController::class, 'search']);
-        Route::post('export', [\AMovil\Reports\OltCmts\Controllers\OltCmtsController::class, 'export']);
-        // Route::post('export-final', [\AMovil\Reports\OltCmts\Controllers\OltCmtsController::class, 'exportFinal']);
+        Route::post('export', [\AMovil\Reports\OltCmts\Controllers\OltCmtsNuevoController::class, 'export']);
     });
     Route::group(['prefix' => 'olt-cmts/trabajo-mantenimiento', 'trac_name' => 'olt-cmts.extraccion-fija'], function(){
         Route::get('/', [\AMovil\Reports\OltCmts\Controllers\OltCmtsExtraccionFijaController::class, 'view']);
