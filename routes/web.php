@@ -605,12 +605,18 @@ Route::group([
         Route::post('export', [\AMovil\Reports\DetallePlanes\ConsolidadoMinutos\Controllers\ConsolidadoMinutosController::class, 'export']);
     });
     
+    // Route::group(['prefix' => 'olt-cmts', 'trac_name' => 'olt-cmts'], function(){
+    //     Route::get('/', [\AMovil\Reports\OltCmts\Controllers\OltCmtsController::class, 'view']);
+    //     Route::get('find-values', [\AMovil\Reports\OltCmts\Controllers\OltCmtsController::class, 'findValues']);
+    //     Route::get('search', [\AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers\InformeFallasController::class, 'search']);
+    //     Route::post('export', [\AMovil\Reports\OltCmts\Controllers\OltCmtsController::class, 'export']);
+    //     // Route::post('export-final', [\AMovil\Reports\OltCmts\Controllers\OltCmtsController::class, 'exportFinal']);
+    // });
     Route::group(['prefix' => 'olt-cmts', 'trac_name' => 'olt-cmts'], function(){
-        Route::get('/', [\AMovil\Reports\OltCmts\Controllers\OltCmtsController::class, 'view']);
-        Route::get('find-values', [\AMovil\Reports\OltCmts\Controllers\OltCmtsController::class, 'findValues']);
+        Route::get('/', [\AMovil\Reports\OltCmts\Controllers\OltCmtsNuevoController::class, 'view']);
+        Route::get('find-values', [\AMovil\Reports\OltCmts\Controllers\OltCmtsNuevoController::class, 'findValues']);
         Route::get('search', [\AMovil\Reports\ExtraccionDevFija\InformesFalla\Controllers\InformeFallasController::class, 'search']);
-        Route::post('export', [\AMovil\Reports\OltCmts\Controllers\OltCmtsController::class, 'export']);
-        // Route::post('export-final', [\AMovil\Reports\OltCmts\Controllers\OltCmtsController::class, 'exportFinal']);
+        Route::post('export', [\AMovil\Reports\OltCmts\Controllers\OltCmtsNuevoController::class, 'export']);
     });
     Route::group(['prefix' => 'olt-cmts/trabajo-mantenimiento', 'trac_name' => 'olt-cmts.extraccion-fija'], function(){
         Route::get('/', [\AMovil\Reports\OltCmts\Controllers\OltCmtsExtraccionFijaController::class, 'view']);
@@ -763,5 +769,16 @@ Route::group([
     Route::group(['prefix' => 'osinfor', 'trac_name' => 'osinfor'], function(){
         Route::get('/', [\AMovil\Reports\OSINFOR\Controllers\OSINFORController::class, 'view']);
         Route::post('export', [\AMovil\Reports\OSINFOR\Controllers\OSINFORController::class, 'export']);
+    });
+
+    //IMR/IMF
+    Route::group(['prefix' => 'imf-movil', 'trac_name' => 'imrimf.imf-movil'], function(){ //imrimf.imf-movil
+        Route::get('/', [\AMovil\Reports\IMRIMF\Controllers\ImfMovilController::class, 'view']);
+    });
+    Route::group(['prefix' => 'imf-fija', 'trac_name' => 'imrimf.imf-fija'], function(){ //imrimf.imf-fija
+        Route::get('/', [\AMovil\Reports\IMRIMF\Controllers\ImfFijaController::class, 'view']);
+    });
+    Route::group(['prefix' => 'imr', 'trac_name' => 'imrimf.imr'], function(){ //imrimf.imr
+        Route::get('/', [\AMovil\Reports\IMRIMF\Controllers\ImrController::class, 'view']);
     });
 });

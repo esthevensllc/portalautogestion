@@ -1,0 +1,486 @@
+    :root {
+      --red: #ef1b16;
+      --red-dark: #d7100c;
+      --gray: #7f7f7f;
+      --panel: #e5e5e5;
+      --text: #222;
+      --muted: #666;
+      --green: #7ee95f;
+      --teal: #8fd0c9;
+      --border: #cfcfcf;
+      --white: #fff;
+      --blue-gray: #253f50;
+    }
+
+
+
+    .imr-card {
+      position: relative;
+      overflow: hidden;
+      background: #fff;
+      border: 1px solid #d7d7d7;
+      box-shadow: 0 10px 30px rgba(0,0,0,.10);
+    }
+
+    .top-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 22px 8px;
+      border-bottom: 1px solid #ececec;
+      background: #fff;
+    }
+
+    .brand-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 190px;
+    }
+
+    .modo {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--red);
+      line-height: .95;
+      letter-spacing: -.5px;
+    }
+
+    .modo small {
+      display: block;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--red);
+    }
+
+    .page-number {
+      flex: 1;
+      font-size: 27px;
+      font-weight: 700;
+      letter-spacing: .2px;
+    }
+
+    .consulta-header {
+      position: relative;
+      display: flex;
+      align-items: center;
+      min-height: 42px;
+      background: var(--red);
+      color: #fff;
+      padding: 0 16px;
+    }
+
+    .consulta-header h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .claro-logo {
+      margin-left: auto;
+      font-size: 30px;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -1px;
+    }
+
+    .claro-logo::after {
+      content: "*";
+      display: inline-block;
+      margin-left: 4px;
+      transform: translateY(-6px);
+      font-size: 18px;
+    }
+
+    .content {
+      min-height: 520px;
+      background: var(--panel);
+    }
+
+    .customer-strip {
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr);
+      gap: 12px;
+      align-items: stretch;
+      padding: 12px 18px;
+      background: #f2f2f2;
+      border-bottom: 1px solid #d3d3d3;
+    }
+
+    .search-panel {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 0;
+    }
+
+    .search-panel label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 13px;
+      color: #111;
+      font-weight: 700;
+    }
+
+    .search-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 34px 34px 34px;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .search-row input {
+      width: 100%;
+      height: 32px;
+      border: 1px solid #aaa;
+      padding: 0 9px;
+      font-size: 12px;
+      outline: none;
+      background: #fff;
+    }
+
+    .search-row input:focus {
+      border-color: var(--red);
+      box-shadow: 0 0 0 2px rgba(239,27,22,.12);
+    }
+
+    .action-btn {
+      width: 34px;
+      height: 32px;
+      border: 1px solid #bdbdbd;
+      border-radius: 2px;
+      background: #fff;
+      color: #333;
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .action-btn:hover {
+      background: #f7f7f7;
+    }
+
+    .action-btn.primary {
+      border-color: var(--red);
+      background: var(--red);
+      color: #fff;
+    }
+
+    .info-scroll {
+      min-width: 0;
+      overflow-x: auto;
+    }
+
+    .info-table {
+      width: 100%;
+      min-width: 690px;
+      height: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      background: #fff;
+      font-size: 12px;
+    }
+
+    .info-table th {
+      background: var(--red);
+      color: #fff;
+      padding: 7px 5px;
+      text-align: center;
+      font-size: 11px;
+      border-right: 1px solid rgba(255,255,255,.35);
+    }
+
+    .info-table td {
+      padding: 8px 5px;
+      text-align: center;
+      border-right: 1px solid #eee;
+      border-bottom: 1px solid #e8e8e8;
+      color: #333;
+      background: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: minmax(340px, .95fr) minmax(420px, 1.25fr);
+      min-height: 432px;
+    }
+
+    .usage-area {
+      background: var(--blue-gray);
+      padding: 18px 20px 18px;
+      color: #fff;
+    }
+
+    .usage-title {
+      margin: 0 0 8px;
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .badge {
+      width: 142px;
+      margin: 0 auto 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      height: 31px;
+      border-radius: 8px;
+      background: var(--teal);
+      color: #1c4d4c;
+      font-weight: 700;
+    }
+
+    .chart-shell {
+      position: relative;
+      width: min(265px, 82vw);
+      height: min(265px, 82vw);
+      margin: 0 auto 13px;
+    }
+
+    .chart-shell::before {
+      content: "";
+      position: absolute;
+      inset: 11px;
+      border-radius: 50%;
+      background: transparent;
+      box-shadow:
+        0 0 0 2px #bdbdbd,
+        inset 0 0 0 7px #e6e6e6;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .chart-shell canvas {
+      position: relative;
+      z-index: 1;
+    }
+
+    .percent {
+      position: absolute;
+      z-index: 2;
+      font-size: 11px;
+      color: #fff;
+      font-weight: 700;
+      text-shadow: 0 1px 2px rgba(0,0,0,.35);
+      pointer-events: none;
+    }
+
+    .percent.used { left: 10px; top: 49%; }
+    .percent.free { right: 10px; top: 49%; }
+
+    .cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      padding: 0 28px;
+    }
+
+    .metric-card {
+      background: #fff;
+      color: #222;
+      border-radius: 4px;
+      min-height: 58px;
+      padding: 9px 12px;
+      text-align: center;
+      box-shadow: 0 1px 1px rgba(0,0,0,.15);
+    }
+
+    .metric-card strong {
+      display: block;
+      font-size: 22px;
+      line-height: 1.1;
+      margin-bottom: 2px;
+    }
+
+    .metric-card span {
+      display: block;
+      font-size: 11px;
+      color: #333;
+      font-weight: 700;
+    }
+
+    .history-area {
+      background: var(--panel);
+      padding: 26px 18px 90px;
+      border-left: 1px solid #cfcfcf;
+    }
+
+    .section-title {
+      margin: 0 0 8px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #222;
+    }
+
+    .history-table,
+    .summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      font-size: 12px;
+      margin-bottom: 28px;
+      table-layout: fixed;
+    }
+
+    .history-table th,
+    .summary-table th {
+      background: var(--red);
+      color: #fff;
+      padding: 7px 6px;
+      text-align: center;
+      font-size: 11px;
+      border-right: 1px solid rgba(255,255,255,.35);
+    }
+
+    .history-table td,
+    .summary-table td {
+      padding: 8px 6px;
+      border: 1px solid #ddd;
+      text-align: center;
+      color: #333;
+    }
+
+    .summary-title {
+      margin: 0 0 6px;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .summary-table {
+      max-width: 330px;
+      margin-bottom: 0;
+    }
+
+    .summary-table td:first-child,
+    .summary-table th:first-child {
+      text-align: left;
+    }
+
+    .anniversary {
+      position: absolute;
+      right: 24px;
+      bottom: 18px;
+      color: var(--red);
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      font-weight: 800;
+    }
+
+    .anniversary .years {
+      font-size: 30px;
+      line-height: .8;
+      font-style: italic;
+    }
+
+    .anniversary small {
+      display: block;
+      font-size: 12px;
+      letter-spacing: .5px;
+      line-height: 1;
+    }
+
+    .anniversary .icon {
+      font-size: 42px;
+      line-height: .85;
+    }
+
+    /*
+      Los porcentajes se posicionan desde JS.
+      Cuando un porcentaje es muy bajo, se mueve verticalmente
+      para quedar cerca del tramo correspondiente del gr�fico.
+    */
+    .percent.used {
+      left: -54px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 13px;
+      min-width: 48px;
+      text-align: right;
+      transition: top .2s ease;
+    }
+
+    .percent.free {
+      right: -58px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 13px;
+      min-width: 48px;
+      text-align: left;
+      transition: top .2s ease;
+    }
+
+    @media (max-width: 920px) {
+      .customer-strip {
+        grid-template-columns: 1fr;
+      }
+
+      .info-table {
+        min-width: 690px;
+      }
+
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .history-area {
+        border-left: 0;
+        border-top: 1px solid #cfcfcf;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .app { margin: 0; padding: 0; }
+      .imr-card { border: 0; }
+
+      .top-title {
+        padding: 10px 12px;
+      }
+
+      .brand-left { min-width: auto; }
+      .page-number { font-size: 22px; }
+      .consulta-header h1 { font-size: 18px; }
+      .claro-logo { font-size: 24px; }
+
+      .customer-strip {
+        padding: 10px 12px;
+      }
+
+      .search-row {
+        grid-template-columns: minmax(0, 1fr) 32px 32px 32px;
+      }
+
+      .cards {
+        gap: 10px;
+        padding: 0 14px;
+      }
+
+      .history-area {
+        padding: 20px 12px 72px;
+      }
+
+      .history-scroll {
+        overflow-x: auto;
+      }
+
+      .history-table,
+      .summary-table,
+      .info-table {
+        font-size: 11px;
+      }
+
+      .history-table {
+        min-width: 580px;
+      }
+
+      .anniversary {
+        right: 16px;
+        bottom: 12px;
+      }
+    }
