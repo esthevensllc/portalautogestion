@@ -1,0 +1,1 @@
+<script src="{{asset('packages/chartjs/chart.js')}}"></script>
