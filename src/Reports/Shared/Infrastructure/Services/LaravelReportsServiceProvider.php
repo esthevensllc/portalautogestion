@@ -324,5 +324,13 @@ class LaravelReportsServiceProvider extends ServiceProvider
             \AMovil\Reports\OSINFOR\Domain\OSINFORRepository::class,
             \AMovil\Reports\OSINFOR\Infrastructure\EloquentOSINFORRepository::class
         );
+        $this->app->bind(
+            \AMovil\Reports\IMRIMF\Domain\ImrRepository::class,
+            \AMovil\Reports\IMRIMF\Infrastructure\EloquentImrRepository::class
+        );
+        $this->app->bind(
+            \AMovil\Reports\IMRIMF\Domain\ImfRepository::class,
+            \AMovil\Reports\IMRIMF\Infrastructure\EloquentImfRepository::class
+        );
     }
 }
