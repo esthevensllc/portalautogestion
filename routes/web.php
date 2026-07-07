@@ -774,11 +774,14 @@ Route::group([
     //IMR/IMF
     Route::group(['prefix' => 'imf-movil', 'trac_name' => 'imrimf.imf-movil'], function(){ //imrimf.imf-movil
         Route::get('/', [\AMovil\Reports\IMRIMF\Controllers\ImfMovilController::class, 'view']);
+        Route::get('search', [\AMovil\Reports\IMRIMF\Controllers\ImfMovilController::class, 'search']);
     });
     Route::group(['prefix' => 'imf-fija', 'trac_name' => 'imrimf.imf-fija'], function(){ //imrimf.imf-fija
         Route::get('/', [\AMovil\Reports\IMRIMF\Controllers\ImfFijaController::class, 'view']);
+        Route::get('search', [\AMovil\Reports\IMRIMF\Controllers\ImfFijaController::class, 'search']);
     });
     Route::group(['prefix' => 'imr', 'trac_name' => 'imrimf.imr'], function(){ //imrimf.imr
         Route::get('/', [\AMovil\Reports\IMRIMF\Controllers\ImrController::class, 'view']);
+        Route::get('search', [\AMovil\Reports\IMRIMF\Controllers\ImrController::class, 'search']);
     });
 });
