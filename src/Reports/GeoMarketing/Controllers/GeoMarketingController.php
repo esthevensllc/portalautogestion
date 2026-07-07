@@ -39,7 +39,11 @@ class GeoMarketingController
                 ["id" => "17", "label" => "PLAYAS SUR"],
                 ["id" => "18", "label" => "MALL SANTA ANITA"],
                 ["id" => "19", "label" => "PLAZA SAN MIGUEL"],                
-                ["id" => "21", "label" => "AEROPUERTO JORGE CHAVEZ"]
+                ["id" => "21", "label" => "AEROPUERTO JORGE CHAVEZ"],
+                ["id" => "22", "label" => "REAL PLAZA CENTRO CIVICO"],
+                ["id" => "23", "label" => "REAL PLAZA SALAVERRY"],
+                ["id" => "24", "label" => "JOCKEY PLAZA"],
+                ["id" => "25", "label" => "Mall Aventura SJL"]
                 // ["id" => "13", "label" => "NAT CRISTO REY"],
                 // ["id" => "14", "label" => "HIPODROMO AREQUIPA"],
                 // ["id" => "15", "label" => "CAC PORONGOCHE AQP"],
@@ -85,7 +89,11 @@ class GeoMarketingController
                 ["id" => "11", "label" => "GRAN TEATRO NACIONAL"],            
                 ["id" => "18", "label" => "MALL SANTA ANITA"],
                 ["id" => "19", "label" => "PLAZA SAN MIGUEL"],                
-                ["id" => "21", "label" => "AEROPUERTO JORGE CHAVEZ"]
+                ["id" => "21", "label" => "AEROPUERTO JORGE CHAVEZ"],
+                ["id" => "22", "label" => "REAL PLAZA CENTRO CIVICO"],
+                ["id" => "23", "label" => "REAL PLAZA SALAVERRY"],
+                ["id" => "24", "label" => "JOCKEY PLAZA"],
+                ["id" => "25", "label" => "Mall Aventura SJL"]
             ]
         ];
         return view("geomarketing.geomarketing_log", compact("config"));

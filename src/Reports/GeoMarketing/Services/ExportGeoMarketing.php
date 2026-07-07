@@ -33,6 +33,10 @@ class ExportGeoMarketing
 	"21" => ["name" => "AEROPUERTO JORGE CHAVEZ"],
 	"19" => ["name" => "PLAZA SAN MIGUEL"],	
 	"18" => ["name" => "MALL SANTA ANITA"],
+        "22" => ["name" => "REAL PLAZA CENTRO CIVICO"],
+        "23" => ["name" => "REAL PLAZA SALAVERRY"],
+        "24" => ["name" => "JOCKEY PLAZA"],
+        "25" => ["name" => "Mall Aventura SJL"],
     ];
     private $repository;
     private $saveReportLog;
