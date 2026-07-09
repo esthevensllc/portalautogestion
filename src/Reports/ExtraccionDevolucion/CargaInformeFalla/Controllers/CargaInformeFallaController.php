@@ -14,6 +14,9 @@ use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Services\EnEsperaRepor
 use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Services\RevisadoReport;
 use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Services\FaseFinalReport;
 use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Services\UpdateReportStatus;
+use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Services\UploadCronogramaReport;
+use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Services\DownloadCronogramaReport;
+use AMovil\Reports\ExtraccionDevolucion\CargaInformeFalla\Services\DeleteCronogramaReport;
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services\ExportExtraccion;
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services\ExportMontoDevolucion;
 use AMovil\Reports\ExtraccionDevolucion\ExtraccionDevolucion\Services\ExportRepPostpago;
@@ -46,6 +49,9 @@ class CargaInformeFallaController
     private $exportRepPrepago;
     private $getTicketReports;
     private $getReportesByCriteria;
+    private $uploadCronogramaReport;
+    private $downloadCronogramaReport;
+    private $deleteCronogramaReport;
 
     public function __construct(
         CargarReporte $cargarReporte,
@@ -67,6 +73,9 @@ class CargaInformeFallaController
         ExportRepPrepago $exportRepPrepago,
         GetTicketReports $getTicketReports,
         GetReportesByCriteria $getReportesByCriteria,
+        UploadCronogramaReport $uploadCronogramaReport,
+        DownloadCronogramaReport $downloadCronogramaReport,
+        DeleteCronogramaReport $deleteCronogramaReport
     ){
         $this->service = $service;
         $this->getReports = $getReports;
@@ -87,6 +96,9 @@ class CargaInformeFallaController
         $this->cargarReporte = $cargarReporte;
         $this->getTicketReports = $getTicketReports;
         $this->getReportesByCriteria = $getReportesByCriteria;
+        $this->uploadCronogramaReport = $uploadCronogramaReport;
+        $this->downloadCronogramaReport = $downloadCronogramaReport;
+        $this->deleteCronogramaReport = $deleteCronogramaReport;
     }
 
     public function view()
@@ -264,6 +276,74 @@ class CargaInformeFallaController
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition' => 'attachment;filename="'.$response["filename"].'"'
         ]);
+    }
+
+    public function uploadCronograma(Request $request, $numReporte)
+    {
+        $request->validate([
+            'cronograma' => 'required|file|max:51200|mimes:xlsx,xls,xlsm,csv,pdf',
+        ]);
+
+        $response = $this->uploadCronogramaReport->__invoke($numReporte, $request->file('cronograma'));
+        if ($response->fails()) {
+            return response()->json([
+                "passes" => false,
+                "errors" => $response->errors(),
+                "message" => $response->errors()["message"] ?? "No se pudo guardar el cronograma",
+            ], 404);
+        }
+
+        return response()->json([
+            "passes" => true,
+            "message" => "Cronograma guardado correctamente",
+            "data" => $response->data(),
+        ]);
+    }
+
+    public function downloadCronograma($numReporte)
+    {
+        $response = $this->downloadCronogramaReport->__invoke($numReporte);
+        if ($response->fails()) {
+            return response($response->errors()["message"] ?? $response->errors(), 404);
+        }
+
+        $response = $response->data();
+        return response($response["content"], 200, [
+            'Content-Type' => $this->contentTypeFor($response["filename"]),
+            'Content-Disposition' => 'attachment;filename="'.$response["filename"].'"'
+        ]);
+    }
+
+    public function deleteCronograma($numReporte)
+    {
+        $response = $this->deleteCronogramaReport->__invoke($numReporte);
+        if ($response->fails()) {
+            return response()->json([
+                "passes" => false,
+                "errors" => $response->errors(),
+                "message" => $response->errors()["message"] ?? "No se pudo eliminar el cronograma",
+            ], 404);
+        }
+
+        return response()->json([
+            "passes" => true,
+            "message" => "Cronograma eliminado correctamente",
+            "data" => $response->data(),
+        ]);
+    }
+
+    private function contentTypeFor($filename)
+    {
+        $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        $contentTypes = [
+            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'xls' => 'application/vnd.ms-excel',
+            'xlsm' => 'application/vnd.ms-excel.sheet.macroEnabled.12',
+            'csv' => 'text/csv; charset=UTF-8',
+            'pdf' => 'application/pdf',
+        ];
+
+        return $contentTypes[$extension] ?? 'application/octet-stream';
     }
 
     public function updateView()

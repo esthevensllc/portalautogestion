@@ -168,6 +168,35 @@
     </div>
   </div>
 </div>
+<!-- Modal para cronograma -->
+<div class="modal fade" id="cronogramaModal" tabindex="-1" role="dialog" aria-labelledby="cronogramaModalLabel">
+  <div class="modal-dialog" role="document">
+    <form id="frm-cronograma" enctype="multipart/form-data">
+      @csrf
+      <input type="hidden" name="numero_reporte" value="">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="cronogramaModalLabel">Agregar cronograma</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Archivo de cronograma</label>
+            <input type="file" name="cronograma" class="form-control" accept=".xlsx,.xls,.xlsm,.csv,.pdf" required>
+            <small class="form-text text-muted">Formatos permitidos: xlsx, xls, xlsm, csv y pdf.</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-success">Guardar cronograma</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
 @endsection
 
 @section('content')
@@ -362,6 +391,7 @@
             <th>Procesado</th>
             <th>Acreditado Pre</th>
             <th>Acreditado Post</th>
+            <th>Cronograma</th>
             <th>Acciones</th>
         </tr>
     </thead>
@@ -533,6 +563,11 @@ $(function() {
             {data: 'acreditado_pre'},
             {data: 'acreditado_post'},
             {render: function(data, type, row){
+                return row['cronograma_file']
+                    ? `<span title="${row['cronograma_file']}"><li class="la la-file-excel-o text-success"></li> ${row['cronograma_file']}</span>`
+                    : '<span class="text-muted">Sin cronograma</span>';
+            }},
+            {render: function(data, type, row){
                 var buttonAprobar = `<div class="dropdown d-inline-block" style="position: unset;">
                     <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         Aprobación
@@ -546,11 +581,52 @@ $(function() {
                         <a class="dropdown-item" href="#" data-toggle="modal" data-target="#fasePreventivoModal" data-id="${row['numero_de_reporte']}"><li class="la la-circle"></li> Fase Preventivo</a>
                     </div>
                 </div>`;
-                return `<button
-                    class="btn btn-sm btn-info" id="descargar"
-                    data-id="${row['numero_de_reporte']}"
-                    data-name="${row['name_file']}"
-                    data-value="descargar"><li class="la la-eye"></li> Descargar</button>
+                var hasCronograma = row['cronograma_file'] !== null && row['cronograma_file'] !== undefined && row['cronograma_file'] !== '';
+                var downloadAction = hasCronograma
+                    ? `<div class="dropdown d-inline-block" style="position: unset;">
+                        <button class="btn btn-sm btn-info dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Descargar
+                        </button>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item download-informe-falla" href="#" data-id="${row['numero_de_reporte']}" data-name="${row['name_file']}"><li class="la la-file-excel-o"></li> Informe de falla</a>
+                            <a class="dropdown-item download-cronograma" href="#" data-id="${row['numero_de_reporte']}" data-name="${row['cronograma_file']}"><li class="la la-calendar"></li> Cronograma</a>
+                        </div>
+                    </div>`
+                    : `<button
+                        class="btn btn-sm btn-info download-informe-falla"
+                        data-id="${row['numero_de_reporte']}"
+                        data-name="${row['name_file']}"
+                        data-value="descargar"><li class="la la-eye"></li> Descargar</button>`;
+                var cronogramaAction = hasCronograma
+                    ? `<div class="dropdown d-inline-block" style="position: unset;">
+                        <button class="btn btn-sm btn-warning dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Cronograma
+                        </button>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="#"
+                                data-toggle="modal"
+                                data-target="#cronogramaModal"
+                                data-action="editar"
+                                data-id="${row['numero_de_reporte']}">
+                                <li class="la la-edit"></li> Editar cronograma
+                            </a>
+                            <a class="dropdown-item delete-cronograma" href="#"
+                                data-id="${row['numero_de_reporte']}"
+                                data-name="${row['cronograma_file']}">
+                                <li class="la la-trash text-danger"></li> Eliminar cronograma
+                            </a>
+                        </div>
+                    </div>`
+                    : `<button
+                        class="btn btn-sm btn-success"
+                        data-toggle="modal"
+                        data-target="#cronogramaModal"
+                        data-action="agregar"
+                        data-id="${row['numero_de_reporte']}">
+                        <li class="la la-upload"></li> Agregar cronograma
+                    </button>`;
+                return `${downloadAction}
+                    ${cronogramaAction}
                     <button
                     class="btn btn-sm btn-danger" id="eliminar"
                     data-id="${row['numero_de_reporte']}"
@@ -880,10 +956,98 @@ $(function() {
         $('#dialogo-eliminar').modal('hide');
     });
 
-    $(document).on('click', '#descargar', function() {
+    $(document).on('click', '.download-informe-falla', function(e) {
+        e.preventDefault();
         id = $(this).data('id');
         name = $(this).data('name');
         window.open(config.downloadApi.replace('[numReporte]', id),"_blank");
+    });
+
+    $(document).on('click', '.download-cronograma', function(e) {
+        e.preventDefault();
+        id = $(this).data('id');
+        let downloadApi = "{{ url('extraccion-devolucion/carga-informe-fallas/[numReporte]/cronograma/download') }}";
+        window.open(downloadApi.replace('[numReporte]', id),"_blank");
+    });
+
+    $(document).on('click', '.delete-cronograma', function(e) {
+        e.preventDefault();
+        var numReporte = $(this).data('id');
+        var fileName = $(this).data('name');
+        var deleteApi = "{{ url('extraccion-devolucion/carga-informe-fallas/[numReporte]/cronograma/delete') }}";
+
+        if (!confirm('¿Estás seguro de eliminar el cronograma "' + fileName + '"?')) {
+            return;
+        }
+
+        $.ajax({
+            url: deleteApi.replace('[numReporte]', numReporte),
+            method: 'POST',
+            data: {_token: document.querySelector('input[name=_token]').value},
+            success: function(response) {
+                _datatable.ajax.reload();
+                new Noty({
+                    type: 'success',
+                    layout: 'topRight',
+                    text: response.message || 'Cronograma eliminado correctamente'
+                }).show();
+            },
+            error: function(xhr) {
+                let message = 'Ocurrió un error al eliminar el cronograma';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    message = xhr.responseJSON.message;
+                }
+                new Noty({
+                    type: 'error',
+                    layout: 'topRight',
+                    text: message
+                }).show();
+            }
+        });
+    });
+
+    $('#cronogramaModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        var numReporte = $(button).data('id');
+        var action = $(button).data('action');
+        $('#frm-cronograma input[name=numero_reporte]').val(numReporte);
+        $('#frm-cronograma input[name=cronograma]').val('');
+        $('#cronogramaModalLabel').text((action === 'editar' ? 'Editar' : 'Agregar') + ' cronograma - Reporte ' + numReporte);
+    });
+
+    $('#frm-cronograma').on('submit', function(e) {
+        e.preventDefault();
+        var numReporte = $('#frm-cronograma input[name=numero_reporte]').val();
+        var uploadApi = "{{ url('extraccion-devolucion/carga-informe-fallas/[numReporte]/cronograma') }}";
+        var formData = new FormData(this);
+
+        $.ajax({
+            url: uploadApi.replace('[numReporte]', numReporte),
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                $('#cronogramaModal').modal('hide');
+                _datatable.ajax.reload();
+                new Noty({
+                    type: 'success',
+                    layout: 'topRight',
+                    text: response.message || 'Cronograma guardado correctamente'
+                }).show();
+            },
+            error: function(xhr) {
+                let message = 'Ocurrió un error al guardar el cronograma';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    message = xhr.responseJSON.message;
+                }
+                new Noty({
+                    type: 'error',
+                    layout: 'topRight',
+                    text: message
+                }).show();
+            }
+        });
     });
 
     $('#input-modal').on('input', function() {

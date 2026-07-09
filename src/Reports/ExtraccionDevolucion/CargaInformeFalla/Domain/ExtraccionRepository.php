@@ -22,6 +22,7 @@ interface ExtraccionRepository
     public function getReportes();
     public function updateReporte($numero, $excel);
     public function findInputFor($numero);
+    public function updateCronogramaFile($numero, ?string $filename);
     public function findInformeByTicket($ticket);
     public function deleteRecord($numero);
     public function registerStatusChanges(string $numReporte, ?string $departamento, string $username, string $ipAddress, string $status, DateTime $fecha);

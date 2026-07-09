@@ -1421,7 +1421,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
     public function getReportes()
     {
         return DB::table("usraes.noc_informe_de_fallas")
-        ->selectRaw("numero_de_reporte,ticket,name_file,fecha_carga,fase_final,revisado,aprobado,procesado,acreditado_pre,acreditado_post,
+        ->selectRaw("numero_de_reporte,ticket,name_file,cronograma_file,fecha_carga,fase_final,revisado,aprobado,procesado,acreditado_pre,acreditado_post,
         en_ejecucion_pre, en_ejecucion_post")
         ->orderByDesc('fecha_carga')
         // ->take(10)
@@ -1431,16 +1431,23 @@ class EloquentExtraccionRepository implements ExtraccionRepository
     public function findInputFor($numero)
     {
         return DB::table("usraes.noc_informe_de_fallas")
-        ->selectRaw("numero_de_reporte,ticket,name_file,fecha_carga,fase_final,revisado,aprobado,procesado,acreditado_pre,acreditado_post,
+        ->selectRaw("numero_de_reporte,ticket,name_file,cronograma_file,fecha_carga,fase_final,revisado,aprobado,procesado,acreditado_pre,acreditado_post,
         en_ejecucion_pre, en_ejecucion_post")
         ->where('numero_de_reporte',$numero)
         ->get();
     }
 
+    public function updateCronogramaFile($numero, ?string $filename)
+    {
+        return DB::table("usraes.noc_informe_de_fallas")
+        ->where('numero_de_reporte', $numero)
+        ->update(["cronograma_file" => $filename]);
+    }
+
     public function findInformeByTicket($ticket)
     {
         return DB::table("usraes.noc_informe_de_fallas")
-        ->selectRaw("numero_de_reporte,ticket,name_file,fecha_carga,fase_final,revisado,aprobado,procesado,acreditado_pre,acreditado_post,
+        ->selectRaw("numero_de_reporte,ticket,name_file,cronograma_file,fecha_carga,fase_final,revisado,aprobado,procesado,acreditado_pre,acreditado_post,
         en_ejecucion_pre, en_ejecucion_post")
         ->where('ticket', $ticket)
         ->first();
