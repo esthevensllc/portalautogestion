@@ -15,13 +15,22 @@ class ImrFinder
         $this->repo = $repo;
     }
 
-    public function search(string $telefono): array
+    public function search(string $customerId): array
     {
-        $telefono = $this->validateTelefono($telefono);
+        $identifiers = $this->normalizeImrIdentifiers($customerId);
 
-        $history = $this->repo->getHistory($telefono);
-        $summary = $this->repo->getSummary($telefono);
+        // DS_SUSCRIPTORES.CUENTA_CD requiere el Customer ID sin la letra H.
+        $customerInfo = $this->repo->getCustomerInfo($identifiers['customer_info']);
 
-        return $this->buildResponse($telefono, $history, $summary);
+        // Las tablas de acciones IMR almacenan el identificador con la letra H.
+        $history = $this->repo->getHistory($identifiers['actions']);
+        $summary = $this->repo->getSummary($identifiers['actions']);
+
+        return $this->buildResponse(
+            $identifiers['input'],
+            $history,
+            $summary,
+            $customerInfo
+        );
     }
 }

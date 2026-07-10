@@ -22,7 +22,7 @@ class ImrController
             'title_percent' => 'Porcentaje de uso de IMR',
             'product_label' => 'IMR',
             'input_label' => 'Customer ID',
-            'input_placeholder' => 'Ej: H16805491',
+            'input_placeholder' => 'Ej: 16805491 o H16805491',
             'search_url' => rtrim(url()->current(), '/') . '/search',
             'initial_chart' => [
                 'hasData' => false,
@@ -53,7 +53,7 @@ class ImrController
 
             return response()->json([
                 'success' => false,
-                'message' => 'No se pudo consultar la información IMR. Revise permisos, conexión o existencia de la tabla CLIATC.CI_PBI_ACCIONES_IMR.',
+                'message' => 'No se pudo consultar la información IMR. Revise la conexión, permisos sobre CLIATC.CI_PBI_ACCIONES_IMR, DWHDS.DS_SUSCRIPTORES y DWA.F_M_SEG_CLIENTES, o la existencia de la partición mensual.',
             ], 500);
         }
     }

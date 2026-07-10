@@ -49,7 +49,7 @@
                 </div>
                 <div class="col-lg-3 col-md-4">
                     <div class="form-group tab-item">
-                        <label for="">Fecha inicio</label>
+                        <label for="">Fecha inicio afectación</label>
                         <input
                             type="date"
                             class="form-control form-control-sm slc-list-values"
@@ -68,7 +68,7 @@
                 </div>
                 <div class="col-lg-3 col-md-4">
                     <div class="form-group tab-item">
-                        <label for="">Fecha fin</label>
+                        <label for="">Fecha fin afectación</label>
                         <input
                             type="date"
                             class="form-control form-control-sm slc-list-values"

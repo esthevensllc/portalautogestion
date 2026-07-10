@@ -169,6 +169,8 @@ class ExportOltCmtsNuevoReport
             "numero" => ['label' => 'NUMERO'],
         ];
 
+        $data = $this->formatSerialNumbersForExport($data);
+
         $this->exportService->loadData($headers, $data, [
             'sheetIndex' => 0,
             'title' => "OLT_CMTS",
@@ -228,6 +230,8 @@ class ExportOltCmtsNuevoReport
             "installation_map" => ['label' => 'INSTALLATION_MAP'],
             "numero" => ['label' => 'NUMERO'],
         ];
+
+        $data = $this->formatSerialNumbersForExport($data);
 
         $this->exportService->loadData($headers, $data, [
             'sheetIndex' => 0,
@@ -310,6 +314,33 @@ class ExportOltCmtsNuevoReport
             ]
         ]);
         return $this->exportService->getWriter(WriterType::XLSX)->saveToTempfile();
+    }
+
+    private function formatSerialNumbersForExport($data)
+    {
+        foreach ($data as $index => $row) {
+            if (is_object($row) && property_exists($row, 'serialnumber')) {
+                $data[$index]->serialnumber = $this->formatSerialNumber($row->serialnumber);
+                continue;
+            }
+            if (is_array($row) && array_key_exists('serialnumber', $row)) {
+                $data[$index]['serialnumber'] = $this->formatSerialNumber($row['serialnumber']);
+            }
+        }
+        return $data;
+    }
+
+    private function formatSerialNumber($serialNumber)
+    {
+        if ($serialNumber === null) {
+            return null;
+        }
+        $serialNumber = trim((string) $serialNumber);
+        if ($serialNumber === '') {
+            return '';
+        }
+        $serialNumber = str_replace('.', '', $serialNumber);
+        return implode('.', str_split($serialNumber, 4));
     }
 
     private function reportLog($tempfile, DateTime $ini, DateTime $fin, array $extra_data = [])

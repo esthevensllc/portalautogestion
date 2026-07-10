@@ -336,15 +336,37 @@
         element.style.color = isError ? '#b91c1c' : '#166534';
     }
 
-    function renderCustomerInfo(telefono) {
+    function displayValue(value, fallback = '-') {
+        if (value === null || value === undefined || String(value).trim() === '') {
+            return fallback;
+        }
+
+        return escapeHtml(value);
+    }
+
+    function renderCustomerInfo(customerInfo, searchedValue) {
+        const info = customerInfo && typeof customerInfo === 'object'
+            ? customerInfo
+            : null;
+
+        if (!info) {
+            document.getElementById('customerInfoBody').innerHTML = `
+                <tr>
+                    <td>${escapeHtml(searchedValue)}</td>
+                    <td colspan="5">No se encontró información del cliente en la partición vigente.</td>
+                </tr>
+            `;
+            return;
+        }
+
         document.getElementById('customerInfoBody').innerHTML = `
             <tr>
-                <td>${escapeHtml(telefono)}</td>
-                <td>-</td>
-                <td>-</td>
-                <td>-</td>
-                <td>-</td>
-                <td>-</td>
+                <td>${displayValue(info.customer_id_telefono, searchedValue)}</td>
+                <td>${displayValue(info.plan_tarifario)}</td>
+                <td>${displayValue(info.rango_antiguedad)}</td>
+                <td>${displayValue(info.segmento_valor)}</td>
+                <td>${displayValue(info.cargo_fijo)}</td>
+                <td>${displayValue(info.tipo_abonado)}</td>
             </tr>
         `;
     }
@@ -439,13 +461,22 @@
             const historyRows = Array.isArray(data.history) ? data.history : [];
             const summaryRows = Array.isArray(data.summary) ? data.summary : [];
 
-            renderCustomerInfo(data.telefono);
+            const customerInfo = data.customer_info && typeof data.customer_info === 'object'
+                ? data.customer_info
+                : null;
+
+            renderCustomerInfo(customerInfo, data.telefono);
             renderHistory(historyRows);
             renderSummary(summaryRows);
 
             if (historyRows.length === 0 && summaryRows.length === 0) {
                 resetGraficoSinDatos();
-                setMessage('No se encontraron resultados.', false);
+                setMessage(
+                    customerInfo
+                        ? 'Se encontró información del cliente, pero no registra acciones.'
+                        : 'No se encontraron resultados.',
+                    false
+                );
                 return;
             }
 

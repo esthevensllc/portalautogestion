@@ -17,11 +17,20 @@ class ImfFinder
 
     public function search(string $telefono): array
     {
-        $telefono = $this->validateTelefono($telefono);
+        $identifiers = $this->normalizeImfIdentifiers($telefono);
 
-        $history = $this->repo->getHistory($telefono);
-        $summary = $this->repo->getSummary($telefono);
+        // DS_SUSCRIPTORES requiere el número con el prefijo de país 51.
+        $customerInfo = $this->repo->getCustomerInfo($identifiers['customer_info']);
 
-        return $this->buildResponse($telefono, $history, $summary);
+        // Las tablas de acciones IMF almacenan el número sin el prefijo 51.
+        $history = $this->repo->getHistory($identifiers['actions']);
+        $summary = $this->repo->getSummary($identifiers['actions']);
+
+        return $this->buildResponse(
+            $identifiers['input'],
+            $history,
+            $summary,
+            $customerInfo
+        );
     }
 }

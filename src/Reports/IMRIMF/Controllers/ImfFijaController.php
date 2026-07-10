@@ -22,7 +22,7 @@ class ImfFijaController
             'title_percent' => 'Porcentaje de uso de IMF',
             'product_label' => 'IMF',
             'input_label' => 'Teléfono',
-            'input_placeholder' => 'Ej: 902857695',
+            'input_placeholder' => 'Ej: 902857695, 51902857695',
             'search_url' => rtrim(url()->current(), '/') . '/search',
             'initial_chart' => [
                 'hasData' => false,
@@ -53,7 +53,7 @@ class ImfFijaController
 
             return response()->json([
                 'success' => false,
-                'message' => 'No se pudo consultar la información IMF FIJA. Revise permisos, conexión o existencia de la tabla CLIATC.CI_ACCIONES_IMF_MACRO.',
+                'message' => 'No se pudo consultar la información IMF FIJA. Revise la conexión, permisos sobre CLIATC.CI_ACCIONES_IMF_MACRO, DWHDS.DS_SUSCRIPTORES y DWA.F_M_SEG_CLIENTES, o la existencia de la partición mensual.',
             ], 500);
         }
     }
