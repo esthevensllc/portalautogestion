@@ -43,7 +43,8 @@ class GeoMarketingController
                 ["id" => "22", "label" => "REAL PLAZA CENTRO CIVICO"],
                 ["id" => "23", "label" => "REAL PLAZA SALAVERRY"],
                 ["id" => "24", "label" => "JOCKEY PLAZA"],
-                ["id" => "25", "label" => "Mall Aventura SJL"]
+                ["id" => "25", "label" => "Mall Aventura SJL"],
+                ["id" => "26", "label" => "EMPORIO COMERCIAL DE GAMARRA"]
                 // ["id" => "13", "label" => "NAT CRISTO REY"],
                 // ["id" => "14", "label" => "HIPODROMO AREQUIPA"],
                 // ["id" => "15", "label" => "CAC PORONGOCHE AQP"],
@@ -93,7 +94,8 @@ class GeoMarketingController
                 ["id" => "22", "label" => "REAL PLAZA CENTRO CIVICO"],
                 ["id" => "23", "label" => "REAL PLAZA SALAVERRY"],
                 ["id" => "24", "label" => "JOCKEY PLAZA"],
-                ["id" => "25", "label" => "Mall Aventura SJL"]
+                ["id" => "25", "label" => "Mall Aventura SJL"],
+                ["id" => "26", "label" => "EMPORIO COMERCIAL DE GAMARRA"]
             ]
         ];
         return view("geomarketing.geomarketing_log", compact("config"));

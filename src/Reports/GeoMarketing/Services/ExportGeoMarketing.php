@@ -37,6 +37,7 @@ class ExportGeoMarketing
         "23" => ["name" => "REAL PLAZA SALAVERRY"],
         "24" => ["name" => "JOCKEY PLAZA"],
         "25" => ["name" => "Mall Aventura SJL"],
+        "26" => ["name" => "EMPORIO COMERCIAL DE GAMARRA"],
     ];
     private $repository;
     private $saveReportLog;
