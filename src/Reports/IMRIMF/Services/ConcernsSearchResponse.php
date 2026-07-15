@@ -21,18 +21,6 @@ trait ConcernsSearchResponse
         return $telefono;
     }
 
-    /**
-     * Genera los dos formatos requeridos por las consultas IMF.
-     *
-     * Entradas admitidas:
-     * - 953468136
-     * - 51953468136
-     * - +51953468136
-     *
-     * Resultado:
-     * - customer_info: 51953468136 (DS_SUSCRIPTORES)
-     * - actions:       953468136   (historial y resumen)
-     */
     protected function normalizeImfIdentifiers(string $telefono): array
     {
         $input = $this->validateTelefono($telefono);
@@ -49,7 +37,6 @@ trait ConcernsSearchResponse
             throw new InvalidArgumentException('Debe ingresar un teléfono IMF válido.');
         }
 
-        // Historial y resumen trabajan sin el código de país 51.
         $telefonoSinPrefijo = substr($digits, 0, 2) === '51'
             ? substr($digits, 2)
             : $digits;
@@ -65,18 +52,6 @@ trait ConcernsSearchResponse
         ];
     }
 
-    /**
-     * Genera los dos formatos requeridos por las consultas IMR.
-     *
-     * Entradas admitidas:
-     * - 16805491
-     * - H16805491
-     * - h16805491
-     *
-     * Resultado:
-     * - customer_info: 16805491  (DS_SUSCRIPTORES.CUENTA_CD)
-     * - actions:       H16805491 (historial y resumen)
-     */
     protected function normalizeImrIdentifiers(string $customerId): array
     {
         $input = $this->validateTelefono($customerId);
