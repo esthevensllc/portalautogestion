@@ -28,7 +28,10 @@ class ImfFijaController
                 'hasData' => false,
                 'total' => 0,
                 'saldo' => 0,
+                'cargoFijo' => 0,
+                'importeTotal' => 0,
                 'cantidadAcciones' => 0,
+                'cantidadFidelizaciones' => 0,
                 'montoConsumido' => 0,
             ],
         ];

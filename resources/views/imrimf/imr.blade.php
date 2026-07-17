@@ -39,8 +39,67 @@
         display: flex;
     }
 
+    .chart-shell .percent,
     .chart-shell.is-empty .percent {
-        display: none;
+        display: none !important;
+    }
+
+    .usage-area .badge {
+        min-width: 190px;
+        padding: 12px 22px;
+        gap: 12px;
+        border-radius: 10px;
+        font-size: 14px;
+    }
+
+    .usage-area .badge span {
+        line-height: 1.2;
+    }
+
+    .usage-area .badge #imrTotalText {
+        font-size: 15px;
+        font-weight: 800;
+    }
+
+    .usage-area .cards {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+        margin-top: 55px;
+    }
+
+    .metric-card.is-negative strong,
+    .percent.is-negative {
+        color: #b91c1c;
+    }
+
+
+    @media (max-width: 1200px) {
+        .usage-area .cards {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 640px) {
+        .usage-area .cards {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .summary-restrictions-note {
+        margin-top: 10px;
+        color: #b91c1c;
+        font-size: 11px;
+        line-height: 1.35;
+    }
+
+    .summary-restrictions-note p,
+    .summary-restrictions-note ul {
+        margin-bottom: 6px;
+    }
+
+    .summary-restrictions-note ul {
+        padding-left: 16px;
     }
 </style>
 @endsection
@@ -91,7 +150,7 @@
 
                 <div class="badge">
                     <span id="productLabelText">{{ $config['product_label'] }}</span>
-                    <span id="imrTotalText">S/ 0</span>
+                    <span id="imrTotalText">S/ 0.00</span>
                 </div>
 
                 <div class="chart-shell is-empty" id="chartShell" role="img" aria-label="Sin datos de {{ $config['product_label'] }}">
@@ -100,15 +159,22 @@
                     <div class="chart-empty-state" id="chartEmptyState">Sin datos</div>
                     <span class="percent free" id="freePercentText">--</span>
                 </div>
-
                 <div class="cards">
-                    <article class="metric-card">
-                        <strong id="cantidadAccionesText">0</strong>
+                    <article class="metric-card" id="importeTotalCard">
+                        <strong id="importeTotalText">S/ 0.00</strong>
+                        <span>{{ $config['product_label'] }} Utilizado</span>
+                    </article>
+                    <article class="metric-card" id="cantidadFidelizacionesCard">
+                        <strong id="cantidadFidelizacionesText">0</strong>
                         <span>Cantidad de Acciones</span>
                     </article>
-                    <article class="metric-card">
-                        <strong id="montoConsumidoText">S/ 0</strong>
-                        <span>Monto Consumido</span>
+                    <article class="metric-card" id="cargoFijoCard">
+                        <strong id="cargoFijoText">S/ 0.00</strong>
+                        <span>{{ $config['product_label'] }}</span>
+                    </article>
+                    <article class="metric-card" id="saldoImfCard">
+                        <strong id="saldoImfText">S/ 0.00</strong>
+                        <span>Saldo {{ $config['product_label'] }}</span>
                     </article>
                 </div>
             </section>
@@ -139,7 +205,7 @@
                     <thead>
                         <tr>
                             <th>Tipo</th>
-                            <th>Cantidad de Fidelizaciones</th>
+                            <th>Cantidad de Acciones</th>
                             <th>Importe</th>
                         </tr>
                     </thead>
@@ -149,6 +215,16 @@
                         </tr>
                     </tbody>
                 </table>
+
+                <div class="summary-restrictions-note" aria-label="Restricciones generales">
+                    <p><strong>Restricciones Generales (Fundados y No Fundados):</strong></p>
+                    <ul>
+                        <li>Ajustes divididos en un solo recibo con la finalidad de no exceder tu autonomía para ajustar.</li>
+                        <li>Ajustes a recibos con saldo a favor.</li>
+                        <li>Ajustes a líneas con &quot;Plan Colaborador Claro&quot; o herramientas de trabajo.</li>
+                        <li>Ajustes de más de una NC a un solo recibo por el mismo tipo de registro (Fundado, No Fundado, Retención).</li>
+                    </ul>
+                </div>
             </section>
         </section>
     </div>
@@ -166,7 +242,10 @@
         hasData: false,
         total: 0,
         saldo: 0,
+        cargoFijo: 0,
+        importeTotal: 0,
         cantidadAcciones: 0,
+        cantidadFidelizaciones: 0,
         montoConsumido: 0
     };
 
@@ -174,6 +253,7 @@
     let colorSaldo = '#7ee95f';
     let colorConsumido = '#eeeeee';
     let colorBorder = '#eeeeee';
+    let colorNegativo = '#b91c1c';
 
     const centerTextPlugin = {
         id: 'centerTextPlugin',
@@ -202,7 +282,21 @@
 
     function formatSoles(value, decimals = 2) {
         const amount = Number(value) || 0;
-        return `S/ ${amount.toFixed(decimals)}`;
+        const sign = amount < 0 ? '-' : '';
+        const factor = 10 ** decimals;
+        const truncatedAmount = Math.trunc(Math.abs(amount) * factor) / factor;
+        return `${sign}S/ ${truncatedAmount.toFixed(decimals)}`;
+    }
+
+    function normalizarNumero(value) {
+        const amount = Number(value);
+        return Number.isFinite(amount) ? amount : 0;
+    }
+
+    function actualizarTextoMetrica(elementId, value, decimals = 2) {
+        const element = document.getElementById(elementId);
+        element.textContent = formatSoles(value, decimals);
+        element.closest('.metric-card')?.classList.toggle('is-negative', normalizarNumero(value) < 0);
     }
 
     function limitarValor(value, min, max) {
@@ -245,37 +339,87 @@
         document.getElementById('imrTotalText').textContent = formatSoles(0, 2);
         document.getElementById('usedPercentText').textContent = '--';
         document.getElementById('freePercentText').textContent = '--';
-        document.getElementById('cantidadAccionesText').textContent = '0';
-        document.getElementById('montoConsumidoText').textContent = formatSoles(0, 2);
+        document.getElementById('usedPercentText').classList.remove('is-negative');
+        document.getElementById('freePercentText').classList.remove('is-negative');
+        document.getElementById('cantidadFidelizacionesText').textContent = '0';
+        actualizarTextoMetrica('importeTotalText', 0, 2);
+        actualizarTextoMetrica('cargoFijoText', 0, 2);
+        actualizarTextoMetrica('saldoImfText', 0, 2);
+    }
+
+    function obtenerDatosGrafico(importeTotal, saldoImf, cargoFijo) {
+        const producto = imrimfConfig.product_label;
+
+        if (importeTotal < 0) {
+            return {
+                values: [Math.abs(importeTotal), Math.max(saldoImf, 0)],
+                actualValues: [importeTotal, saldoImf],
+                labels: [`${producto} Utilizado`, `Saldo ${producto}`],
+                colors: [colorNegativo, colorSaldo],
+                negativeLabelIndex: 0
+            };
+        }
+
+        if (saldoImf < 0) {
+            return {
+                values: [Math.max(cargoFijo, 0), Math.abs(saldoImf)],
+                actualValues: [Math.max(cargoFijo, 0), saldoImf],
+                labels: [`${producto} cubierto`, `Exceso ${producto}`],
+                colors: [colorSaldo, colorNegativo],
+                negativeLabelIndex: 1
+            };
+        }
+
+        return {
+            values: [Math.max(importeTotal, 0), Math.max(saldoImf, 0)],
+            actualValues: [importeTotal, saldoImf],
+            labels: [`${producto} Utilizado`, `Saldo ${producto}`],
+            colors: [colorConsumido, colorSaldo],
+            negativeLabelIndex: -1
+        };
     }
 
     function llenarCuadroImf(data) {
-        const importeTotal = Number(data?.montoConsumido ?? data?.total ?? 0) || 0;
-        const cantidadAcciones = Number(data?.cantidadAcciones) || 0;
+        const importeTotal = normalizarNumero(data?.importeTotal ?? data?.montoConsumido ?? data?.total);
+        const cantidadFidelizaciones = normalizarNumero(data?.cantidadFidelizaciones ?? data?.cantidadAcciones);
+        const cargoFijo = normalizarNumero(data?.cargoFijo);
+        const saldoImf = normalizarNumero(data?.saldo);
+        const usedLabel = document.getElementById('usedPercentText');
+        const freeLabel = document.getElementById('freePercentText');
+        document.getElementById('imrTotalText').textContent = formatSoles(cargoFijo, 2);
+        document.getElementById('cantidadFidelizacionesText').textContent = cantidadFidelizaciones;
+        actualizarTextoMetrica('importeTotalText', importeTotal, 2);
+        actualizarTextoMetrica('cargoFijoText', cargoFijo, 2);
+        actualizarTextoMetrica('saldoImfText', saldoImf, 2);
 
-        if (!data?.hasData || importeTotal <= 0) {
-            resetGraficoSinDatos();
+        const chartData = obtenerDatosGrafico(importeTotal, saldoImf, cargoFijo);
+        const chartTotal = chartData.values.reduce((acc, value) => acc + value, 0);
+
+        usedLabel.classList.toggle('is-negative', chartData.negativeLabelIndex === 0);
+        freeLabel.classList.toggle('is-negative', chartData.negativeLabelIndex === 1);
+
+        if (!data?.hasData || chartTotal <= 0) {
+            if (imfChartInstance) {
+                imfChartInstance.destroy();
+                imfChartInstance = null;
+            }
+
+            const chartShell = document.getElementById('chartShell');
+            chartShell.classList.add('is-empty');
+            chartShell.setAttribute('aria-label', `Sin datos graficables de ${imrimfConfig.product_label}`);
+            usedLabel.textContent = '--';
+            freeLabel.textContent = '--';
             return;
         }
 
-        const porcentajeUsadoNumero = 100;
-        const porcentajeLibreNumero = 0;
-        const porcentajeUsado = porcentajeUsadoNumero.toFixed(2);
-        const porcentajeLibre = porcentajeLibreNumero.toFixed(2);
-
-        document.getElementById('imrTotalText').textContent = formatSoles(importeTotal, 2);
-        document.getElementById('usedPercentText').textContent = `${porcentajeUsado}%`;
-        document.getElementById('freePercentText').textContent = `${porcentajeLibre}%`;
-        document.getElementById('cantidadAccionesText').textContent = cantidadAcciones;
-        document.getElementById('montoConsumidoText').textContent = formatSoles(importeTotal, 2);
-
-        actualizarPosicionPorcentajes(porcentajeLibreNumero, porcentajeUsadoNumero);
+        usedLabel.textContent = '';
+        freeLabel.textContent = '';
 
         const chartShell = document.getElementById('chartShell');
         chartShell.classList.remove('is-empty');
         chartShell.setAttribute(
             'aria-label',
-            `Importe total de ${imrimfConfig.product_label}: ${importeTotal} soles`
+            `${imrimfConfig.product_label}: ${cargoFijo} soles. ${imrimfConfig.product_label} utilizado: ${importeTotal} soles. Saldo: ${saldoImf} soles.`
         );
 
         const ctx = document.getElementById('imfChart');
@@ -287,11 +431,11 @@
         imfChartInstance = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['Importe total'],
+                labels: chartData.labels,
                 datasets: [
                     {
-                        data: [importeTotal],
-                        backgroundColor: [colorSaldo],
+                        data: chartData.values,
+                        backgroundColor: chartData.colors,
                         borderColor: colorBorder,
                         borderWidth: 5,
                         hoverOffset: 0
@@ -308,12 +452,37 @@
                         display: false
                     },
                     tooltip: {
-                        enabled: false
+                        enabled: true,
+                        backgroundColor: 'rgba(17, 24, 39, 0.96)',
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff',
+                        borderColor: 'rgba(255, 255, 255, 0.25)',
+                        borderWidth: 1,
+                        padding: 12,
+                        cornerRadius: 8,
+                        displayColors: true,
+                        boxWidth: 10,
+                        boxHeight: 10,
+                        callbacks: {
+                            title(items) {
+                                return items?.[0]?.label || '';
+                            },
+                            label(context) {
+                                const actualValue = chartData.actualValues[context.dataIndex] ?? context.parsed;
+                                const visibleValue = chartData.values[context.dataIndex] ?? 0;
+                                const percentage = chartTotal > 0 ? (visibleValue / chartTotal) * 100 : 0;
+
+                                return [
+                                    ` Monto: ${formatSoles(actualValue, 2)}`,
+                                    ` Porcentaje: ${percentage.toFixed(2)}%`
+                                ];
+                            }
+                        }
                     },
                     centerTextPlugin: {
-                        valueText: formatSoles(importeTotal, 0),
+                        valueText: formatSoles(importeTotal, 2),
                         labelText: 'IMPORTE',
-                        valueColor: colorSaldo,
+                        valueColor: importeTotal < 0 ? colorNegativo : colorSaldo,
                         labelColor: colorConsumido
                     }
                 }
@@ -422,15 +591,20 @@
     }
 
     function calcularDataGraficoDesdeResumen(totals) {
-        const montoConsumido = Number(totals?.importe_total) || 0;
-        const cantidadAcciones = Number(totals?.cantidad_acciones) || 0;
+        const importeTotal = normalizarNumero(totals?.importe_total);
+        const cantidadFidelizaciones = normalizarNumero(totals?.cantidad_acciones);
+        const cargoFijo = normalizarNumero(totals?.cargo_fijo);
+        const saldo = normalizarNumero(totals?.saldo);
 
         return {
-            hasData: montoConsumido > 0 && cantidadAcciones > 0,
-            total: montoConsumido,
-            saldo: 0,
-            montoConsumido,
-            cantidadAcciones
+            hasData: cantidadFidelizaciones > 0 || importeTotal !== 0 || cargoFijo !== 0,
+            total: cargoFijo,
+            saldo,
+            importeTotal,
+            montoConsumido: importeTotal,
+            cargoFijo,
+            cantidadFidelizaciones,
+            cantidadAcciones: cantidadFidelizaciones
         };
     }
 
@@ -470,7 +644,7 @@
             renderSummary(summaryRows);
 
             if (historyRows.length === 0 && summaryRows.length === 0) {
-                resetGraficoSinDatos();
+                llenarCuadroImf(calcularDataGraficoDesdeResumen(data.totals));
                 setMessage(
                     customerInfo
                         ? 'Se encontró información del cliente, pero no registra acciones.'

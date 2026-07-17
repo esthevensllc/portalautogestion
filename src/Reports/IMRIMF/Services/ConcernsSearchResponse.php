@@ -92,6 +92,9 @@ trait ConcernsSearchResponse
             return $carry + (float) $row['importe'];
         }, 0.0);
 
+        $cargoFijo = $this->parseAmount($customerInfo['cargo_fijo'] ?? 0);
+        $saldo = $cargoFijo - $importeTotal;
+
         return [
             'telefono' => $telefono,
             'customer_info' => $customerInfo,
@@ -99,8 +102,38 @@ trait ConcernsSearchResponse
             'summary' => $summary,
             'totals' => [
                 'cantidad_acciones' => $cantidadTotal,
-                'importe_total' => round($importeTotal, 2),
+                'importe_total' => $importeTotal,
+                'cargo_fijo' => $cargoFijo,
+                'saldo' => $saldo,
             ],
         ];
+    }
+
+    private function parseAmount($value): float
+    {
+        if (is_int($value) || is_float($value)) {
+            return (float) $value;
+        }
+
+        $amount = trim((string) $value);
+
+        if ($amount === '') {
+            return 0.0;
+        }
+
+        $amount = preg_replace('/[^0-9,.-]/', '', $amount) ?: '0';
+        $lastComma = strrpos($amount, ',');
+        $lastDot = strrpos($amount, '.');
+
+        if ($lastComma !== false && $lastDot !== false) {
+            $decimalSeparator = $lastComma > $lastDot ? ',' : '.';
+            $thousandSeparator = $decimalSeparator === ',' ? '.' : ',';
+            $amount = str_replace($thousandSeparator, '', $amount);
+            $amount = str_replace($decimalSeparator, '.', $amount);
+        } elseif ($lastComma !== false) {
+            $amount = str_replace(',', '.', $amount);
+        }
+
+        return is_numeric($amount) ? (float) $amount : 0.0;
     }
 }
