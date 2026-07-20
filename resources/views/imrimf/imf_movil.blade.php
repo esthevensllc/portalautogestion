@@ -8,16 +8,38 @@
         position: relative;
     }
 
-    .history-scroll.is-scrollable {
-        max-height: 318px;
-        overflow-y: auto;
-        padding-right: 4px;
+    .history-scroll {
+        width: 100%;
+        overflow-x: auto;
+        overflow-y: visible;
     }
 
-    .history-scroll.is-scrollable thead th {
-        position: sticky;
-        top: 0;
-        z-index: 2;
+    .history-scroll.is-scrollable {
+        overflow-y: visible;
+        padding-right: 0;
+    }
+
+    .history-table.has-body-scroll {
+        width: 100%;
+        table-layout: fixed;
+    }
+
+    .history-table.has-body-scroll thead,
+    .history-table.has-body-scroll tbody tr {
+        display: table;
+        width: 100%;
+        table-layout: fixed;
+    }
+
+    .history-table.has-body-scroll tbody {
+        display: block;
+        max-height: var(--history-body-height);
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .history-table.has-body-scroll thead th {
+        position: static;
     }
 
     .chart-shell.is-empty canvas {
@@ -65,7 +87,6 @@
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 16px;
-        margin-top: 55px;
     }
 
     .metric-card.is-negative strong,
@@ -473,16 +494,16 @@
                                 const percentage = chartTotal > 0 ? (visibleValue / chartTotal) * 100 : 0;
 
                                 return [
-                                    ` Monto: ${formatSoles(actualValue, 2)}`,
-                                    ` Porcentaje: ${percentage.toFixed(2)}%`
+                                    `Monto: ${formatSoles(actualValue, 2)}`,
+                                    `Porcentaje: ${percentage.toFixed(2)}%`
                                 ];
                             }
                         }
                     },
                     centerTextPlugin: {
-                        valueText: formatSoles(importeTotal, 2),
-                        labelText: 'IMPORTE',
-                        valueColor: importeTotal < 0 ? colorNegativo : colorSaldo,
+                        valueText: formatSoles(saldoImf, 2),
+                        labelText: `SALDO ${imrimfConfig.product_label}`,
+                        valueColor: saldoImf < 0 ? colorNegativo : colorSaldo,
                         labelColor: colorConsumido
                     }
                 }
@@ -540,15 +561,59 @@
         `;
     }
 
+    const HISTORY_VISIBLE_ROWS = 5;
+
+    function resetHistoryScrollHeight(historyScroll) {
+        const table = historyScroll?.querySelector('.history-table');
+        const tbody = table?.querySelector('tbody');
+
+        historyScroll?.classList.remove('is-scrollable');
+        historyScroll?.style.removeProperty('max-height');
+        historyScroll?.style.removeProperty('height');
+        table?.classList.remove('has-body-scroll');
+        table?.style.removeProperty('--history-body-height');
+        tbody?.style.removeProperty('max-height');
+
+        if (tbody) {
+            tbody.scrollTop = 0;
+        }
+    }
+
+    function syncHistoryScrollHeight(historyScroll) {
+        const table = historyScroll?.querySelector('.history-table');
+        const tbody = table?.querySelector('tbody');
+        const bodyRows = Array.from(table?.querySelectorAll('tbody tr') || []);
+
+        if (!table || !tbody || bodyRows.length <= HISTORY_VISIBLE_ROWS) {
+            resetHistoryScrollHeight(historyScroll);
+            return;
+        }
+
+        table.classList.remove('has-body-scroll');
+        table.style.removeProperty('--history-body-height');
+        tbody.style.removeProperty('max-height');
+        historyScroll.classList.remove('is-scrollable');
+
+        const rowsHeight = bodyRows
+            .slice(0, HISTORY_VISIBLE_ROWS)
+            .reduce((height, row) => height + row.getBoundingClientRect().height, 0);
+        const targetHeight = Math.ceil(rowsHeight + 1);
+
+        historyScroll.classList.add('is-scrollable');
+        table.classList.add('has-body-scroll');
+        table.style.setProperty('--history-body-height', `${targetHeight}px`);
+        tbody.style.maxHeight = `${targetHeight}px`;
+        tbody.scrollTop = 0;
+    }
+
     function renderHistory(rows) {
         const tbody = document.getElementById('historyBody');
         const historyRows = Array.isArray(rows) ? rows : [];
         const historyScroll = document.getElementById('historyScroll');
 
-        historyScroll.classList.toggle('is-scrollable', historyRows.length > 5);
-
         if (historyRows.length === 0) {
             tbody.innerHTML = '<tr><td colspan="5">No se encontraron resultados.</td></tr>';
+            resetHistoryScrollHeight(historyScroll);
             return;
         }
 
@@ -561,6 +626,8 @@
                 <td>${escapeHtml(row.detalle)}</td>
             </tr>
         `).join('');
+
+        requestAnimationFrame(() => syncHistoryScrollHeight(historyScroll));
     }
 
     function renderSummary(rows) {
@@ -688,7 +755,7 @@
             setMessage('');
             document.getElementById('customerInfoBody').innerHTML = '<tr><td colspan="6">Ingrese un valor para consultar.</td></tr>';
             document.getElementById('historyBody').innerHTML = '<tr><td colspan="5">Sin Datos.</td></tr>';
-            document.getElementById('historyScroll').classList.remove('is-scrollable');
+            resetHistoryScrollHeight(document.getElementById('historyScroll'));
             document.getElementById('summaryBody').innerHTML = '<tr><td colspan="3">Sin Datos.</td></tr>';
             resetGraficoSinDatos();
         });
