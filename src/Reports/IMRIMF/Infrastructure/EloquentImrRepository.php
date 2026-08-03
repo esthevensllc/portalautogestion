@@ -34,7 +34,7 @@ class EloquentImrRepository implements ImrRepository
                         ORDER BY DS.FECHA_ACTIVACION_SUSCRIPTOR DESC
                     ) AS NROW
                 FROM DWHDS.DS_SUSCRIPTORES PARTITION ({$partition}) DS
-                INNER JOIN DWA.F_M_SEG_CLIENTES FMS
+                LEFT JOIN DWA.F_M_SEG_CLIENTES FMS
                     ON FMS.NRO_DOCUMENTO = DS.NUMERO_DOCUMENTO_PARTICIPANTE
                 WHERE DS.CUENTA_CD = :customer_id
             )
@@ -42,6 +42,47 @@ class EloquentImrRepository implements ImrRepository
 
         $rows = DB::select(DB::raw($query), [
             'customer_id' => trim($customerId),
+        ]);
+
+        if (empty($rows)) {
+            return null;
+        }
+
+        return $this->mapCustomerInfo($rows[0]);
+    }
+
+    public function getCustomerInfoByPhone(string $telefono): ?array
+    {
+        $partition = $this->currentSubscriberPartition();
+
+        $query = "SELECT
+                CUSTOMER_ID_TELEFONO,
+                PLAN_TARIFARIO,
+                RANGO_ANTIGUEDAD,
+                SEGMENTO_VALOR,
+                CARGO_FIJO,
+                TIPO_ABONADO
+            FROM (
+                SELECT
+                    DS.CUENTA_CD AS CUSTOMER_ID_TELEFONO,
+                    DS.PLAN_DESC AS PLAN_TARIFARIO,
+                    TO_CHAR(DS.FECHA_ACTIVACION_SUSCRIPTOR, 'DD/MM/YYYY') AS RANGO_ANTIGUEDAD,
+                    FMS.SEGMENTO AS SEGMENTO_VALOR,
+                    DS.CARGO_FIJO_SUSCRIPTOR AS CARGO_FIJO,
+                    DS.PLATAFORMA AS TIPO_ABONADO,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY DS.NUMERO_TELEFONO
+                        ORDER BY DS.FECHA_ACTIVACION_SUSCRIPTOR DESC
+                    ) AS NROW
+                FROM DWHDS.DS_SUSCRIPTORES PARTITION ({$partition}) DS
+                LEFT JOIN DWA.F_M_SEG_CLIENTES FMS
+                    ON FMS.NRO_DOCUMENTO = DS.NUMERO_DOCUMENTO_PARTICIPANTE
+                WHERE DS.NUMERO_TELEFONO = :telefono
+            )
+            WHERE NROW = 1";
+
+        $rows = DB::select(DB::raw($query), [
+            'telefono' => trim($telefono),
         ]);
 
         if (empty($rows)) {

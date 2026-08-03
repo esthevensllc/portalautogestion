@@ -107,6 +107,75 @@
         }
     }
 
+    .customer-strip > *,
+    .search-panel,
+    .info-scroll {
+        min-width: 0;
+    }
+
+    .search-panel .search-row {
+        display: grid;
+        grid-template-columns: 104px minmax(0, 1fr) 38px 38px;
+        gap: 5px;
+        width: 100%;
+        align-items: center;
+    }
+
+    .search-type-select,
+    .search-value-input {
+        box-sizing: border-box;
+        width: 100%;
+        min-width: 0;
+        height: 42px;
+    }
+
+    .search-type-select {
+        padding: 0 26px 0 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 2px;
+        background-color: #ffffff;
+        color: #111827;
+        font-size: 14px;
+        height: 39px;
+    }
+
+    .search-value-input {
+        flex: none;
+    }
+
+    .search-panel .action-btn {
+        box-sizing: border-box;
+        width: 38px;
+        min-width: 38px;
+        height: 39px;
+        padding: 0;
+    }
+
+    @media (max-width: 640px) {
+        .search-panel .search-row {
+            grid-template-columns: minmax(0, 1fr) 38px 38px;
+            grid-template-areas:
+                "type type type"
+                "value search clear";
+        }
+
+        .search-type-select {
+            grid-area: type;
+        }
+
+        .search-value-input {
+            grid-area: value;
+        }
+
+        #searchButton {
+            grid-area: search;
+        }
+
+        #clearSearch {
+            grid-area: clear;
+        }
+    }
+
     .summary-restrictions-note {
         margin-top: 10px;
         color: #b91c1c;
@@ -135,9 +204,28 @@
     <div class="content">
         <section class="customer-strip" aria-label="Consulta e información del cliente">
             <form class="search-panel" id="imrimfSearchForm" action="{{ $config['search_url'] }}" method="get">
-                <label for="customer-id">{{ $config['input_label'] }}</label>
+                <label for="customer-id" id="searchInputLabel">{{ $config['input_label'] }}</label>
                 <div class="search-row">
-                    <input id="customer-id" name="telefono" type="text" placeholder="{{ $config['input_placeholder'] }}" autocomplete="off" />
+                    <select
+                        class="search-type-select"
+                        id="search-type"
+                        name="tipo_busqueda"
+                        aria-label="Tipo de búsqueda IMR"
+                    >
+                        @foreach ($config['search_types'] as $value => $searchType)
+                            <option value="{{ $value }}" {{ $value === $config['default_search_type'] ? 'selected' : '' }}>
+                                {{ $searchType['label'] }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <input
+                        class="search-value-input"
+                        id="customer-id"
+                        name="telefono"
+                        type="text"
+                        placeholder="{{ $config['input_placeholder'] }}"
+                        autocomplete="off"
+                    />
                     <button class="action-btn primary" id="searchButton" type="submit" title="Buscar" aria-label="Buscar">⌕</button>
                     <button class="action-btn" id="clearSearch" type="button" title="Borrar texto" aria-label="Borrar texto">↻</button>
                 </div>
@@ -675,10 +763,29 @@
         };
     }
 
-    async function buscarAcciones(telefono) {
+    function getSearchTypeConfig(searchType) {
+        const searchTypes = imrimfConfig.search_types || {};
+        return searchTypes[searchType] || searchTypes[imrimfConfig.default_search_type] || {
+            label: 'Customer ID',
+            placeholder: 'Ej: 16805491 o H16805491'
+        };
+    }
+
+    function updateSearchInput(searchTypeSelect, input) {
+        const selectedType = searchTypeSelect.value;
+        const selectedConfig = getSearchTypeConfig(selectedType);
+        const inputLabel = document.getElementById('searchInputLabel');
+
+        inputLabel.textContent = selectedConfig.label;
+        input.placeholder = selectedConfig.placeholder;
+        input.inputMode = selectedType === 'telefono' ? 'tel' : 'text';
+    }
+
+    async function buscarAcciones(searchValue, searchType) {
         const button = document.getElementById('searchButton');
         const url = new URL(imrimfConfig.search_url, window.location.origin);
-        url.searchParams.set('telefono', telefono);
+        url.searchParams.set('telefono', searchValue);
+        url.searchParams.set('tipo_busqueda', searchType);
 
         button.disabled = true;
         setMessage('Consultando...', false);
@@ -735,18 +842,29 @@
 
         const form = document.getElementById('imrimfSearchForm');
         const input = document.getElementById('customer-id');
+        const searchTypeSelect = document.getElementById('search-type');
         const clearButton = document.getElementById('clearSearch');
+
+        updateSearchInput(searchTypeSelect, input);
+
+        searchTypeSelect.addEventListener('change', function () {
+            updateSearchInput(searchTypeSelect, input);
+            setMessage('');
+            input.focus();
+        });
 
         form.addEventListener('submit', function (event) {
             event.preventDefault();
-            const telefono = input.value.trim();
+            const searchValue = input.value.trim();
+            const searchType = searchTypeSelect.value;
+            const searchTypeConfig = getSearchTypeConfig(searchType);
 
-            if (!telefono) {
-                setMessage('Ingrese un teléfono o Customer ID.');
+            if (!searchValue) {
+                setMessage(`Ingrese un ${searchTypeConfig.label}.`);
                 return;
             }
 
-            buscarAcciones(telefono);
+            buscarAcciones(searchValue, searchType);
         });
 
         clearButton.addEventListener('click', function () {
@@ -760,10 +878,18 @@
             resetGraficoSinDatos();
         });
 
-        const initialTelefono = new URLSearchParams(window.location.search).get('telefono');
-        if (initialTelefono) {
-            input.value = initialTelefono;
-            buscarAcciones(initialTelefono);
+        const queryParams = new URLSearchParams(window.location.search);
+        const initialValue = queryParams.get('telefono');
+        const initialSearchType = queryParams.get('tipo_busqueda');
+
+        if (initialSearchType && imrimfConfig.search_types?.[initialSearchType]) {
+            searchTypeSelect.value = initialSearchType;
+            updateSearchInput(searchTypeSelect, input);
+        }
+
+        if (initialValue) {
+            input.value = initialValue;
+            buscarAcciones(initialValue, searchTypeSelect.value);
         }
     });
 </script>

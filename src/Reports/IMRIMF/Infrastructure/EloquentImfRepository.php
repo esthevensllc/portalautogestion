@@ -35,7 +35,7 @@ class EloquentImfRepository implements ImfRepository
                         ORDER BY DS.FECHA_ACTIVACION_SUSCRIPTOR DESC
                     ) AS NROW
                 FROM DWHDS.DS_SUSCRIPTORES PARTITION ({$partition}) DS
-                INNER JOIN DWA.F_M_SEG_CLIENTES FMS
+                LEFT JOIN DWA.F_M_SEG_CLIENTES FMS
                     ON FMS.NRO_DOCUMENTO = DS.NUMERO_DOCUMENTO_PARTICIPANTE
                 WHERE DS.NUMERO_TELEFONO = :telefono
             )

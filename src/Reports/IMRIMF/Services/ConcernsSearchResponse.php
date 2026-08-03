@@ -52,6 +52,50 @@ trait ConcernsSearchResponse
         ];
     }
 
+    protected function normalizeImrSearchType(string $searchType): string
+    {
+        $normalizedType = strtolower(trim($searchType));
+
+        if (!in_array($normalizedType, ['customer_id', 'telefono'], true)) {
+            throw new InvalidArgumentException(
+                'El tipo de búsqueda IMR debe ser Customer ID o Teléfono.'
+            );
+        }
+
+        return $normalizedType;
+    }
+
+    protected function normalizeImrPhoneIdentifiers(string $telefono): array
+    {
+        $input = $this->validateTelefono($telefono);
+
+        if (!preg_match('/^\+?[0-9\s().-]+$/', $input)) {
+            throw new InvalidArgumentException(
+                'El teléfono IMR solo puede contener números, el prefijo +51 y separadores válidos.'
+            );
+        }
+
+        $digits = preg_replace('/\D+/', '', $input) ?: '';
+
+        if ($digits === '') {
+            throw new InvalidArgumentException('Debe ingresar un teléfono IMR válido.');
+        }
+
+        $telefonoSinPrefijo = substr($digits, 0, 2) === '51'
+            ? substr($digits, 2)
+            : $digits;
+
+        if ($telefonoSinPrefijo === '') {
+            throw new InvalidArgumentException('Debe ingresar el número después del prefijo 51.');
+        }
+
+        return [
+            'input' => $input,
+            'customer_info' => '51' . $telefonoSinPrefijo,
+            'actions' => $telefonoSinPrefijo,
+        ];
+    }
+
     protected function normalizeImrIdentifiers(string $customerId): array
     {
         $input = $this->validateTelefono($customerId);

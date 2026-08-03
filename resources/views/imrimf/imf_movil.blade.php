@@ -95,6 +95,249 @@
     }
 
 
+
+
+    .imrimf-main-view.is-locked,
+    .imrimf-gate[hidden],
+    .approval-modal-backdrop[hidden],
+    .selected-reason-strip[hidden] {
+        display: none !important;
+    }
+
+    .imrimf-gate {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+        margin-bottom: 18px;
+    }
+
+    .imrimf-gate-header {
+        display: grid;
+        grid-template-columns: 1fr auto 0px;
+        align-items: center;
+        gap: 16px;
+        background: #f81010;
+        color: #ffffff;
+        padding: 6px 14px;
+        min-height: 48px;
+    }
+
+    .imrimf-gate-header h1 {
+        margin: 0;
+        font-size: 24px;
+        line-height: 1.1;
+        font-weight: 800;
+    }
+
+    .imrimf-gate-logo {
+        text-align: right;
+        margin-left: auto;
+        font-size: 30px;
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: -1px;
+    }
+
+    .imrimf-gate-body {
+        display: grid;
+        grid-template-columns: minmax(280px, 1fr) minmax(260px, 0.85fr);
+        gap: 64px;
+        padding: 28px 48px 42px;
+    }
+
+    .question-group-title {
+        margin: 0 0 22px;
+        color: #1f2937;
+        font-size: 24px;
+        font-weight: 800;
+    }
+
+    .question-supervisor-title {
+        margin: 10px 0 12px;
+        color: #1f2937;
+        font-size: 18px;
+        line-height: 1.25;
+        font-weight: 600;
+    }
+
+    .reason-options {
+        display: grid;
+        gap: 10px;
+    }
+
+    .reason-option {
+        border: 0;
+        width: 100%;
+        min-height: 44px;
+        border-radius: 14px;
+        background: #d8d5d5;
+        color: #2d2d2d;
+        padding: 10px 14px;
+        text-align: left;
+        font-size: 16px;
+        font-weight: 600;
+        line-height: 1.25;
+        transition: transform 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease, color 0.16s ease;
+    }
+
+    .reason-option:hover,
+    .reason-option:focus {
+        outline: none;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 14px rgba(15, 23, 42, 0.16);
+    }
+
+    .reason-option.is-supervisor:hover,
+    .reason-option.is-supervisor:focus {
+        background: #f81010;
+        color: #ffffff;
+    }
+
+    .reason-option.is-selected,
+    .reason-option.is-supervisor.is-selected {
+        background: #f81010;
+        color: #ffffff;
+    }
+
+    .selected-reason-strip {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        background: #fff7ed;
+        border: 1px solid #fed7aa;
+        border-top: 0;
+        padding: 10px 16px;
+        color: #7c2d12;
+        font-size: 13px;
+    }
+
+    .selected-reason-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border-radius: 999px;
+        background: #ffffff;
+        border: 1px solid #fdba74;
+        padding: 5px 10px;
+        color: #7c2d12;
+        font-weight: 700;
+    }
+
+    .selected-reason-change {
+        margin-left: auto;
+        border: 1px solid #f97316;
+        border-radius: 999px;
+        background: #ffffff;
+        color: #9a3412;
+        padding: 5px 12px;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .selected-reason-change:hover,
+    .selected-reason-change:focus {
+        background: #ffedd5;
+        outline: none;
+    }
+
+    .approval-modal-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 1050;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(15, 23, 42, 0.55);
+        padding: 20px;
+    }
+
+    .approval-modal-card {
+        width: min(440px, 100%);
+        border-radius: 16px;
+        background: #ffffff;
+        box-shadow: 0 24px 48px rgba(15, 23, 42, 0.24);
+        overflow: hidden;
+    }
+
+    .approval-modal-card header {
+        background: #f81010;
+        color: #ffffff;
+        padding: 14px 18px;
+    }
+
+    .approval-modal-card h2 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 800;
+    }
+
+    .approval-modal-body {
+        padding: 18px;
+    }
+
+    .approval-modal-body p {
+        margin: 0 0 12px;
+        color: #1f2937;
+        font-size: 16px;
+        font-weight: 700;
+    }
+
+    .approval-reason {
+        border-radius: 10px;
+        background: #f3f4f6;
+        padding: 10px 12px;
+        color: #374151;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .approval-modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        padding: 0 18px 18px;
+    }
+
+    .approval-modal-actions button {
+        border: 0;
+        border-radius: 999px;
+        padding: 8px 16px;
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .approval-modal-actions .secondary {
+        background: #e5e7eb;
+        color: #374151;
+    }
+
+    .approval-modal-actions .primary {
+        background: #f81010;
+        color: #ffffff;
+    }
+
+    @media (max-width: 900px) {
+        .imrimf-gate-header {
+            grid-template-columns: 1fr;
+            text-align: center;
+        }
+
+        .imrimf-gate-logo {
+            text-align: center;
+        }
+
+        .imrimf-gate-body {
+            grid-template-columns: 1fr;
+            gap: 28px;
+            padding: 24px 18px 32px;
+        }
+
+        .selected-reason-change {
+            margin-left: 0;
+        }
+    }
+
     @media (max-width: 1200px) {
         .usage-area .cards {
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -126,10 +369,63 @@
 @endsection
 
 @section('content')
-<section class="imr-card" aria-label="{{ $config['title'] }}">
+<section class="imrimf-gate" id="imfMotivoGate" aria-label="Selección de motivo IMF móvil">
+    <div class="imrimf-gate-header">
+        <h1>{{ $config['questionnaire']['title'] }}</h1>
+        <div class="claro-logo" aria-label="Claro">Claro</div>
+    </div>
+
+    <div class="imrimf-gate-body">
+        <div class="question-group">
+            <h2 class="question-group-title">{{ $config['questionnaire']['general_title'] }}</h2>
+            <div class="reason-options" role="list">
+                @foreach ($config['questionnaire']['general_options'] as $option)
+                    <button type="button" class="reason-option" data-reason="{{ $option }}" data-requires-supervisor="0">
+                        {{ $option }}
+                    </button>
+                @endforeach
+            </div>
+        </div>
+
+        <div class="question-group">
+            <p class="question-supervisor-title">{{ $config['questionnaire']['supervisor_title'] }}</p>
+            <div class="reason-options" role="list">
+                @foreach ($config['questionnaire']['supervisor_options'] as $option)
+                    <button type="button" class="reason-option is-supervisor" data-reason="{{ $option }}" data-requires-supervisor="1">
+                        {{ $option }}
+                    </button>
+                @endforeach
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="approval-modal-backdrop" id="supervisorApprovalModal" role="dialog" aria-modal="true" aria-labelledby="supervisorApprovalTitle" hidden>
+    <div class="approval-modal-card">
+        <header>
+            <h2 id="supervisorApprovalTitle">Pedir Aprobación de supervisor</h2>
+        </header>
+        <div class="approval-modal-body">
+            <p>¿Aprobado por supervisor?</p>
+            <div class="approval-reason" id="supervisorApprovalReason"></div>
+        </div>
+        <div class="approval-modal-actions">
+            <button type="button" class="secondary" id="supervisorApprovalCancel">No</button>
+            <button type="button" class="primary" id="supervisorApprovalConfirm">Sí</button>
+        </div>
+    </div>
+</div>
+
+<section class="imr-card imrimf-main-view is-locked" id="imrimfMainView" aria-label="{{ $config['title'] }}">
     <div class="consulta-header">
         <h1>{{ $config['title'] }}</h1>
         <div class="claro-logo" aria-label="Claro">Claro</div>
+    </div>
+
+    <div class="selected-reason-strip" id="selectedReasonStrip" hidden>
+        <span class="selected-reason-pill"><strong>Motivo:</strong> <span id="selectedReasonText">-</span></span>
+        <span class="selected-reason-pill" id="selectedSupervisorPill" hidden><strong>Aprobación supervisor:</strong> Sí</span>
+        <button type="button" class="selected-reason-change" id="changeReasonButton">Cambiar motivo</button>
     </div>
 
     <div class="content">
@@ -271,6 +567,9 @@
     };
 
     let imfChartInstance = null;
+    let selectedReasonState = null;
+    let pendingSupervisorReason = null;
+    let initialTelefonoSearchExecuted = false;
     let colorSaldo = '#7ee95f';
     let colorConsumido = '#eeeeee';
     let colorBorder = '#eeeeee';
@@ -675,7 +974,156 @@
         };
     }
 
+
+    function setMotivoGateVisible(isVisible) {
+        document.getElementById('imfMotivoGate')?.toggleAttribute('hidden', !isVisible);
+        document.getElementById('imrimfMainView')?.classList.toggle('is-locked', isVisible);
+    }
+
+    function updateSelectedReasonUI() {
+        const strip = document.getElementById('selectedReasonStrip');
+        const reasonText = document.getElementById('selectedReasonText');
+        const supervisorPill = document.getElementById('selectedSupervisorPill');
+
+        if (!selectedReasonState) {
+            strip?.setAttribute('hidden', 'hidden');
+            return;
+        }
+
+        if (reasonText) {
+            reasonText.textContent = selectedReasonState.reason;
+        }
+
+        supervisorPill?.toggleAttribute('hidden', !selectedReasonState.requiresSupervisor);
+        strip?.removeAttribute('hidden');
+    }
+
+    function clearReasonSelectionStyles() {
+        document.querySelectorAll('.reason-option.is-selected').forEach(option => {
+            option.classList.remove('is-selected');
+        });
+    }
+
+    function markSelectedReason(reason) {
+        clearReasonSelectionStyles();
+
+        document.querySelectorAll('.reason-option').forEach(option => {
+            if (option.dataset.reason === reason) {
+                option.classList.add('is-selected');
+            }
+        });
+    }
+
+    function activateImfMovilView(reason, requiresSupervisor, approvedSupervisor = false) {
+        selectedReasonState = {
+            reason,
+            requiresSupervisor,
+            approvedSupervisor: requiresSupervisor ? approvedSupervisor : false
+        };
+
+        markSelectedReason(reason);
+        updateSelectedReasonUI();
+        setMotivoGateVisible(false);
+
+        const input = document.getElementById('customer-id');
+        input?.focus();
+
+        if (input?.value.trim() && !initialTelefonoSearchExecuted) {
+            initialTelefonoSearchExecuted = true;
+            buscarAcciones(input.value.trim());
+        }
+    }
+
+    function showReasonSelector() {
+        selectedReasonState = null;
+        pendingSupervisorReason = null;
+        updateSelectedReasonUI();
+        clearReasonSelectionStyles();
+        setMotivoGateVisible(true);
+        closeSupervisorApprovalModal();
+    }
+
+    function openSupervisorApprovalModal(reason) {
+        pendingSupervisorReason = reason;
+        const modal = document.getElementById('supervisorApprovalModal');
+        const reasonElement = document.getElementById('supervisorApprovalReason');
+        reasonElement.textContent = reason;
+        modal?.removeAttribute('hidden');
+        document.getElementById('supervisorApprovalConfirm')?.focus();
+    }
+
+    function closeSupervisorApprovalModal() {
+        const modal = document.getElementById('supervisorApprovalModal');
+        modal?.setAttribute('hidden', 'hidden');
+        pendingSupervisorReason = null;
+    }
+
+    function initializeQuestionnaireGate() {
+        document.querySelectorAll('.reason-option').forEach(option => {
+            option.addEventListener('click', function () {
+                const reason = this.dataset.reason || '';
+                const requiresSupervisor = this.dataset.requiresSupervisor === '1';
+
+                if (!reason) {
+                    return;
+                }
+
+                if (requiresSupervisor) {
+                    clearReasonSelectionStyles();
+                    this.classList.add('is-selected');
+                    openSupervisorApprovalModal(reason);
+                    return;
+                }
+
+                activateImfMovilView(reason, false, false);
+            });
+        });
+
+        document.getElementById('supervisorApprovalConfirm')?.addEventListener('click', function () {
+            if (!pendingSupervisorReason) {
+                closeSupervisorApprovalModal();
+                return;
+            }
+
+            const reason = pendingSupervisorReason;
+            closeSupervisorApprovalModal();
+            activateImfMovilView(reason, true, true);
+        });
+
+        document.getElementById('supervisorApprovalCancel')?.addEventListener('click', function () {
+            clearReasonSelectionStyles();
+            closeSupervisorApprovalModal();
+        });
+
+        document.getElementById('supervisorApprovalModal')?.addEventListener('click', function (event) {
+            if (event.target === this) {
+                clearReasonSelectionStyles();
+                closeSupervisorApprovalModal();
+            }
+        });
+
+        document.addEventListener('keydown', function (event) {
+            const modal = document.getElementById('supervisorApprovalModal');
+
+            if (event.key === 'Escape' && modal && !modal.hasAttribute('hidden')) {
+                clearReasonSelectionStyles();
+                closeSupervisorApprovalModal();
+            }
+        });
+
+        document.getElementById('changeReasonButton')?.addEventListener('click', function () {
+            showReasonSelector();
+        });
+
+        showReasonSelector();
+    }
+
     async function buscarAcciones(telefono) {
+        if (!selectedReasonState) {
+            showReasonSelector();
+            return;
+        }
+
         const button = document.getElementById('searchButton');
         const url = new URL(imrimfConfig.search_url, window.location.origin);
         url.searchParams.set('telefono', telefono);
@@ -763,8 +1211,9 @@
         const initialTelefono = new URLSearchParams(window.location.search).get('telefono');
         if (initialTelefono) {
             input.value = initialTelefono;
-            buscarAcciones(initialTelefono);
         }
+
+        initializeQuestionnaireGate();
     });
 </script>
 @endsection
