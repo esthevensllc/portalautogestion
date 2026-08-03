@@ -52,6 +52,45 @@ trait ConcernsSearchResponse
         ];
     }
 
+    protected function normalizeImfSearchType(string $searchType): string
+    {
+        $normalizedType = strtolower(trim($searchType));
+
+        if (!in_array($normalizedType, ['customer_id', 'telefono'], true)) {
+            throw new InvalidArgumentException(
+                'El tipo de búsqueda IMF FIJA debe ser Customer ID o Teléfono.'
+            );
+        }
+
+        return $normalizedType;
+    }
+
+    protected function normalizeImfCustomerIdIdentifiers(string $customerId): array
+    {
+        $input = $this->validateTelefono($customerId);
+        $compactValue = strtoupper((string) preg_replace('/\s+/', '', $input));
+
+        if (!preg_match('/^H?[0-9]+$/', $compactValue)) {
+            throw new InvalidArgumentException(
+                'El Customer ID IMF FIJA debe contener solo números y opcionalmente el prefijo H.'
+            );
+        }
+
+        $customerIdSinPrefijo = substr($compactValue, 0, 1) === 'H'
+            ? substr($compactValue, 1)
+            : $compactValue;
+
+        if ($customerIdSinPrefijo === '') {
+            throw new InvalidArgumentException('Debe ingresar el número después del prefijo H.');
+        }
+
+        return [
+            'input' => $input,
+            'customer_info' => $customerIdSinPrefijo,
+            'actions' => 'H' . $customerIdSinPrefijo,
+        ];
+    }
+
     protected function normalizeImrSearchType(string $searchType): string
     {
         $normalizedType = strtolower(trim($searchType));
