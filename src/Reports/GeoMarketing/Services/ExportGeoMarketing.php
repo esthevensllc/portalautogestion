@@ -38,6 +38,10 @@ class ExportGeoMarketing
         "24" => ["name" => "JOCKEY PLAZA"],
         "25" => ["name" => "Mall Aventura SJL"],
         "26" => ["name" => "EMPORIO COMERCIAL DE GAMARRA"],
+        "27" => ["name" => "Real Plaza Huancayo"],
+        "28" => ["name" => "Open Plaza Piura"],
+        "29" => ["name" => "REAL PLAZA JULIACA"],
+        "30" => ["name" => "Mall Aventura Plaza Trujillo"],
     ];
     private $repository;
     private $saveReportLog;

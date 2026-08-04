@@ -44,7 +44,11 @@ class GeoMarketingController
                 ["id" => "23", "label" => "REAL PLAZA SALAVERRY"],
                 ["id" => "24", "label" => "JOCKEY PLAZA"],
                 ["id" => "25", "label" => "Mall Aventura SJL"],
-                ["id" => "26", "label" => "EMPORIO COMERCIAL DE GAMARRA"]
+                ["id" => "26", "label" => "EMPORIO COMERCIAL DE GAMARRA"],
+                ["id" => "27", "label" => "Real Plaza Huancayo"],
+                ["id" => "28", "label" => "Open Plaza Piura"],
+                ["id" => "29", "label" => "REAL PLAZA JULIACA"],
+                ["id" => "30", "label" => "Mall Aventura Plaza Trujillo"]
                 // ["id" => "13", "label" => "NAT CRISTO REY"],
                 // ["id" => "14", "label" => "HIPODROMO AREQUIPA"],
                 // ["id" => "15", "label" => "CAC PORONGOCHE AQP"],
@@ -95,7 +99,11 @@ class GeoMarketingController
                 ["id" => "23", "label" => "REAL PLAZA SALAVERRY"],
                 ["id" => "24", "label" => "JOCKEY PLAZA"],
                 ["id" => "25", "label" => "Mall Aventura SJL"],
-                ["id" => "26", "label" => "EMPORIO COMERCIAL DE GAMARRA"]
+                ["id" => "26", "label" => "EMPORIO COMERCIAL DE GAMARRA"],
+                ["id" => "27", "label" => "Real Plaza Huancayo"],
+                ["id" => "28", "label" => "Open Plaza Piura"],
+                ["id" => "29", "label" => "REAL PLAZA JULIACA"],
+                ["id" => "30", "label" => "Mall Aventura Plaza Trujillo"]
             ]
         ];
         return view("geomarketing.geomarketing_log", compact("config"));

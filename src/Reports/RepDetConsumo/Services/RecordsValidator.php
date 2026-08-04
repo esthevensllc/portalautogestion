@@ -111,3 +111,4 @@ class RecordsValidator
         return ['errors' => $errors, 'passes' => count($errors) === 0];
     }
 }
+

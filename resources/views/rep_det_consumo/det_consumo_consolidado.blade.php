@@ -275,6 +275,9 @@ $(function() {
 
             const modal = $('#reportResultModal');
             const modalHeader = $('#reportResultModalHeader');
+
+            // Evita que el backdrop del loader o del layout quede encima del modal.
+            // Además deja el modal sin backdrop para no bloquear la página completa.
             modal.appendTo('body');
             clearModalBlockingState();
             showReportBackdrop();
@@ -447,3 +450,4 @@ $(function() {
 });
 </script>
 @endsection
+
