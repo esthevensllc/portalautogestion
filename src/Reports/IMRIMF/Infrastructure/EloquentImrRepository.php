@@ -20,6 +20,10 @@ class EloquentImrRepository implements ImrRepository
                 RANGO_ANTIGUEDAD,
                 SEGMENTO_VALOR,
                 CARGO_FIJO,
+                CARGO_FIJO_CALCULADO,
+                FACTOR_APLICADO,
+                PRODUCTO_FACTOR,
+                ES_MAYOR_DOS_ANIOS,
                 TIPO_ABONADO
             FROM (
                 SELECT
@@ -28,6 +32,29 @@ class EloquentImrRepository implements ImrRepository
                     TO_CHAR(DS.FECHA_ACTIVACION_SUSCRIPTOR, 'DD/MM/YYYY') AS RANGO_ANTIGUEDAD,
                     FMS.SEGMENTO AS SEGMENTO_VALOR,
                     DS.CARGO_FIJO_SUSCRIPTOR AS CARGO_FIJO,
+                    NVL(DS.CARGO_FIJO_SUSCRIPTOR, 0) *
+                        NVL(
+                            CASE
+                                WHEN TRUNC(SYSDATE) > ADD_MONTHS(TRUNC(DS.FECHA_ACTIVACION_SUSCRIPTOR), 24)
+                                    THEN SF.FACTOR2
+                                ELSE SF.FACTOR
+                            END,
+                            1
+                        ) AS CARGO_FIJO_CALCULADO,
+                    NVL(
+                        CASE
+                            WHEN TRUNC(SYSDATE) > ADD_MONTHS(TRUNC(DS.FECHA_ACTIVACION_SUSCRIPTOR), 24)
+                                THEN SF.FACTOR2
+                            ELSE SF.FACTOR
+                        END,
+                        1
+                    ) AS FACTOR_APLICADO,
+                    'FIJA' AS PRODUCTO_FACTOR,
+                    CASE
+                        WHEN TRUNC(SYSDATE) > ADD_MONTHS(TRUNC(DS.FECHA_ACTIVACION_SUSCRIPTOR), 24)
+                            THEN 1
+                        ELSE 0
+                    END AS ES_MAYOR_DOS_ANIOS,
                     DS.PLATAFORMA AS TIPO_ABONADO,
                     ROW_NUMBER() OVER (
                         PARTITION BY DS.CUENTA_CD
@@ -36,6 +63,9 @@ class EloquentImrRepository implements ImrRepository
                 FROM DWHDS.DS_SUSCRIPTORES PARTITION ({$partition}) DS
                 LEFT JOIN DWA.F_M_SEG_CLIENTES FMS
                     ON FMS.NRO_DOCUMENTO = DS.NUMERO_DOCUMENTO_PARTICIPANTE
+                LEFT JOIN USRAES.SEGMENTOS_FACTOR SF
+                    ON UPPER(TRIM(SF.PRODUCTO)) = 'FIJA'
+                    AND UPPER(TRIM(SF.SEGMENTO)) = UPPER(TRIM(FMS.SEGMENTO))
                 WHERE DS.CUENTA_CD = :customer_id
             )
             WHERE NROW = 1";
@@ -61,6 +91,10 @@ class EloquentImrRepository implements ImrRepository
                 RANGO_ANTIGUEDAD,
                 SEGMENTO_VALOR,
                 CARGO_FIJO,
+                CARGO_FIJO_CALCULADO,
+                FACTOR_APLICADO,
+                PRODUCTO_FACTOR,
+                ES_MAYOR_DOS_ANIOS,
                 TIPO_ABONADO
             FROM (
                 SELECT
@@ -69,6 +103,29 @@ class EloquentImrRepository implements ImrRepository
                     TO_CHAR(DS.FECHA_ACTIVACION_SUSCRIPTOR, 'DD/MM/YYYY') AS RANGO_ANTIGUEDAD,
                     FMS.SEGMENTO AS SEGMENTO_VALOR,
                     DS.CARGO_FIJO_SUSCRIPTOR AS CARGO_FIJO,
+                    NVL(DS.CARGO_FIJO_SUSCRIPTOR, 0) *
+                        NVL(
+                            CASE
+                                WHEN TRUNC(SYSDATE) > ADD_MONTHS(TRUNC(DS.FECHA_ACTIVACION_SUSCRIPTOR), 24)
+                                    THEN SF.FACTOR2
+                                ELSE SF.FACTOR
+                            END,
+                            1
+                        ) AS CARGO_FIJO_CALCULADO,
+                    NVL(
+                        CASE
+                            WHEN TRUNC(SYSDATE) > ADD_MONTHS(TRUNC(DS.FECHA_ACTIVACION_SUSCRIPTOR), 24)
+                                THEN SF.FACTOR2
+                            ELSE SF.FACTOR
+                        END,
+                        1
+                    ) AS FACTOR_APLICADO,
+                    'MOVIL' AS PRODUCTO_FACTOR,
+                    CASE
+                        WHEN TRUNC(SYSDATE) > ADD_MONTHS(TRUNC(DS.FECHA_ACTIVACION_SUSCRIPTOR), 24)
+                            THEN 1
+                        ELSE 0
+                    END AS ES_MAYOR_DOS_ANIOS,
                     DS.PLATAFORMA AS TIPO_ABONADO,
                     ROW_NUMBER() OVER (
                         PARTITION BY DS.NUMERO_TELEFONO
@@ -77,6 +134,9 @@ class EloquentImrRepository implements ImrRepository
                 FROM DWHDS.DS_SUSCRIPTORES PARTITION ({$partition}) DS
                 LEFT JOIN DWA.F_M_SEG_CLIENTES FMS
                     ON FMS.NRO_DOCUMENTO = DS.NUMERO_DOCUMENTO_PARTICIPANTE
+                LEFT JOIN USRAES.SEGMENTOS_FACTOR SF
+                    ON UPPER(TRIM(SF.PRODUCTO)) = 'MOVIL'
+                    AND UPPER(TRIM(SF.SEGMENTO)) = UPPER(TRIM(FMS.SEGMENTO))
                 WHERE DS.NUMERO_TELEFONO = :telefono
             )
             WHERE NROW = 1";
@@ -147,6 +207,10 @@ class EloquentImrRepository implements ImrRepository
             'rango_antiguedad' => $this->rowValue($row, 'RANGO_ANTIGUEDAD'),
             'segmento_valor' => $this->rowValue($row, 'SEGMENTO_VALOR'),
             'cargo_fijo' => $this->rowValue($row, 'CARGO_FIJO'),
+            'cargo_fijo_calculado' => $this->rowValue($row, 'CARGO_FIJO_CALCULADO'),
+            'factor_aplicado' => $this->rowValue($row, 'FACTOR_APLICADO'),
+            'producto_factor' => $this->rowValue($row, 'PRODUCTO_FACTOR'),
+            'es_mayor_dos_anios' => (int) ($this->rowValue($row, 'ES_MAYOR_DOS_ANIOS') ?? 0) === 1,
             'tipo_abonado' => $this->rowValue($row, 'TIPO_ABONADO'),
         ];
     }

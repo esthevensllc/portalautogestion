@@ -32,11 +32,32 @@ class ImrFinder
         $history = $this->repo->getHistory($identifiers['actions']);
         $summary = $this->repo->getSummary($identifiers['actions']);
 
-        return $this->buildResponse(
+        $response = $this->buildResponse(
             $identifiers['input'],
             $history,
             $summary,
             $customerInfo
         );
+
+        return $this->applyCalculatedFixedChargeToChart($response, $customerInfo);
+    }
+
+    private function applyCalculatedFixedChargeToChart(array $response, ?array $customerInfo): array
+    {
+        $cargoFijoReal = $this->parseAmount($customerInfo['cargo_fijo'] ?? 0);
+        $cargoFijoCalculado = $this->parseAmount(
+            $customerInfo['cargo_fijo_calculado'] ?? $cargoFijoReal
+        );
+        $importeTotal = $this->parseAmount($response['totals']['importe_total'] ?? 0);
+
+        $response['totals']['cargo_fijo'] = $cargoFijoCalculado;
+        $response['totals']['cargo_fijo_real'] = $cargoFijoReal;
+        $response['totals']['cargo_fijo_calculado'] = $cargoFijoCalculado;
+        $response['totals']['factor_aplicado'] = $this->parseAmount(
+            $customerInfo['factor_aplicado'] ?? 1
+        );
+        $response['totals']['saldo'] = $cargoFijoCalculado - $importeTotal;
+
+        return $response;
     }
 }
