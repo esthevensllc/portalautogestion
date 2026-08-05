@@ -698,6 +698,7 @@
             negativeLabelIndex: -1
         };
     }
+<<<<<<< Updated upstream
 
     function llenarCuadroImf(data) {
         const importeTotal = normalizarNumero(data?.importeTotal ?? data?.montoConsumido ?? data?.total);
@@ -732,6 +733,42 @@
             return;
         }
 
+=======
+
+    function llenarCuadroImf(data) {
+        const importeTotal = normalizarNumero(data?.importeTotal ?? data?.montoConsumido ?? data?.total);
+        const cantidadFidelizaciones = normalizarNumero(data?.cantidadFidelizaciones ?? data?.cantidadAcciones);
+        const cargoFijo = normalizarNumero(data?.cargoFijo);
+        const saldoImf = normalizarNumero(data?.saldo);
+        const usedLabel = document.getElementById('usedPercentText');
+        const freeLabel = document.getElementById('freePercentText');
+        document.getElementById('imrTotalText').textContent = formatSoles(cargoFijo, 2);
+        document.getElementById('cantidadFidelizacionesText').textContent = cantidadFidelizaciones;
+        actualizarTextoMetrica('importeTotalText', importeTotal, 2);
+        actualizarTextoMetrica('cargoFijoText', cargoFijo, 2);
+        actualizarTextoMetrica('saldoImfText', saldoImf, 2);
+
+        const chartData = obtenerDatosGrafico(importeTotal, saldoImf, cargoFijo);
+        const chartTotal = chartData.values.reduce((acc, value) => acc + value, 0);
+
+        usedLabel.classList.toggle('is-negative', chartData.negativeLabelIndex === 0);
+        freeLabel.classList.toggle('is-negative', chartData.negativeLabelIndex === 1);
+
+        if (!data?.hasData || chartTotal <= 0) {
+            if (imfChartInstance) {
+                imfChartInstance.destroy();
+                imfChartInstance = null;
+            }
+
+            const chartShell = document.getElementById('chartShell');
+            chartShell.classList.add('is-empty');
+            chartShell.setAttribute('aria-label', `Sin datos graficables de ${imrimfConfig.product_label}`);
+            usedLabel.textContent = '--';
+            freeLabel.textContent = '--';
+            return;
+        }
+
+>>>>>>> Stashed changes
         usedLabel.textContent = '';
         freeLabel.textContent = '';
 
@@ -971,7 +1008,154 @@
             cargoFijo,
             cantidadFidelizaciones,
             cantidadAcciones: cantidadFidelizaciones
+<<<<<<< Updated upstream
         };
+    }
+
+
+    function setMotivoGateVisible(isVisible) {
+        document.getElementById('imfMotivoGate')?.toggleAttribute('hidden', !isVisible);
+        document.getElementById('imrimfMainView')?.classList.toggle('is-locked', isVisible);
+    }
+
+    function updateSelectedReasonUI() {
+        const strip = document.getElementById('selectedReasonStrip');
+        const reasonText = document.getElementById('selectedReasonText');
+        const supervisorPill = document.getElementById('selectedSupervisorPill');
+
+        if (!selectedReasonState) {
+            strip?.setAttribute('hidden', 'hidden');
+            return;
+        }
+
+        if (reasonText) {
+            reasonText.textContent = selectedReasonState.reason;
+        }
+
+        supervisorPill?.toggleAttribute('hidden', !selectedReasonState.requiresSupervisor);
+        strip?.removeAttribute('hidden');
+    }
+
+    function clearReasonSelectionStyles() {
+        document.querySelectorAll('.reason-option.is-selected').forEach(option => {
+            option.classList.remove('is-selected');
+        });
+    }
+
+    function markSelectedReason(reason) {
+        clearReasonSelectionStyles();
+
+        document.querySelectorAll('.reason-option').forEach(option => {
+            if (option.dataset.reason === reason) {
+                option.classList.add('is-selected');
+            }
+        });
+    }
+
+    function activateImfMovilView(reason, requiresSupervisor, approvedSupervisor = false) {
+        selectedReasonState = {
+            reason,
+            requiresSupervisor,
+            approvedSupervisor: requiresSupervisor ? approvedSupervisor : false
+=======
+>>>>>>> Stashed changes
+        };
+
+        markSelectedReason(reason);
+        updateSelectedReasonUI();
+        setMotivoGateVisible(false);
+
+        const input = document.getElementById('customer-id');
+        input?.focus();
+
+        if (input?.value.trim() && !initialTelefonoSearchExecuted) {
+            initialTelefonoSearchExecuted = true;
+            buscarAcciones(input.value.trim());
+        }
+    }
+
+    function showReasonSelector() {
+        selectedReasonState = null;
+        pendingSupervisorReason = null;
+        updateSelectedReasonUI();
+        clearReasonSelectionStyles();
+        setMotivoGateVisible(true);
+        closeSupervisorApprovalModal();
+    }
+
+    function openSupervisorApprovalModal(reason) {
+        pendingSupervisorReason = reason;
+        const modal = document.getElementById('supervisorApprovalModal');
+        const reasonElement = document.getElementById('supervisorApprovalReason');
+        reasonElement.textContent = reason;
+        modal?.removeAttribute('hidden');
+        document.getElementById('supervisorApprovalConfirm')?.focus();
+    }
+
+    function closeSupervisorApprovalModal() {
+        const modal = document.getElementById('supervisorApprovalModal');
+        modal?.setAttribute('hidden', 'hidden');
+        pendingSupervisorReason = null;
+    }
+
+    function initializeQuestionnaireGate() {
+        document.querySelectorAll('.reason-option').forEach(option => {
+            option.addEventListener('click', function () {
+                const reason = this.dataset.reason || '';
+                const requiresSupervisor = this.dataset.requiresSupervisor === '1';
+
+                if (!reason) {
+                    return;
+                }
+
+                if (requiresSupervisor) {
+                    clearReasonSelectionStyles();
+                    this.classList.add('is-selected');
+                    openSupervisorApprovalModal(reason);
+                    return;
+                }
+
+                activateImfMovilView(reason, false, false);
+            });
+        });
+
+        document.getElementById('supervisorApprovalConfirm')?.addEventListener('click', function () {
+            if (!pendingSupervisorReason) {
+                closeSupervisorApprovalModal();
+                return;
+            }
+
+            const reason = pendingSupervisorReason;
+            closeSupervisorApprovalModal();
+            activateImfMovilView(reason, true, true);
+        });
+
+        document.getElementById('supervisorApprovalCancel')?.addEventListener('click', function () {
+            clearReasonSelectionStyles();
+            closeSupervisorApprovalModal();
+        });
+
+        document.getElementById('supervisorApprovalModal')?.addEventListener('click', function (event) {
+            if (event.target === this) {
+                clearReasonSelectionStyles();
+                closeSupervisorApprovalModal();
+            }
+        });
+
+        document.addEventListener('keydown', function (event) {
+            const modal = document.getElementById('supervisorApprovalModal');
+
+            if (event.key === 'Escape' && modal && !modal.hasAttribute('hidden')) {
+                clearReasonSelectionStyles();
+                closeSupervisorApprovalModal();
+            }
+        });
+
+        document.getElementById('changeReasonButton')?.addEventListener('click', function () {
+            showReasonSelector();
+        });
+
+        showReasonSelector();
     }
 
 
@@ -1217,3 +1401,4 @@
     });
 </script>
 @endsection
+

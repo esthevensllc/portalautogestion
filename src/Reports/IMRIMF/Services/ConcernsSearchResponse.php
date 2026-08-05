@@ -220,3 +220,4 @@ trait ConcernsSearchResponse
         return is_numeric($amount) ? (float) $amount : 0.0;
     }
 }
+

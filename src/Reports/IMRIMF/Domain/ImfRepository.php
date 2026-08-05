@@ -16,3 +16,4 @@ interface ImfRepository
 
     public function getSummaryByIdentifiers(array $identifiers): array;
 }
+

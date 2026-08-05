@@ -12,3 +12,4 @@ interface ImrRepository
 
     public function getSummary(string $telefono): array;
 }
+

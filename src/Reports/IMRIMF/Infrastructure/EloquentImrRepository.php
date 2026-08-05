@@ -226,3 +226,4 @@ class EloquentImrRepository implements ImrRepository
         return $partition;
     }
 }
+

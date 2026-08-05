@@ -43,11 +43,11 @@ class EloquentOltCmtsRepository implements OltCmtsRepository
     {
         $stFecha = $fecha->format("Y-m-d");
         $query = "SELECT
-        device_name id, device_name label
-        from fija_analisis.fija_usuarios_hfc
-        where tecnologia='HFC' and fecha = toDate('{$stFecha}') and device_name is not null
+        devicedisplayname id, devicedisplayname label
+        from fija_analisis.fija_clientes_hfc
+        where tecnologia='HFC' and fecha = toDate('{$stFecha}') and devicedisplayname is not null
         group by 1
-        order by device_name";
+        order by devicedisplayname";
         $data = DB::connection("ch-dn09")->select(DB::raw($query));
         return json_decode(json_encode($data), false);
     }

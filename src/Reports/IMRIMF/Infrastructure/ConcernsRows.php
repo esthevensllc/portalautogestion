@@ -17,3 +17,4 @@ trait ConcernsRows
         return null;
     }
 }
+

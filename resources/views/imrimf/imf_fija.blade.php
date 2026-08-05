@@ -760,6 +760,7 @@
             cargoFijo,
             cantidadFidelizaciones,
             cantidadAcciones: cantidadFidelizaciones
+<<<<<<< Updated upstream
         };
     }
 
@@ -771,6 +772,19 @@
         };
     }
 
+=======
+        };
+    }
+
+    function getSearchTypeConfig(searchType) {
+        const searchTypes = imrimfConfig.search_types || {};
+        return searchTypes[searchType] || searchTypes[imrimfConfig.default_search_type] || {
+            label: 'Teléfono',
+            placeholder: 'Ej: 902857695, 51902857695 o +51 902 857 695'
+        };
+    }
+
+>>>>>>> Stashed changes
     function updateSearchInput(searchTypeSelect, input) {
         const selectedType = searchTypeSelect.value;
         const selectedConfig = getSearchTypeConfig(selectedType);
@@ -894,3 +908,4 @@
     });
 </script>
 @endsection
+
