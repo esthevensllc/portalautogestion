@@ -22,13 +22,27 @@ class ImfFijaController
             'title_percent' => 'Porcentaje de uso de IMF',
             'product_label' => 'IMF',
             'input_label' => 'Teléfono',
-            'input_placeholder' => 'Ej: 902857695, 51902857695',
+            'input_placeholder' => 'Ej: 902857695, 51902857695 o +51 902 857 695',
+            'default_search_type' => 'telefono',
+            'search_types' => [
+                'customer_id' => [
+                    'label' => 'Customer ID',
+                    'placeholder' => 'Ej: 16805491 o H16805491',
+                ],
+                'telefono' => [
+                    'label' => 'Teléfono',
+                    'placeholder' => 'Ej: 902857695, 51902857695 o +51 902 857 695',
+                ],
+            ],
             'search_url' => rtrim(url()->current(), '/') . '/search',
             'initial_chart' => [
                 'hasData' => false,
                 'total' => 0,
                 'saldo' => 0,
+                'cargoFijo' => 0,
+                'importeTotal' => 0,
                 'cantidadAcciones' => 0,
+                'cantidadFidelizaciones' => 0,
                 'montoConsumido' => 0,
             ],
         ];
@@ -41,7 +55,10 @@ class ImfFijaController
         try {
             return response()->json([
                 'success' => true,
-                'data' => $this->finder->search((string) $request->query('telefono', '')),
+                'data' => $this->finder->search(
+                    (string) $request->query('telefono', ''),
+                    (string) $request->query('tipo_busqueda', 'telefono')
+                ),
             ]);
         } catch (InvalidArgumentException $exception) {
             return response()->json([
