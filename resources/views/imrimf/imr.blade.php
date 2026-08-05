@@ -132,7 +132,7 @@
     .search-type-select {
         padding: 0 26px 0 10px;
         border: 1px solid #d1d5db;
-        border-radius: 2px;
+        border-radius: 8px;
         background-color: #ffffff;
         color: #111827;
         font-size: 14px;
@@ -760,7 +760,6 @@
             cargoFijo,
             cantidadFidelizaciones,
             cantidadAcciones: cantidadFidelizaciones
-<<<<<<< Updated upstream
         };
     }
 
@@ -772,19 +771,6 @@
         };
     }
 
-=======
-        };
-    }
-
-    function getSearchTypeConfig(searchType) {
-        const searchTypes = imrimfConfig.search_types || {};
-        return searchTypes[searchType] || searchTypes[imrimfConfig.default_search_type] || {
-            label: 'Customer ID',
-            placeholder: 'Ej: 16805491 o H16805491'
-        };
-    }
-
->>>>>>> Stashed changes
     function updateSearchInput(searchTypeSelect, input) {
         const selectedType = searchTypeSelect.value;
         const selectedConfig = getSearchTypeConfig(selectedType);
@@ -908,4 +894,3 @@
     });
 </script>
 @endsection
-

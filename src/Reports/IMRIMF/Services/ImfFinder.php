@@ -25,17 +25,10 @@ class ImfFinder
         if ($normalizedSearchType === self::SEARCH_BY_CUSTOMER_ID) {
             return $this->searchByCustomerId($value);
         }
-<<<<<<< Updated upstream
 
         return $this->searchByPhone($value);
     }
 
-=======
-
-        return $this->searchByPhone($value);
-    }
-
->>>>>>> Stashed changes
     private function searchByPhone(string $telefono): array
     {
         $identifiers = $this->normalizeImfIdentifiers($telefono);
@@ -75,4 +68,3 @@ class ImfFinder
         );
     }
 }
-
