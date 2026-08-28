@@ -38,7 +38,7 @@ class EloquentMODEVRepository implements MODEVRepository
             -- aa.MTO_DEV_FACTURACION MONTO_DEVOLVER_IGV,
 	    CASE WHEN aa.MODALIDAD_DEV like '%POSTPAGO%' THEN aa.MTO_DEV_FACTURACION
 	    WHEN aa.MODALIDAD_DEV like '%PREPAGO%' THEN aa.MTO_DEV
-	    WHEN aa.MODALIDAD_DEV like '%WEB%' THEN aa.MTO_TOTAL_DEV_IGV END MONTO_DEVOLVER_IGV,
+	    WHEN aa.MODALIDAD_DEV LIKE '%CF%' THEN ROUND(INTERES, 2) + ROUND(ROUND(ROUND(MONTO_DEVOLVER_IGV, 2)*1.18, 2) / 1.18, 2) WHEN aa.MODALIDAD_DEV like '%WEB%' and aa.MODALIDAD_DEV NOT LIKE '%CF%' THEN aa.MTO_TOTAL_DEV_IGV END MONTO_DEVOLVER_IGV,
             'SOLES' unidad,
 	    case when aa.MSISDN_DEVOLVER is not null AND MODALIDAD_DEV LIKE '%POSTPAGO%' then aa.FECHA_DEVOLUCION
                 when aa.MSISDN_DEVOLVER is not null AND MODALIDAD_DEV LIKE '%PREPAGO%' and FECHA_DEVOLUCION<>TO_DATE('01/01/1970','DD/MM/YYYY') then aa.FECHA_DEVOLUCION
@@ -49,7 +49,7 @@ class EloquentMODEVRepository implements MODEVRepository
             case when aa.MSISDN_DEVOLVER is null then aa.FECHA_BAJA
                 when aa.fecha_baja_facturacion is not null then aa.fecha_baja_facturacion
                 when aa.MSISDN_DEVOLVER is not null and aa.fecha_baja_facturacion is null then NULL END fecha_baja,
-	    case when aa.MSISDN_DEVOLVER is null then aa.CUSTOMER_FULL_NAME 
+	    case when aa.MODALIDAD_DEV LIKE '%CF%' THEN aa.CUSTOMER_FULL_NAME when aa.MSISDN_DEVOLVER is null then aa.CUSTOMER_FULL_NAME 
                 END NOMBRE_RAZON_SOCIAL,
             case when aa.fecha_baja_facturacion is not null or aa.MODALIDAD_DEV like '%WEB%' THEN 'CENTRO DE ATENCIÃ“N AL CLIENTE'
             WHEN aa.fecha_baja_facturacion is not null or aa.MODALIDAD_DEV NOT LIKE '%WEB%' THEN '' END LUGAR_DONDE_COBRAR,
@@ -64,8 +64,9 @@ class EloquentMODEVRepository implements MODEVRepository
 		WHEN MODALIDAD_DEV like '%POSTPAGO%' and aa.MTO_DEV_FACTURACION is null THEN 'DEVOLUCION PENDIENTE-POSTPAGO'
             WHEN MODALIDAD_DEV like '%PREPAGO%' and aa.MTO_DEV is not null THEN 'DEVOLUCION APLICADA-PREPAGO' 
 		WHEN MODALIDAD_DEV like '%PREPAGO%' and aa.MTO_DEV is null THEN 'DEVOLUCION PENDIENTE-PREPAGO'
-            WHEN aa.MODALIDAD_DEV like '%WEB%' THEN 'DEVOLUCION WEB' END COMENTARIOS,
-            null liberado
+            WHEN aa.MODALIDAD_DEV like '%CF%' THEN 'DEVOLUCION WEB - CARGO FIJO 0'
+                WHEN aa.MODALIDAD_DEV like '%WEB%' THEN 'DEVOLUCION WEB' END COMENTARIOS,
+		null liberado
         from USRAES.BASE_PREV_BASEDEV aa
         left join (
             SELECT ticket,corte_fecha_ini,corte_fecha_fin,(corte_fecha_fin-corte_fecha_ini)*24*60 diferencia
@@ -94,7 +95,7 @@ class EloquentMODEVRepository implements MODEVRepository
             -- aa.MTO_DEV_FACTURACION MONTO_DEVOLVER_IGV,
             CASE WHEN aa.MODALIDAD_DEV like '%POSTPAGO%' THEN aa.MTO_DEV_FACTURACION
             WHEN aa.MODALIDAD_DEV like '%PREPAGO%' THEN aa.MTO_DEV
-            WHEN aa.MODALIDAD_DEV like '%WEB%' THEN aa.MTO_TOTAL_DEV_IGV END MONTO_DEVOLVER_IGV,
+            WHEN aa.MODALIDAD_DEV LIKE '%CF%' THEN ROUND(INTERES, 2) + ROUND(ROUND(ROUND(MONTO_DEVOLVER_IGV, 2)*1.18, 2) / 1.18, 2) WHEN aa.MODALIDAD_DEV like '%WEB%' and aa.MODALIDAD_DEV NOT LIKE '%CF%' THEN aa.MTO_TOTAL_DEV_IGV END MONTO_DEVOLVER_IGV,
             'SOLES' unidad,
             case when aa.MSISDN_DEVOLVER is not null AND MODALIDAD_DEV LIKE '%POSTPAGO%' then aa.FECHA_DEVOLUCION
                 when aa.MSISDN_DEVOLVER is not null AND MODALIDAD_DEV LIKE '%PREPAGO%' and FECHA_DEVOLUCION<>TO_DATE('01/01/1970','DD/MM/YYYY') then aa.FECHA_DEVOLUCION
@@ -105,7 +106,7 @@ class EloquentMODEVRepository implements MODEVRepository
             case when aa.MSISDN_DEVOLVER is null then aa.FECHA_BAJA
 		when aa.fecha_baja_facturacion is not null then aa.fecha_baja_facturacion
                 when aa.MSISDN_DEVOLVER is not null and aa.fecha_baja_facturacion is null then NULL END fecha_baja,
-            case when aa.MSISDN_DEVOLVER is null or aa.fecha_baja_facturacion is not null then aa.CUSTOMER_FULL_NAME
+            case when aa.MODALIDAD_DEV LIKE '%CF%' THEN aa.CUSTOMER_FULL_NAME when aa.MSISDN_DEVOLVER is null or aa.fecha_baja_facturacion is not null then aa.CUSTOMER_FULL_NAME
                 END NOMBRE_RAZON_SOCIAL,
             case when aa.fecha_baja_facturacion is not null or aa.MODALIDAD_DEV like '%WEB%' THEN 'CENTRO DE ATENCIÃ“N AL CLIENTE'
             WHEN aa.fecha_baja_facturacion is not null or aa.MODALIDAD_DEV NOT LIKE '%WEB%' THEN '' END LUGAR_DONDE_COBRAR,
@@ -120,7 +121,8 @@ class EloquentMODEVRepository implements MODEVRepository
                 WHEN MODALIDAD_DEV like '%POSTPAGO%' and aa.MTO_DEV_FACTURACION is null THEN 'DEVOLUCION PENDIENTE-POSTPAGO'
             WHEN MODALIDAD_DEV like '%PREPAGO%' and aa.MTO_DEV is not null THEN 'DEVOLUCION APLICADA-PREPAGO'
                 WHEN MODALIDAD_DEV like '%PREPAGO%' and aa.MTO_DEV is null THEN 'DEVOLUCION PENDIENTE-PREPAGO'
-            WHEN aa.MODALIDAD_DEV like '%WEB%' THEN 'DEVOLUCION WEB' END COMENTARIOS,
+            WHEN aa.MODALIDAD_DEV like '%CF%' THEN 'DEVOLUCION WEB - CARGO FIJO 0'
+                WHEN aa.MODALIDAD_DEV like '%WEB%' THEN 'DEVOLUCION WEB' END COMENTARIOS,
 	    null LIBERADO,
             cc.TIPO_REPORTE TIPO_REPORTE,
             MODALIDAD_DEV, DEPARTAMENTO

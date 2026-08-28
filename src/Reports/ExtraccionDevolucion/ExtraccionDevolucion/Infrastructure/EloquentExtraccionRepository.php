@@ -1889,7 +1889,7 @@ class EloquentExtraccionRepository implements ExtraccionRepository
         $strBindsOracle = implode(",", $strBindsOracle);
 
         return DB::select(DB::raw("SELECT
-        TICKET, CUSTOMER_FULL_NAME, TIPO_DOCUMENTO, NRO_DOCUMENTO, MTO_TOTAL_DEV_IGV
+        TICKET, CUSTOMER_FULL_NAME, TIPO_DOCUMENTO, NRO_DOCUMENTO, ROUND(INTERES, 2) + ROUND(ROUND(ROUND(MONTO_DEVOLVER_IGV, 2)*1.18, 2) / 1.18, 2) AS MTO_TOTAL_DEV_IGV
         FROM USRAES.BASE_PREV_BASEDEV@DBL_REPTDM
         WHERE MODALIDAD_DEV like '%WEB%' and ticket in ({$strBindsOracle})
         ORDER BY TICKET"), $ticketValues);
