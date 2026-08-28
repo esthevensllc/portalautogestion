@@ -289,9 +289,9 @@
             </section>
 
             <section class="history-area">
-                <h2 class="section-title">Historial de acciones de fidelización otorgadas a la línea:</h2>
+                <h2 class="section-title">Historial de acciones de retención otorgadas a la línea:</h2>
                 <div class="history-scroll" id="historyScroll">
-                    <table class="history-table" aria-label="Historial de acciones de fidelización">
+                    <table class="history-table" aria-label="Historial de acciones de retención">
                         <thead>
                             <tr>
                                 <th>Fecha</th>
