@@ -68,7 +68,11 @@ class ImfMovilController
         try {
             return response()->json([
                 'success' => true,
-                'data' => $this->finder->search((string) $request->query('telefono', '')),
+                'data' => $this->finder->search(
+                    (string) $request->query('telefono', ''),
+                    'telefono',
+                    'MOVIL'
+                ),
             ]);
         } catch (InvalidArgumentException $exception) {
             return response()->json([

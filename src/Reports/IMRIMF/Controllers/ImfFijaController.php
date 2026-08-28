@@ -57,7 +57,8 @@ class ImfFijaController
                 'success' => true,
                 'data' => $this->finder->search(
                     (string) $request->query('telefono', ''),
-                    (string) $request->query('tipo_busqueda', 'telefono')
+                    (string) $request->query('tipo_busqueda', 'telefono'),
+                    'FIJA'
                 ),
             ]);
         } catch (InvalidArgumentException $exception) {
